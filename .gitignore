@@ -1,0 +1,18 @@
+# Python
+venv/
+pycache/
+*.pyc
+
+# Node
+node_modules/
+
+# Temp
+backend/generated_cards/
+backend/temp/
+
+# DB
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
