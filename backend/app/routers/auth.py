@@ -24,7 +24,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 router = APIRouter(tags=["auth"])
-
+ADMIN_EMAILS = {"udalovaristarh@gmail.com"}
 TARIFFS = {
     "Start": 20,
     "Business": 60,
@@ -35,7 +35,7 @@ SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "marketcardai@gmail.com"
 SMTP_PASSWORD = "tqogmqncvuwzfqkx"
-FRONTEND_RESET_URL = "http://localhost:3000/reset-password"
+FRONTEND_URL = "https://marketcard.uz"
 
 
 def send_reset_email(to_email: str, reset_link: str):
@@ -138,6 +138,9 @@ def activate_tariff(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if user.email not in ADMIN_EMAILS:
+        raise HTTPException(status_code=403, detail="Оплата обязательна")
+
     if data.tariff_name not in TARIFFS:
         raise HTTPException(status_code=400, detail="Invalid tariff")
     user.tariff_name = data.tariff_name
@@ -171,7 +174,7 @@ def forgot_password(
         return {"message": "Если такая почта существует, письмо отправлено"}
 
     token = create_reset_token(user.email)
-    reset_link = f"{FRONTEND_RESET_URL}?token={token}"
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
 
     try:
         send_reset_email(user.email, reset_link)

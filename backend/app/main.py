@@ -14,7 +14,11 @@ from app.routes.listing_generate import router as listing_generate_router
 from app.routes.full_generate import router as full_generate_router
 from app.routes.ikpu import router as ikpu_router
 
-app = FastAPI(title="MarketCard AI", debug=True)
+app = FastAPI(
+    title="MarketCard AI",
+    debug=True,
+    
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,7 +29,7 @@ app.add_middleware(
 )
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-GENERATED_DIR = (BACKEND_DIR / "generated_cards").resolve()
+GENERATED_DIR = Path("/var/www/marketcard/generated_cards").resolve()
 TEMP_DIR = (BACKEND_DIR / "temp").resolve()
 
 GENERATED_DIR.mkdir(parents=True, exist_ok=True)
@@ -37,11 +41,11 @@ app.mount(
     name="generated_cards",
 )
 
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
-app.include_router(products_router, prefix="/api/products", tags=["products"])
-app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
-app.include_router(listing_generate_router, prefix="/api/listing", tags=["listing"])
-app.include_router(full_generate_router)
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(products_router, prefix="/products", tags=["products"])
+app.include_router(ai_router, prefix="/ai", tags=["ai"])
+app.include_router(listing_generate_router, prefix="/listing", tags=["listing"])
+app.include_router(full_generate_router, prefix="", tags=["full_generate"])
 app.include_router(ikpu_router)
 
 @app.on_event("startup")

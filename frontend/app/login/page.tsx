@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("")
   const [forgotLoading, setForgotLoading] = useState(false)
 
-  const API_BASE = "http://localhost:8000"
+  const API_BASE = "/api"
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -26,7 +26,7 @@ export default function LoginPage() {
     try {
       setLoading(true)
 
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -70,7 +70,7 @@ export default function LoginPage() {
     try {
       setForgotLoading(true)
 
-      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

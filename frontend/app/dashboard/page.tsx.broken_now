@@ -917,7 +917,7 @@ export default function DashboardPage() {
   const [activePage, setActivePage] =
     useState<DashboardPageKey>("generator")
 
-  const [languageMode, setLanguageMode] = useState<LanguageMode>("ru")
+  const [languageMode, setLanguageMode] = useState<LanguageMode>("ru")  
   const [variantCount, setVariantCount] = useState(5)
   const [generatedVariants, setGeneratedVariants] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
@@ -934,12 +934,10 @@ export default function DashboardPage() {
   setIkpuLoading(true)
 
   try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
     const res = await fetch(
-      `https://tasnif.soliq.uz/api/cl-api/classifier/search?search=${encodeURIComponent(ikpuQuery)}`
+      `/api/ikpu/search?q=${encodeURIComponent(ikpuQuery)}`
     )
 
-    console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
 
     let items: any[] = []
@@ -976,21 +974,20 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const loadProfile = async (email: string) => {
     try {
       setProfileLoading(true)
-    console.log("ACTIVATE 4 BEFORE FETCH")
       const res = await fetch(
-         `https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email)}`
+         `/api/auth/me?email=${encodeURIComponent(email)}&_t=${Date.now()}`
 )
 
       if (!res.ok) {
-        setProfile(null)
-        return
+      console.error("Ошибка загрузки профиля")
+      return
       }
 
       const data: ProfileResponse = await res.json()
       setProfile(data)
     } catch (error) {
       console.error("Profile load error:", error)
-      setProfile(null)
+      console.error("Ошибка загрузки профиля")
     } finally {
       setProfileLoading(false)
     }
@@ -1036,10 +1033,9 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   setIkpuLoading(true)
 
   try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
- // const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
- // const data = await res.json()
-    setIkpuResults([])
+    const res = await fetch(`/api/api/ikpu/search?q=${encodeURIComponent(query)}`)
+    const data = await res.json()
+    setIkpuResults(Array.isArray(data?.items) ? data.items : [])
   } catch (e) {
     console.log("IKPU AUTO ERROR:", e)
     setIkpuResults([])
@@ -1048,29 +1044,21 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   }
 }
   const handleActivateTariff = async () => {
-  console.log("ACTIVATE 1 START", { userEmail, selectedTariff })
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = Promise.resolve()
-  const emailToUse = userEmail || profile?.email
-  if (!emailToUse) {
-    console.log("ACTIVATE STOP: no email at all")
-    return
-  }
-
+const ikpuPromise = searchIkpuAuto(ikpuSearchText)
+    if (!userEmail) return
 
     try {
-    console.log("ACTIVATE 3 BEFORE SET LOADING")
       setActivatingTariff(true)
 
-    console.log("ACTIVATE 4 BEFORE FETCH")
-      const res = await fetch(
-        `https://marketcard.uz/api/auth/activate-tariff?email=${encodeURIComponent(emailToUse)}`,
-        {
+      const res = await fetch(`/api/auth/activate-tariff?email=${encodeURIComponent(userEmail)}`,
+          {
+        
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            
           },
           body: JSON.stringify({
             
@@ -1079,10 +1067,7 @@ const ikpuPromise = Promise.resolve()
         }
       )
 
-    console.log("ACTIVATE 5 AFTER FETCH", res.status)
-    console.log("GEN 3 STATUS", res.status)
       const data = await res.json().catch(() => null)
-    console.log("ACTIVATE 6 RESPONSE DATA", data)
 
       if (!res.ok) {
         alert(data?.detail || t.serverError)
@@ -1096,7 +1081,6 @@ const ikpuPromise = Promise.resolve()
       console.error("Tariff activation error:", error)
       alert(t.serverError)
     } finally {
-    console.log("ACTIVATE 8 FINALLY")
       setActivatingTariff(false)
     }
   }
@@ -1113,11 +1097,10 @@ const ikpuPromise = Promise.resolve()
   }
 
     const handleGenerate = async () => {
-  console.log("GEN 0 PROFILE", profile)
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = Promise.resolve()
+const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     setIsGenerating(true)
   try {
     setCreating(true)
@@ -1126,68 +1109,56 @@ const ikpuPromise = Promise.resolve()
     setListingData(null)
     setListingReady(false)
 
-    const formData = new FormData()
-    if (!profile?.email) {
-      console.log("GEN STOP: NO EMAIL", profile)
-      alert("Email пользователя не найден")
-      return
-    }
+const formData = new FormData();
+formData.append("email", profile?.email || "");
+formData.append("product_title", productTitle);
+formData.append("brand", brand);
+formData.append("category", category);
+formData.append("marketplace", selectedMarketplace);
+formData.append("language_mode", languageMode);
+formData.append("variant_count", String(variantCount));
 
-    formData.append("email", profile?.email || "")
-    formData.append("product_title", productTitle)
-    formData.append("brand", brand)
-    formData.append("category", category)
-    formData.append("marketplace", selectedMarketplace)
-    formData.append("language_mode", languageMode)
-    formData.append("variant_count", String(variantCount))
-
-    if (selectedFile) {
-      formData.append("image", selectedFile)
-    }
-
-    
-    console.log("GEN 2 BEFORE FETCH")
-    const res = await fetch("https://marketcard.uz/api/full-generate", {
-      method: "POST",
-      body: formData,
-    })
-
-    console.log("GEN 3 STATUS", res.status)
-    const data = await res.json()
-    console.log("FULL GENERATE STATUS:", res.status)
-    console.log("FULL GENERATE DATA:", data)
-    if (!res.ok || !data?.success) {
-  console.log("FULL GENERATE ERROR:", data)
-  alert(JSON.stringify(data))
-  return
-} 
-  
-
-    // ✅ КАРТИНКИ
-    const images = (data.slides || [])
-      .filter((s: any) => s.image_url)
-      .map((s: any) => `https://marketcard.uz${s.image_url}`)
-
-    setGeneratedVariants(images)
-    setPngReady(images.length > 0)
-
-    // ✅ SEO / ОПИСАНИЕ
-    if (data.listing) {
-      setListingData(data.listing)
-      setListingReady(true)
-    }
-    if (profile?.email) {
-  await loadProfile(profile.email)
+if (selectedFile) {
+  formData.append("image", selectedFile);
 }
-  await ikpuPromise
-  } catch (err) {
-    console.log("GEN ERROR", err)
-    console.error(err)
-    alert("Ошибка")
-  } finally {
-  setCreating(false)
-  setIsGenerating(false)
+
+const res = await fetch("/api/full-generate", {
+  method: "POST",
+  body: formData,
+});
+
+const data = await res.json();
+console.log("FULL GENERATE STATUS:", res.status);
+console.log("FULL GENERATE DATA:", data);
+
+if (!res.ok) {
+  console.log("FULL GENERATE ERROR:", data);
+  alert(JSON.stringify(data));
+  return;
 }
+
+const images = (data.slides || [])
+  .filter((s: any) => s.image_url)
+  .map((s: any) => s.image_url);
+
+setGeneratedVariants(images);
+setPngReady(images.length > 0);
+
+if (data.listing) {
+  setListingData(data.listing);
+  setListingReady(true);
+}
+
+if (profile?.email) {
+  await loadProfile(profile.email);
+}
+
+try {
+  await ikpuPromise;
+} catch (ikpuErr) {
+  console.error("IKPU ERROR:", ikpuErr);
+}
+
 }
 
   const handleDownloadPng = async () => {
@@ -1227,7 +1198,7 @@ const ikpuPromise = Promise.resolve()
       return
     }
 
-    const url = `https://marketcard.uz/products/${createdProduct.id}/download-image?marketplace_mode=${selectedMarketplace}`
+    const url = `/api/products/${createdProduct.id}/download-image?marketplace_mode=${selectedMarketplace}`
     window.open(url, "_blank")
   }
 

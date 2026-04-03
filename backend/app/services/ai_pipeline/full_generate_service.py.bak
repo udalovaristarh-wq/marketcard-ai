@@ -11,8 +11,7 @@ from app.services.ai_pipeline.visual_profile_builder import build_visual_profile
 from app.services.ai_pipeline.seo_generator import generate_listing
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
-GENERATED_DIR = Path("/var/www/marketcard/generated_cards").resolve()
-GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+GENERATED_DIR = (BACKEND_DIR / "generated_cards").resolve()
 
 
 def _clean_text(value: Any) -> str:

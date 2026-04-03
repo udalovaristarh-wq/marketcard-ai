@@ -57,7 +57,7 @@ export default function AiCardGenerator() {
 
     try {
 
-      const res = await fetch("http://127.0.0.1:8000/ai/generate", {
+      const res = await fetch("/api/ai/generate", {
         method: "POST",
         body: formData
       })

@@ -874,6 +874,23 @@ export default function DashboardPage() {
 
   const [lang, setLang] = useState<Lang>("ru")
   const [showLangMenu, setShowLangMenu] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 900)
+  }
+
+  checkMobile()
+  window.addEventListener("resize", checkMobile)
+
+  return () => window.removeEventListener("resize", checkMobile)
+}, [])
+  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+
+  
 
   const [authChecked, setAuthChecked] = useState(false)
   const [userEmail, setUserEmail] = useState("")
@@ -934,12 +951,10 @@ export default function DashboardPage() {
   setIkpuLoading(true)
 
   try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
     const res = await fetch(
       `https://tasnif.soliq.uz/api/cl-api/classifier/search?search=${encodeURIComponent(ikpuQuery)}`
     )
 
-    console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
 
     let items: any[] = []
@@ -976,9 +991,8 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const loadProfile = async (email: string) => {
     try {
       setProfileLoading(true)
-    console.log("ACTIVATE 4 BEFORE FETCH")
       const res = await fetch(
-         `https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email)}`
+         `/api/auth/me?email=${encodeURIComponent(email)}`
 )
 
       if (!res.ok) {
@@ -1036,10 +1050,9 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   setIkpuLoading(true)
 
   try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
- // const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
- // const data = await res.json()
-    setIkpuResults([])
+    const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
+    const data = await res.json()
+    setIkpuResults(Array.isArray(data?.items) ? data.items : [])
   } catch (e) {
     console.log("IKPU AUTO ERROR:", e)
     setIkpuResults([])
@@ -1048,25 +1061,17 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   }
 }
   const handleActivateTariff = async () => {
-  console.log("ACTIVATE 1 START", { userEmail, selectedTariff })
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = Promise.resolve()
-  const emailToUse = userEmail || profile?.email
-  if (!emailToUse) {
-    console.log("ACTIVATE STOP: no email at all")
-    return
-  }
-
+const ikpuPromise = searchIkpuAuto(ikpuSearchText)
+    if (!userEmail) return
 
     try {
-    console.log("ACTIVATE 3 BEFORE SET LOADING")
       setActivatingTariff(true)
 
-    console.log("ACTIVATE 4 BEFORE FETCH")
       const res = await fetch(
-        `https://marketcard.uz/api/auth/activate-tariff?email=${encodeURIComponent(emailToUse)}`,
+        `/api/auth/activate-tariff?email=${encodeURIComponent(userEmail)}`,
         {
           method: "POST",
           headers: {
@@ -1079,10 +1084,7 @@ const ikpuPromise = Promise.resolve()
         }
       )
 
-    console.log("ACTIVATE 5 AFTER FETCH", res.status)
-    console.log("GEN 3 STATUS", res.status)
       const data = await res.json().catch(() => null)
-    console.log("ACTIVATE 6 RESPONSE DATA", data)
 
       if (!res.ok) {
         alert(data?.detail || t.serverError)
@@ -1096,28 +1098,54 @@ const ikpuPromise = Promise.resolve()
       console.error("Tariff activation error:", error)
       alert(t.serverError)
     } finally {
-    console.log("ACTIVATE 8 FINALLY")
       setActivatingTariff(false)
     }
   }
 
   const handleConfirmPayment = async () => {
-    if (!selectedPayment) {
-      alert(t.choosePayment)
-      return
-    }
+  if (!selectedPayment) {
+    alert(t.choosePayment)
+    return
+  }
 
+  const adminEmails = ["udalovaristarh@gmail.com"]
+  const currentEmail = String(profile?.email || userEmail || "").toLowerCase()
+  const isAdmin = adminEmails.includes(currentEmail)
+
+  if (isAdmin) {
     await handleActivateTariff()
     setShowPaymentModal(false)
     setSelectedPayment(null)
+    return
   }
 
+  if (selectedPayment === "visa") {
+    alert("Оплата через Visa временно недоступна. Выберите Payme или Click.")
+    return
+  }
+
+  if (selectedPayment === "payme") {
+    alert("Оплата через Payme скоро будет подключена.")
+    setShowPaymentModal(false)
+    setSelectedPayment(null)
+    return
+  }
+
+  if (selectedPayment === "click") {
+    alert("Оплата через Click скоро будет подключена.")
+    setShowPaymentModal(false)
+    setSelectedPayment(null)
+    return
+  }
+
+  alert("Неизвестный способ оплаты.")
+}
+
     const handleGenerate = async () => {
-  console.log("GEN 0 PROFILE", profile)
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = Promise.resolve()
+const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     setIsGenerating(true)
   try {
     setCreating(true)
@@ -1128,11 +1156,9 @@ const ikpuPromise = Promise.resolve()
 
     const formData = new FormData()
     if (!profile?.email) {
-      console.log("GEN STOP: NO EMAIL", profile)
-      alert("Email пользователя не найден")
-      return
-    }
-
+  alert("Email пользователя не найден")
+  return
+}
     formData.append("email", profile?.email || "")
     formData.append("product_title", productTitle)
     formData.append("brand", brand)
@@ -1145,14 +1171,11 @@ const ikpuPromise = Promise.resolve()
       formData.append("image", selectedFile)
     }
 
-    
-    console.log("GEN 2 BEFORE FETCH")
-    const res = await fetch("https://marketcard.uz/api/full-generate", {
+    const res = await fetch("/api/full-generate", {
       method: "POST",
       body: formData,
     })
 
-    console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
     console.log("FULL GENERATE STATUS:", res.status)
     console.log("FULL GENERATE DATA:", data)
@@ -1164,12 +1187,31 @@ const ikpuPromise = Promise.resolve()
   
 
     // ✅ КАРТИНКИ
-    const images = (data.slides || [])
-      .filter((s: any) => s.image_url)
-      .map((s: any) => `https://marketcard.uz${s.image_url}`)
+const images = (data.slides || [])
+  .filter((s: any) => s.image_url)
+  .map((s: any) => {
+    const raw = String(s.image_url || "").trim()
 
-    setGeneratedVariants(images)
-    setPngReady(images.length > 0)
+    if (!raw) return ""
+
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+      return raw
+    }
+
+    if (raw.includes("/backend/generated_cards/")) {
+      return raw.replace(/^.*\/backend\/generated_cards\//, "/generated_cards/")
+    }
+
+    if (raw.includes("/generated_cards/")) {
+      return raw.replace(/^.*\/generated_cards\//, "/generated_cards/")
+    }
+
+    return raw.startsWith("/") ? raw : `/${raw}`
+  })
+  .filter(Boolean)
+
+setGeneratedVariants(images)
+setPngReady(images.length > 0)
 
     // ✅ SEO / ОПИСАНИЕ
     if (data.listing) {
@@ -1181,7 +1223,6 @@ const ikpuPromise = Promise.resolve()
 }
   await ikpuPromise
   } catch (err) {
-    console.log("GEN ERROR", err)
     console.error(err)
     alert("Ошибка")
   } finally {
@@ -1227,7 +1268,7 @@ const ikpuPromise = Promise.resolve()
       return
     }
 
-    const url = `https://marketcard.uz/products/${createdProduct.id}/download-image?marketplace_mode=${selectedMarketplace}`
+    const url = `/api/products/${createdProduct.id}/download-image?marketplace_mode=${selectedMarketplace}`
     window.open(url, "_blank")
   }
 
@@ -1302,6 +1343,8 @@ const ikpuPromise = Promise.resolve()
     competitorPrice,
   ])
 
+  
+
   if (!authChecked) return null 
   return (
     <>
@@ -1317,22 +1360,137 @@ const ikpuPromise = Promise.resolve()
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "260px 1fr",
+            gridTemplateColumns: isMobile ? "1fr" : "260px 1fr",
             minHeight: "100vh",
           }}
         >
+        </div>
+
+           style={{width:"42px",height:"42px",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.06)",color:"white",fontSize:"22px",fontWeight:900}}>×</button>
+              </div>
+              <div style={{display:"grid",gap:"12px"}}<button onClick={() => { setActivePage("generator"); setMobileMenuOpen(false) }} style={{padding:"16px",borderRadius:"16px",background:activePage==="generator"?"linear-gradient(135deg,#0ea5e9,#2563eb)":"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.10)",color:"white",fontWeight:800,textAlign:"left"}}>{t.sidebarGenerator}</button>
+                <button onClick={() => { setActivePage("economy"); setMobileMenuOpen(false) }} style={{padding:"16px",borderRadius:"16px",background:activePage==="economy"?"linear-gradient(135deg,#22c55e,#16a34a)":"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.10)",color:"white",fontWeight:800,textAlign:"left"}}>{t.sidebarEconomy}</button>
+                <button onClick={() => { setActivePage("listing"); setMobileMenuOpen(false) }} style={{padding:"16px",borderRadius:"16px",background:activePage==="listing"?"linear-gradient(135deg,#8b5cf6,#2563eb)":"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.10)",color:"white",fontWeight:800,textAlign:"left"}}>{t.listingButton}</button>
+                <button onClick={() => { window.open("https://tasnif.soliq.uz","_blank"); setMobileMenuOpen(false) }} style={{padding:"16px",borderRadius:"16px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.10)",color:"white",fontWeight:800,textAlign:"left"}}>ИКПУ</button>
+              </div>
+            </div>
+
+        </div>
+
+          
+                  style={{
+                    width: "42px",
+                    height: "42px",
+                    borderRadius: "12px",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                    color: "white",
+                    cursor: "pointer",
+                    fontSize: "22px",
+                    fontWeight: 900,
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ display: "grid", gap: "12px" }}<button
+                  onClick={() => {
+                    setActivePage("generator")
+                    setMobileMenuOpen(false)
+                  }}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background:
+                      activePage === "generator"
+                        ? "linear-gradient(135deg,#0ea5e9,#2563eb)"
+                        : "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    color: "white",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {t.sidebarGenerator}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActivePage("economy")
+                    setMobileMenuOpen(false)
+                  }}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background:
+                      activePage === "economy"
+                        ? "linear-gradient(135deg,#22c55e,#16a34a)"
+                        : "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    color: "white",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {t.sidebarEconomy}
+                </button><button
+                  onClick={() => {
+                    setActivePage("listing")
+                    setMobileMenuOpen(false)
+                  }}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background:
+                      activePage === "listing"
+                        ? "linear-gradient(135deg,#8b5cf6,#2563eb)"
+                        : "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    color: "white",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {t.listingButton}
+                </button>
+
+                <button
+                  onClick={() => {
+                    window.open("https://tasnif.soliq.uz", "_blank")
+                    setMobileMenuOpen(false)
+                  }}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "16px",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    color: "white",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  ИКПУ
+                </button>
+            </div>
+
           <aside
             style={{
-              width: "320px",
-              minWidth: "320px",
+              width: isMobile ? "100%" : "320px",
+              minWidth: isMobile ? "0" : "320px",
               padding: "24px",
               borderRight: "1px solid rgba(255,255,255,0.08)",
+              display: isMobile ? "none" : "block",
             }}
           >
             <div
               style={{
                 color: "white",
-                fontSize: "56px",
+                fontSize: isMobile ? "34px" : "56px",
                 fontWeight: 900,
                 lineHeight: 1.05,
                 marginBottom: "36px",
@@ -1342,9 +1500,8 @@ const ikpuPromise = Promise.resolve()
               MarketCard AI
             </div>
 
-            <div style={{ display: "grid", gap: "12px" }}>
-              <button
-                onClick={() => setActivePage("generator")}
+            <div style={{ display: "grid", gap: "12px" }}<button
+                onClick={() => { setActivePage("generator"); setMobileMenuOpen(false) }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1363,7 +1520,7 @@ const ikpuPromise = Promise.resolve()
               </button>
 
               <button
-                onClick={() => setActivePage("economy")}
+                onClick={() => { setActivePage("economy"); setMobileMenuOpen(false) }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1382,7 +1539,7 @@ const ikpuPromise = Promise.resolve()
               </button>
 
               <button
-                onClick={() => setActivePage("listing")}
+                onClick={() => { setActivePage("listing"); setMobileMenuOpen(false) }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1439,13 +1596,16 @@ const ikpuPromise = Promise.resolve()
 >
   ИКПУ
 </button>
-            </div>
+            </div>}
           </aside>
           
         <section
   style={{
-    padding: "24px",
+    padding: isMobile ? "14px" : "24px",
     overflowX: "hidden",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   }}
 >
   {false && (
@@ -1624,8 +1784,29 @@ const ikpuPromise = Promise.resolve()
             alignItems: "flex-end",
           }}
         >
-          <div style={{ position: "relative" }}>
+          {isMobile && (
             <button
+              onClick={() => setMobileMenuOpen(true)}
+              style={{
+                width: "52px",
+                height: "52px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255,255,255,0.12)",
+                background: "rgba(255,255,255,0.06)",
+                color: "white",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "26px",
+                fontWeight: 900,
+              }}
+            >
+              ☰
+            </button>
+          )}
+          {isMobile && <button onClick={() => setMobileMenuOpen(true)} style={{width:"52px",height:"52px",borderRadius:"14px",border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.06)",color:"white",fontSize:"26px",fontWeight:900}}>☰</button>}
+          <div style={{ position: "relative" }}<button
               onClick={() => setShowLangMenu((prev) => !prev)}
               style={{
                 padding: "12px 16px",
@@ -1801,7 +1982,7 @@ const ikpuPromise = Promise.resolve()
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "440px 1fr",
+          gridTemplateColumns: isMobile ? "1fr" : "440px minmax(0, 1fr)",
           gap: "24px",
           alignItems: "start",
         }}
@@ -2011,8 +2192,7 @@ const ikpuPromise = Promise.resolve()
 
             <div>
               <div style={labelStyle}>{t.languageMode}</div>
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                <button
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}<button
                   onClick={() => setLanguageMode("ru")}
                   style={smallPillButton(languageMode === "ru")}
                 >
@@ -2081,8 +2261,7 @@ const ikpuPromise = Promise.resolve()
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <button
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}<button
                 onClick={handleGenerate}
                 disabled={creating}
                 style={primaryButtonStyle(creating)}
@@ -2230,7 +2409,7 @@ const ikpuPromise = Promise.resolve()
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))",
                   gap: "18px",
                 }}
               >
@@ -2635,7 +2814,7 @@ const ikpuPromise = Promise.resolve()
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
             gap: "12px",
           }}
         >
@@ -2894,7 +3073,7 @@ const ikpuPromise = Promise.resolve()
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
           gap: "18px",
         }}
       >
@@ -3037,7 +3216,7 @@ const ikpuPromise = Promise.resolve()
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
           gap: "18px",
           marginBottom: "24px",
         }}
@@ -3125,8 +3304,7 @@ const ikpuPromise = Promise.resolve()
         </button>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button
+      <div style={{ display: "flex", justifyContent: "flex-end" }}<button
           onClick={handleConfirmPayment}
           style={{
             padding: "16px 24px",

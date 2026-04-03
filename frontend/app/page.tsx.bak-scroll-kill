@@ -134,11 +134,11 @@ function SlideView({
 
   return (
     <div className="slideImageWrap">
-      <div className="slideImageShell" style={{ position: "absolute", inset: 0, padding: 0, margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="slideImageShell">
         <img
           src={src}
           alt={title}
-          className="slideImage" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block" }}
+          className="slideImage"
           onError={() => setImgError(true)}
         />
       </div>
@@ -202,33 +202,9 @@ function SlideView({
       <div className="cursorGlow" style={cursorStyle} />
 
       <style jsx>{`
-
-@keyframes floatTopA {
-  0% {
-    transform: translateY(0px) scale(1) rotate(-7deg);
-  }
-  50% {
-    transform: translateY(-12px) scale(1.04) rotate(-5deg);
-  }
-  100% {
-    transform: translateY(0px) scale(1) rotate(-7deg);
-  }
-}
-
-@keyframes floatTopB {
-  0% {
-    transform: translateY(0px) scale(1) rotate(7deg);
-  }
-  50% {
-    transform: translateY(12px) scale(1.04) rotate(5deg);
-  }
-  100% {
-    transform: translateY(0px) scale(1) rotate(7deg);
-  }
-}
         .page {
           height: 100vh;
-          overflow: hidden;
+          overflow-x: hidden;
           position: relative;
           color: white;
           font-family: Arial, sans-serif;
@@ -288,7 +264,7 @@ function SlideView({
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
-          overflow: hidden;
+          overflow-x: hidden;
         }
 
         .topbar {
@@ -332,7 +308,7 @@ function SlideView({
           background: rgba(10,18,32,0.95);
           border: 1px solid rgba(255,255,255,0.12);
           box-shadow: 0 26px 50px rgba(0,0,0,0.35);
-          overflow: hidden;
+          overflow-x: hidden;
           z-index: 10;
           backdrop-filter: blur(14px);
         }
@@ -357,7 +333,7 @@ function SlideView({
           grid-template-columns: minmax(0, 1fr) 620px;
           gap: 38px;
           align-items: center;
-          overflow: hidden;
+          overflow-x: hidden;
         }
 
         .left {
@@ -367,7 +343,7 @@ function SlideView({
           flex-direction: column;
           justify-content: center;
           padding-right: 6px;
-          overflow: hidden;
+          overflow-x: hidden;
         }
 
         .topCards {
@@ -376,14 +352,14 @@ function SlideView({
           gap: 18px;
           align-items: flex-end;
           margin-bottom: 16px;
-          overflow: hidden;
+          overflow-x: hidden;
         }
 
         .miniCard {
           width: 210px;
           height: 136px;
           border-radius: 24px;
-          overflow: hidden;
+          overflow-x: hidden;
           border: 1px solid rgba(255,255,255,0.12);
           background: rgba(255,255,255,0.05);
           box-shadow:
@@ -419,14 +395,14 @@ function SlideView({
         }
 
         .miniCardLeft {
-  animation: floatTopA 4.8s ease-in-out infinite;
-  transform: rotate(-7deg);
-}
+          animation: floatTopA 4.8s ease-in-out infinite;
+          transform: rotate(-7deg);
+        }
 
         .miniCardRight {
-  animation: floatTopB 5s ease-in-out infinite;
-  transform: rotate(7deg);
-}
+          animation: floatTopB 5s ease-in-out infinite;
+          transform: rotate(7deg);
+        }
 
         .title {
           margin: 0 0 12px;
@@ -477,7 +453,7 @@ function SlideView({
             0 0 24px rgba(255,255,255,0.05);
           position: relative;
                     overflow: hidden;
-overflow: hidden;
+overflow-x: hidden;
           backdrop-filter: blur(10px);
         }
 
@@ -528,15 +504,21 @@ overflow: hidden;
         }
 
         .marketCard {
-          height: 64px;
-          border-radius: 14px;
+          height: 78px;
+          border-radius: 20px;
           border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.05);
+          background: rgba(255,255,255,0.045);
           position: relative;
-          overflow: hidden;
+                    overflow: hidden;
+overflow-x: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
+          box-shadow:
+            0 14px 30px rgba(0,0,0,0.22),
+            0 0 0 1px rgba(255,255,255,0.04) inset;
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
+          backdrop-filter: blur(14px);
         }
 
         .marketCard:hover {
@@ -560,20 +542,20 @@ overflow: hidden;
         }
 
         .marketLogo {
-          width: 80%;
-          height: 80%;
-          object-fit: contain;
-          object-position: center;
-          display: block;
-          margin: auto;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: contain !important;
+          padding: 12px 16px;
+          z-index: 2;
         }
 
         .right {
           width: 100%;
           max-width: 100%;
           height: 100%;
-                              overflow: hidden !important;
-overflow: hidden !important;
+                    overflow: hidden !important;
 display: flex;
           align-items: center;
           justify-content: center;
@@ -581,13 +563,10 @@ display: flex;
         }
 
         .sliderBlock {
-  display: flex !important;
-  justify-content: center !important;
           width: 100%;
-          max-width: 520px;
+          max-width: 360px;
           height: 100%;
-                              overflow: hidden !important;
-overflow: hidden !important;
+                    overflow: hidden !important;
 min-height: 0;
           display: flex;
           flex-direction: column;
@@ -610,12 +589,12 @@ min-height: 0;
           flex: 1 1 auto;
           min-height: 0;
           max-height: none;
-          aspect-ratio: 1.7 / 3;
+          aspect-ratio: 3 / 4;
                     width: 100%;
           margin: 0 auto;
 border-radius: 34px;
           overflow: hidden;
-overflow: hidden;
+overflow-x: hidden;
           border: 1px solid rgba(255,255,255,0.14);
           background: rgba(255,255,255,0.04);
           box-shadow:
@@ -658,38 +637,33 @@ overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
-          overflow: hidden;
-          background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+          background:
+            radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 42%),
+            linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
         }
 
         .slideImageShell {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
           position: absolute;
           inset: 0;
-          padding: 0;
+          padding: 16px;
           box-sizing: border-box;
           display: flex;
           align-items: center;
           justify-content: center;
-          overflow: hidden;
         }
 
         .slideImage {
-          width: auto !important;
-          height: auto !important;
-          max-width: 100% !important;
-          max-height: 100% !important;
+          width: 100%;
+          height: 100%;
           object-fit: contain !important;
           object-position: center center !important;
           display: block;
           filter: drop-shadow(0 22px 42px rgba(0,0,0,0.3));
-          transition: none !important;
+          transition: transform 0.42s ease;
         }
 
         .sliderBox:hover .slideImage {
-          transform: none !important;
+          transform: scale(1.02);
         }
 
         .slideOverlay {
@@ -823,65 +797,22 @@ overflow: hidden;
           width: fit-content;
         }
 
-        .slideImageWrap {
-          width: 100%;
-          height: 100%;
-          flex: 1;
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-        }
-
-        .slideImageShell {
-          position: absolute;
-          inset: 0;
-          padding: 0;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .slideImageShell .slideImage,
-        .slideImage {
-          width: auto !important;
-          height: auto !important;
-          max-width: 100% !important;
-          max-height: 100% !important;
-          object-fit: contain !important;
-          object-position: center center !important;
-          display: block;
-          filter: drop-shadow(0 22px 42px rgba(0,0,0,0.3));
-          transition: none !important;
-        }
-
-        .sliderBox:hover .slideImage {
-          transform: none !important;
-        }50% {
+        @keyframes floatTopA {
+          0% {
+            transform: translateY(0px) scale(1) rotate(-7deg);
+          }
+          50% {
             transform: translateY(-12px) scale(1.04) rotate(-5deg);
           }
           100% {
             transform: translateY(0px) scale(1) rotate(-7deg);
           }
         }
-  50% {
-    transform: translateY(-12px) scale(1.04) rotate(-5deg);
-  }
-  100% {
-    transform: translateY(0px) scale(1) rotate(-7deg);
-  }
-}
-  50% {
-    transform: translateY(-12px) scale(1.04) rotate(-5deg);
-  }
-  100% {
-    transform: translateY(0px) scale(1) rotate(-7deg);
-  }
-}
+
+        @keyframes floatTopB {
+          0% {
+            transform: translateY(0px) scale(1) rotate(7deg);
+          }
           50% {
             transform: translateY(12px) scale(1.04) rotate(5deg);
           }
@@ -890,31 +821,7 @@ overflow: hidden;
           }
         }
 
-         floatTopA {
-  0% {
-    transform: translateY(0px) scale(1) rotate(-7deg);
-  }
-  50% {
-    transform: translateY(-12px) scale(1.04) rotate(-5deg);
-  }
-  100% {
-    transform: translateY(0px) scale(1) rotate(-7deg);
-  }
-}
-
- floatTopB {
-  0% {
-    transform: translateY(0px) scale(1) rotate(7deg);
-  }
-  50% {
-    transform: translateY(12px) scale(1.04) rotate(5deg);
-  }
-  100% {
-    transform: translateY(0px) scale(1) rotate(7deg);
-  }
-}
-
- breatheFrame {
+        @keyframes breatheFrame {
           0% {
             transform: scale(1);
           }
@@ -1017,7 +924,7 @@ overflow: hidden;
             width: 44vw;
             max-width: 150px;
             height: auto;
-            aspect-ratio: 1.7 / 3;
+            aspect-ratio: 210 / 136;
             border-radius: 20px;
           }
 
@@ -1057,50 +964,31 @@ overflow: hidden;
           }
 
           .marketCard {
-          height: 64px;
-          border-radius: 14px;
-          border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.05);
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+            height: 72px;
+            border-radius: 16px;
+          }
 
           .marketLogo {
-          width: 80%;
-          height: 80%;
-          object-fit: contain;
-          object-position: center;
-          display: block;
-          margin: auto;
-        }
+            padding: 10px 14px;
+          }
 
           .sliderBlock {
             width: 100%;
             height: auto;
-            max-width: 520px;
+            max-width: 360px;
             margin: 0 auto;
           }
 
           .sliderBox {
             min-height: auto;
             max-height: none;
-            aspect-ratio: 1.7 / 3;
+            aspect-ratio: 3 / 4;
             border-radius: 24px;
           }
 
           .slideImageShell {
-          position: absolute;
-          inset: 0;
-          padding: 0;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
+            padding: 12px;
+          }
 
           .slideCaption {
             padding: 14px 14px 34px;
@@ -1119,29 +1007,7 @@ overflow: hidden;
             display: none;
           }
           
-        
-        .container,
-        .hero,
-        .left,
-        .right,
-        .sliderBlock,
-        .sliderBox {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .container::-webkit-scrollbar,
-        .hero::-webkit-scrollbar,
-        .left::-webkit-scrollbar,
         .right::-webkit-scrollbar,
-        .sliderBlock::-webkit-scrollbar,
-        .sliderBox::-webkit-scrollbar {
-          width: 0 !important;
-          height: 0 !important;
-          display: none !important;
-          background: transparent !important;
-        }
-.right::-webkit-scrollbar,
         .sliderBlock::-webkit-scrollbar,
         .sliderBox::-webkit-scrollbar {
           display: none;
@@ -1149,14 +1015,8 @@ overflow: hidden;
           height: 0;
         }
 .sliderBox {
-  width: 100% !important;
-  max-width: 420px !important;
-  aspect-ratio: 1 / 1.7 !important;
-  margin: 0 auto !important;
-  position: relative !important;
-  display: flex !important;
-  animation: none !important;
-}
+            animation: none !important;
+          }
           .sliderBox::before,
           .sliderBox::after {
             display: none !important;
@@ -1200,11 +1060,11 @@ overflow: hidden;
         <div className="hero">
           <div className="left">
             <div className="topCards">
-              <div className="miniCard miniCardLeft" style={{ animation: "floatTopA 4.8s ease-in-out infinite", transform: "rotate(-7deg)" }}>
+              <div className="miniCard miniCardLeft">
                 <img src={topCards[0].src} alt={topCards[0].alt} />
               </div>
 
-              <div className="miniCard miniCardRight" style={{ animation: "floatTopB 5s ease-in-out infinite", transform: "rotate(7deg)" }}>
+              <div className="miniCard miniCardRight">
                 <img src={topCards[1].src} alt={topCards[1].alt} />
               </div>
             </div>
@@ -1268,16 +1128,12 @@ overflow: hidden;
           </div>
 
           <div className="right">
-            <div className="sliderBlock" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-              <div className="examples" style={{ width: "340px", margin: "0 auto 14px", textAlign: "center" }}>{t.examples}</div>
+            <div className="sliderBlock">
+              <div className="examples">{t.examples}</div>
 
               <div
-  className="sliderBox"
-  style={{
-    width: "340px",
-    aspectRatio: "1.9 / 3"
-  }}
-  onMouseMove={(e) => {
+                className="sliderBox"
+                onMouseMove={(e) => {
                   const box = e.currentTarget
                   const rect = box.getBoundingClientRect()
 
@@ -1325,35 +1181,6 @@ overflow: hidden;
           </div>
         </div>
       </div>
-<div
-  style={{
-    width: "100%",
-    background: "#08101d",
-    borderTop: "1px solid rgba(255,255,255,0.05)",
-    padding: "20px 0",
-    textAlign: "center",
-    marginTop: "40px"
-  }}
->
-  <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-    <a
-      href="/privacy"
-      style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
-    >
-      Privacy
-    </a>
-    <a
-      href="/terms"
-      style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
-    >
-      Terms
-    </a>
-  </div>
-
-  <p style={{ color: "rgba(255,255,255,0.4)", marginTop: "10px" }}>
-    © 2026 MarketCard AI
-  </p>
-</div>
     </main>
   )
 }

@@ -11,7 +11,7 @@ from app.db import engine
 from app.models import User
 from app.services.ai_pipeline.full_generate_service import full_generate
 
-router = APIRouter(prefix="/api", tags=["AI Full Generate"])
+router = APIRouter(tags=["AI Full Generate"])
 
 TEMP_DIR = Path("temp")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)

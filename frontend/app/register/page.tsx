@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = "/api"
 
   const validatePassword = (value: string) => {
     const hasMinLength = value.length >= 8
@@ -38,7 +38,7 @@ export default function RegisterPage() {
     try {
       setLoading(true)
 
-       const res = await fetch(`${API_BASE}/api/auth/register`, {
+       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

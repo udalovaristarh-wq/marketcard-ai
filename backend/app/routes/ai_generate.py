@@ -77,9 +77,9 @@ async def generate(
         files = files[:variants_count]
 
         variants = [
-            f"http://127.0.0.1:8000/generated_cards/{unique}/{Path(file_path).name}"
-            for file_path in files
-        ]
+    f"/generated_cards/{unique}/{Path(file_path).name}"
+    for file_path in files
+]
 
         return {
             "success": True,
