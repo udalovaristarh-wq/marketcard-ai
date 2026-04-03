@@ -877,6 +877,8 @@ export default function DashboardPage() {
 
   const [authChecked, setAuthChecked] = useState(false)
   const [userEmail, setUserEmail] = useState("")
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
 
@@ -928,6 +930,16 @@ export default function DashboardPage() {
   (listingData as any)?.uz ||
   (listingData as any)?.en ||
   null
+useEffect(() => {
+  const checkMobile = () => {
+    const mobile = window.innerWidth <= 900
+    setIsMobile(mobile)
+  }
+
+  checkMobile()
+  window.addEventListener("resize", checkMobile)
+  return () => window.removeEventListener("resize", checkMobile)
+}, [])
   const searchIkpu = async () => {
   if (!ikpuQuery) return
 
@@ -1314,21 +1326,59 @@ const ikpuPromise = Promise.resolve()
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "260px 1fr",
-            minHeight: "100vh",
-          }}
-        >
-          <aside
-            style={{
-              width: "320px",
-              minWidth: "320px",
-              padding: "24px",
-              borderRight: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "260px 1fr", 
+    position: "relative",
+    minHeight: "100vh",
+  }}
+>
+{isMobile && (
+  <div
+    style={{
+      position: "fixed",
+      top: "12px",
+      left: "12px",
+      zIndex: 9999,
+    }}
+  >
+    <button
+      onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+      style={{
+        background: "#0ea5e9",
+        color: "#fff",
+        border: "none",
+        borderRadius: "10px",
+        padding: "10px 14px",
+        fontSize: "18px",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      ☰
+    </button>
+  </div>
+)}
+
+ <aside
+  style={{
+    display: isMobile ? (isMobileMenuOpen ? "block" : "none") : "block",
+    position: isMobile ? "fixed" : "relative",
+    top: isMobile ? "0" : undefined,
+    left: isMobile ? "0" : undefined,
+    zIndex: isMobile ? 9998 : undefined,
+    width: isMobile ? "280px" : "320px",
+    minWidth: isMobile ? "280px" : "320px",
+    height: isMobile ? "100vh" : "auto",
+    overflowY: isMobile ? "auto" : "visible",
+    padding: "24px",
+    borderRight: "1px solid rgba(255,255,255,0.08)",
+    background: isMobile ? "rgba(8,15,35,0.96)" : "transparent",
+    backdropFilter: isMobile ? "blur(14px)" : undefined,
+    boxShadow: isMobile ? "0 0 30px rgba(0,0,0,0.35)" : undefined,
+  }}
+>
             <div
               style={{
                 color: "white",
@@ -1344,7 +1394,10 @@ const ikpuPromise = Promise.resolve()
 
             <div style={{ display: "grid", gap: "12px" }}>
               <button
-                onClick={() => setActivePage("generator")}
+                onClick={() => {
+                  setActivePage("generator")
+                  if (isMobile) setIsMobileMenuOpen(false)
+                }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1363,7 +1416,10 @@ const ikpuPromise = Promise.resolve()
               </button>
 
               <button
-                onClick={() => setActivePage("economy")}
+                onClick={() => {
+                  setActivePage("economy")
+                  if (isMobile) setIsMobileMenuOpen(false)
+                }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1382,7 +1438,10 @@ const ikpuPromise = Promise.resolve()
               </button>
 
               <button
-                onClick={() => setActivePage("listing")}
+                onClick={() => {
+                  setActivePage("listing")
+                  if (isMobile) setIsMobileMenuOpen(false)
+                }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1440,8 +1499,18 @@ const ikpuPromise = Promise.resolve()
   ИКПУ
 </button>
             </div>
-          </aside>
-          
+</aside>
+ {isMobile && isMobileMenuOpen && (
+  <div
+    onClick={() => setIsMobileMenuOpen(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.45)",
+      zIndex: 9997,
+    }}
+  />
+)}
         <section
   style={{
     padding: "24px",
@@ -1801,7 +1870,7 @@ const ikpuPromise = Promise.resolve()
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "440px 1fr",
+          gridTemplateColumns: isMobile ? "1fr" : "440px 1fr",
           gap: "24px",
           alignItems: "start",
         }}
