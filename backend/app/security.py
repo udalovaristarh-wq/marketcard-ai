@@ -1,6 +1,13 @@
 from datetime import datetime, timedelta, timezone
+
 import jwt
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from sqlmodel import Session
+
+from app.db import get_session
+from app.models import User
 
 SECRET_KEY = "super-secret-key"
 ALGORITHM = "HS256"
@@ -10,7 +17,7 @@ pwd_context = CryptContext(
     deprecated="auto",
 )
 
-print("SECURITY.PY LOADED")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 def hash_password(password: str) -> str:
@@ -26,6 +33,8 @@ def create_access_token(data: dict):
     payload = data.copy()
     payload.update({"exp": expire})
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
 def create_reset_token(email: str):
     expire = datetime.now(timezone.utc) + timedelta(minutes=30)
     payload = {
@@ -39,13 +48,37 @@ def create_reset_token(email: str):
 def verify_reset_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
         if payload.get("type") != "password_reset":
             return None
-        
         return payload.get("email")
-    
     except jwt.ExpiredSignatureError:
         return None
     except jwt.InvalidTokenError:
         return None
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: Session = Depends(get_session),
+):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+    )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise credentials_exception
+    except jwt.InvalidTokenError:
+        raise credentials_exception
+
+    user = session.get(User, user_id)
+    if not user:
+        raise credentials_exception
+
+    if hasattr(user, "is_banned") and user.is_banned:
+        raise HTTPException(status_code=403, detail="User banned")
+
+    return user

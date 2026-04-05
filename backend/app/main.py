@@ -13,11 +13,12 @@ from app.routes.ai_generate import router as ai_router
 from app.routes.listing_generate import router as listing_generate_router
 from app.routes.full_generate import router as full_generate_router
 from app.routes.ikpu import router as ikpu_router
+from app.routes import admin
 
 app = FastAPI(
     title="MarketCard AI",
     debug=True,
-    
+    root_path="/api",
 )
 
 app.add_middleware(
@@ -37,7 +38,7 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 app.mount(
     "/generated_cards",
-    StaticFiles(directory=str(GENERATED_DIR)),
+    StaticFiles(directory="/var/www/marketcard/generated_cards"),
     name="generated_cards",
 )
 
@@ -47,6 +48,7 @@ app.include_router(ai_router, prefix="/ai", tags=["ai"])
 app.include_router(listing_generate_router, prefix="/listing", tags=["listing"])
 app.include_router(full_generate_router, prefix="", tags=["full_generate"])
 app.include_router(ikpu_router)
+app.include_router(admin.router)
 
 @app.on_event("startup")
 def on_startup() -> None:

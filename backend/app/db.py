@@ -1,9 +1,9 @@
 from sqlmodel import SQLModel, Session, create_engine
 
-sqlite_file_name = "database.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
+# 🔥 PostgreSQL подключение
+DATABASE_URL = "postgresql://marketcard_user:12345678@127.0.0.1:5432/marketcard"
 
-engine = create_engine(sqlite_url, echo=True)
+engine = create_engine(DATABASE_URL, echo=True)
 
 
 def create_db_and_tables():
@@ -12,6 +12,7 @@ def create_db_and_tables():
     from app.models.ikpu import IKPU
 
     SQLModel.metadata.create_all(engine)
+
 
 def get_session():
     with Session(engine) as session:

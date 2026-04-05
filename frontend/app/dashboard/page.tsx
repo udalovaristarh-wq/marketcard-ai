@@ -1211,8 +1211,12 @@ const ikpuPromise = Promise.resolve()
 
   for (let i = 0; i < generatedVariants.length; i++) {
     const imageUrl = generatedVariants[i]
+    const fixedImageUrl =
+    typeof imageUrl === "string" && imageUrl.startsWith("/generated_cards")
+    ? `/api${imageUrl}`
+    : imageUrl
 
-    const response = await fetch(imageUrl)
+    const response = await fetch(fixedImageUrl)
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
 
@@ -1240,7 +1244,7 @@ const ikpuPromise = Promise.resolve()
     }
 
     const url = `https://marketcard.uz/products/${createdProduct.id}/download-image?marketplace_mode=${selectedMarketplace}`
-    window.open(url, "_blank")
+    window.open(url window.open(urlwindow.open(url url.startsWith("/generated_cards") ? /api${url} : url, "_blank")
   }
 
   const accountEmailLabel = useMemo(() => userEmail || "-", [userEmail])
@@ -2322,7 +2326,7 @@ const ikpuPromise = Promise.resolve()
                     >
                       {"Вариант " + (index + 1)}
                     </div><img
-                      src={url}
+                      src={url.startsWith("/generated_cards") ? /api${url} : url}
                       alt={`variant-${index + 1}`}
                       style={{
                         width: "100%",
@@ -2333,7 +2337,7 @@ const ikpuPromise = Promise.resolve()
                     />
 
                     <a
-                      href={url}
+                      href={url.startsWith("/generated_cards") ? /api${url} : url}
                       target="_blank"
                       rel="noreferrer"
                       style={{
