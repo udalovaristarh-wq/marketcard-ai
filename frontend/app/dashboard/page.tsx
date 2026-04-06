@@ -990,13 +990,17 @@ const listingKeywords = Array.isArray(listingView?.keywords)
       setProfileLoading(true)
     const token = localStorage.getItem("access_token")
 
-if (!token) {
+    const email = localStorage.getItem("user_email")
+
+if (!token || !email) {
   setProfileLoading(false)
   setProfile(null)
   return
 }
 
-const res = await fetch("https://marketcard.uz/api/auth/me", {
+const res = await fetch(
+`https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email || "")}`,
+ {
   headers: {
     Authorization: `Bearer ${token}`,
   },
@@ -1129,9 +1133,10 @@ const ikpuPromise = Promise.resolve()
         return
       }
 
-      await loadProfile()
       setShowTariffModal(false)
       alert(t.tariffActivated)
+
+      await loadProfile()
     } catch (error) {
       console.error("Tariff activation error:", error)
       alert(t.serverError)

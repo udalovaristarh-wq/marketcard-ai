@@ -90,7 +90,7 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
     token = create_access_token({"user_id": user.id})
     return {"access_token": token}
 
-
+@router.get("/me", response_model=ProfileResponse)
 def get_profile(
     email: str = Query(...),
     session: Session = Depends(get_session),
