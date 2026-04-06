@@ -77,8 +77,11 @@ def get_current_user(
     user = session.get(User, user_id)
     if not user:
         raise credentials_exception
-
+   
     if hasattr(user, "is_banned") and user.is_banned:
-        raise HTTPException(status_code=403, detail="User banned")
+          raise HTTPException(
+        status_code=403,
+        detail=user.ban_reason or "Ваш аккаунт заблокирован",
+    )
 
     return user

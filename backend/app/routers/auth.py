@@ -67,7 +67,9 @@ def send_reset_email(to_email: str, reset_link: str):
 
 @router.post("/register", response_model=TokenResponse)
 def register_user(data: UserRegister, session: Session = Depends(get_session)):
-    existing = session.exec(select(User).where(User.email == data.email)).first()
+    existing = session.exec(
+        select(User).where(
+            User.email == data.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
 
@@ -89,25 +91,6 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
     return {"access_token": token}
 
 
-@router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, session: Session = Depends(get_session)):
-    user = session.exec(select(User).where(User.email == data.email)).first()
-    if not user:
-        raise HTTPException(status_code=400, detail="Invalid login")
-
-    try:
-        password_valid = verify_password(data.password, user.password)
-    except Exception:
-        password_valid = False
-
-    if not password_valid:
-        raise HTTPException(status_code=400, detail="Invalid login")
-
-    token = create_access_token({"user_id": user.id})
-    return {"access_token": token, "token_type": "bearer"}
-
-
-@router.get("/me", response_model=ProfileResponse)
 def get_profile(
     email: str = Query(...),
     session: Session = Depends(get_session),
@@ -180,7 +163,10 @@ def forgot_password(
     try:
         send_reset_email(user.email, reset_link)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка отправки письма: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка отправки письма: {
+                str(e)}")
 
     return {"message": "Если такая почта существует, письмо отправлено"}
 
@@ -192,7 +178,8 @@ def reset_password(
 ):
     email = verify_reset_token(data.token)
     if not email:
-        raise HTTPException(status_code=400, detail="Неверный или просроченный токен")
+        raise HTTPException(status_code=400,
+                            detail="Неверный или просроченный токен")
 
     user = session.exec(select(User).where(User.email == email)).first()
     if not user:
@@ -204,3 +191,35 @@ def reset_password(
     session.refresh(user)
 
     return {"message": "Пароль успешно обновлён"}
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+from app.models import User
+from app.security import verify_password, create_access_token
+from app.db import get_session
+from fastapi import Depends
+
+
+@router.post("/login")
+def login(data: UserLogin, session: Session = Depends(get_session)):
+    user = session.query(User).filter(User.email == data.email).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid login")
+
+    if not verify_password(data.password, user.password):
+        raise HTTPException(status_code=400, detail="Invalid login")
+
+    # 🔥 БАН ПРОВЕРКА
+    if getattr(user, "is_banned", False):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Ваш аккаунт заблокирован. Причина: {getattr(user, 'ban_reason', 'Не указана')}"
+        )
+
+    token = create_access_token({"user_id": user.id})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }

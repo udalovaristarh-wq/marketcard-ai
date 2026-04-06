@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from sqlmodel import SQLModel, Field
-
+from datetime import datetime
+from typing import Optional
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -20,3 +21,6 @@ class User(SQLModel, table=True):
     is_admin: bool = Field(default=False)
     is_banned: bool = Field(default=False)
     ban_reason: str | None = Field(default=None)
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: Optional[datetime] = None

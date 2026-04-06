@@ -985,18 +985,46 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const t = dict[lang]
   const currentFormat = marketplaceFormats[selectedMarketplace]
 
-  const loadProfile = async (email: string) => {
+  const loadProfile = async () => {
     try {
       setProfileLoading(true)
-    console.log("ACTIVATE 4 BEFORE FETCH")
-      const res = await fetch(
-         `https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email)}`
-)
+    const token = localStorage.getItem("access_token")
+
+if (!token) {
+  setProfileLoading(false)
+  setProfile(null)
+  return
+}
+
+const res = await fetch("https://marketcard.uz/api/auth/me", {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
 
       if (!res.ok) {
-        setProfile(null)
-        return
-      }
+  const errorData = await res.json().catch(() => null)
+
+  if (res.status === 403) {
+    const message = errorData?.detail || "Ваш аккаунт заблокирован"
+
+    document.body.innerHTML = ` 
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;">
+        <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
+          <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
+          <div style="font-size:18px;opacity:0.9;line-height:1.5;">
+            ${message}
+          </div>
+        </div>
+      </div>
+    `
+
+    throw new Error(message)
+  }
+
+  setProfile(null)
+  return
+}
 
       const data: ProfileResponse = await res.json()
       setProfile(data)
@@ -1019,7 +1047,7 @@ const listingKeywords = Array.isArray(listingView?.keywords)
 
     setUserEmail(savedEmail)
     setAuthChecked(true)
-    loadProfile(savedEmail)
+    loadProfile()
   }, [router])
 
   useEffect(() => {
@@ -1101,7 +1129,7 @@ const ikpuPromise = Promise.resolve()
         return
       }
 
-      await loadProfile(userEmail)
+      await loadProfile()
       setShowTariffModal(false)
       alert(t.tariffActivated)
     } catch (error) {
@@ -1189,7 +1217,7 @@ const ikpuPromise = Promise.resolve()
       setListingReady(true)
     }
     if (profile?.email) {
-  await loadProfile(profile.email)
+  await loadProfile()
 }
   await ikpuPromise
   } catch (err) {
@@ -1244,7 +1272,7 @@ const ikpuPromise = Promise.resolve()
     }
 
     const url = `https://marketcard.uz/products/${createdProduct.id}/download-image?marketplace_mode=${selectedMarketplace}`
-    window.open(url window.open(urlwindow.open(url url.startsWith("/generated_cards") ? /api${url} : url, "_blank")
+    window.open(url, "_blank")
   }
 
   const accountEmailLabel = useMemo(() => userEmail || "-", [userEmail])
@@ -2326,7 +2354,7 @@ const ikpuPromise = Promise.resolve()
                     >
                       {"Вариант " + (index + 1)}
                     </div><img
-                      src={url.startsWith("/generated_cards") ? /api${url} : url}
+                      src={url.startsWith("/generated_cards") ? `/api${url}` : url}
                       alt={`variant-${index + 1}`}
                       style={{
                         width: "100%",
@@ -2337,7 +2365,7 @@ const ikpuPromise = Promise.resolve()
                     />
 
                     <a
-                      href={url.startsWith("/generated_cards") ? /api${url} : url}
+                      href={url.startsWith("/generated_cards") ? `/api${url}` : url}
                       target="_blank"
                       rel="noreferrer"
                       style={{
