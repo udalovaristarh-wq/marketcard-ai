@@ -74,7 +74,9 @@ export default function AdminPage() {
   const [errorsMessage, setErrorsMessage] = useState("");
   const [resolvingErrorId, setResolvingErrorId] = useState<number | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("")
+const [showAnalytics, setShowAnalytics] = useState(false)
+const [systemLoad, setSystemLoad] = useState(35);
 
   const filteredUsers = users.filter((u) =>
     u.email?.toLowerCase().includes(search.toLowerCase()),
@@ -133,6 +135,15 @@ export default function AdminPage() {
       loadUsers()
     }
   }, [isVerified])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSystemLoad(Math.floor(Math.random() * 100))
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [])
+
 ;
 
   useEffect(() => {
@@ -494,7 +505,111 @@ export default function AdminPage() {
             )}
           </div>
         </div>
-      </main>
+  
+      {isVerified && (<div style={{ marginTop: "40px", textAlign: "center" }}>
+        <button
+          onClick={() => setShowAnalytics((prev) => !prev)}
+          style={{
+            padding: "14px 28px",
+            borderRadius: "12px",
+            border: "none",
+            background: "linear-gradient(135deg, #00f5a0, #00d9f5)",
+            color: "#001f2f",
+            fontWeight: 700,
+            fontSize: "16px",
+            cursor: "pointer",
+            boxShadow: "0 10px 30px rgba(0,255,200,0.2)",
+          }}
+        >
+          {showAnalytics ? "Скрыть аналитику" : "Показать аналитику"}
+        </button>
+      </div>)}
+
+      {isVerified && showAnalytics && (
+        <div
+          style={{
+            marginTop: "40px",
+            padding: "30px",
+            borderRadius: "20px",
+            background: "linear-gradient(145deg, #0f2027, #203a43, #2c5364)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+          }}
+        >
+          <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
+            Аналитика и мониторинг
+          </h2>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "20px",
+            }}
+          >
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Всего пользователей</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.length}
+              </div>
+            </div>
+
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Всего генераций</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.reduce((sum, u) => sum + Number(u.tariff_generations_total ?? u.generations_total ?? 0), 0)}
+              </div>
+            </div>
+
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Использовано</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.reduce((sum, u) => sum + Number(u.tariff_generations_used ?? u.generations_used ?? 0), 0)}
+              </div>
+            </div>
+
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Без тарифа</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.filter((u) => !u.tariff_name).length}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: "30px" }}>
+            <div style={{ marginBottom: "10px" }}>Нагрузка системы</div>
+
+            <div
+              style={{
+                width: "100%",
+                height: "20px",
+                borderRadius: "10px",
+                background: "#111",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: systemLoad + "%",
+                  height: "100%",
+                  background:
+                    systemLoad < 50
+                      ? "linear-gradient(90deg, #00ff99, #00cc66)"
+                      : systemLoad < 75
+                      ? "linear-gradient(90deg, #ffaa00, #ff8800)"
+                      : "linear-gradient(90deg, #ff3c3c, #cc0000)",
+                  transition: "0.5s",
+                }}
+              />
+            </div>
+
+            <div style={{ marginTop: "8px", opacity: 0.7 }}>
+              {systemLoad}% загрузка
+            </div>
+          </div>
+        </div>
+      )}
+
+  </main>
     );
   }
 
@@ -1128,6 +1243,110 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-    </main>
+
+      <div style={{ marginTop: "40px", textAlign: "center" }}>
+        <button
+          onClick={() => setShowAnalytics((prev) => !prev)}
+          style={{
+            padding: "14px 28px",
+            borderRadius: "12px",
+            border: "none",
+            background: "linear-gradient(135deg, #00f5a0, #00d9f5)",
+            color: "#001f2f",
+            fontWeight: 700,
+            fontSize: "16px",
+            cursor: "pointer",
+            boxShadow: "0 10px 30px rgba(0,255,200,0.2)",
+          }}
+        >
+          {showAnalytics ? "Скрыть аналитику" : "Показать аналитику"}
+        </button>
+      </div>
+
+      {showAnalytics && (
+        <div
+          style={{
+            marginTop: "40px",
+            padding: "30px",
+            borderRadius: "20px",
+            background: "linear-gradient(145deg, #0f2027, #203a43, #2c5364)",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+          }}
+        >
+          <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
+            Аналитика и мониторинг
+          </h2>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "20px",
+            }}
+          >
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Всего пользователей</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.length}
+              </div>
+            </div>
+
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Всего генераций</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.reduce((sum, u) => sum + Number(u.tariff_generations_total ?? u.generations_total ?? 0), 0)}
+              </div>
+            </div>
+
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Использовано</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.reduce((sum, u) => sum + Number(u.tariff_generations_used ?? u.generations_used ?? 0), 0)}
+              </div>
+            </div>
+
+            <div style={smallStatStyle}>
+              <div style={{ opacity: 0.7 }}>Без тарифа</div>
+              <div style={{ fontSize: "28px", fontWeight: 800 }}>
+                {users.filter((u) => !u.tariff_name).length}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: "30px" }}>
+            <div style={{ marginBottom: "10px" }}>Нагрузка системы</div>
+
+            <div
+              style={{
+                width: "100%",
+                height: "20px",
+                borderRadius: "10px",
+                background: "#111",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: systemLoad + "%",
+                  height: "100%",
+                  background:
+                    systemLoad < 50
+                      ? "linear-gradient(90deg, #00ff99, #00cc66)"
+                      : systemLoad < 75
+                      ? "linear-gradient(90deg, #ffaa00, #ff8800)"
+                      : "linear-gradient(90deg, #ff3c3c, #cc0000)",
+                  transition: "0.5s",
+                }}
+              />
+            </div>
+
+            <div style={{ marginTop: "8px", opacity: 0.7 }}>
+              {systemLoad}% загрузка
+            </div>
+          </div>
+        </div>
+      )}
+
+  </main>
   );
 }
