@@ -83,5 +83,17 @@ async def full_generate_endpoint(
 
     except HTTPException:
         raise
+
     except Exception as e:
+        from app.models import UserError
+
+    with Session(engine) as session:
+        error = UserError(
+            user_id=0,
+            error_type="generation_error",
+            error_message=str(e),
+        )
+        session.add(error)
+        session.commit()
+
         raise HTTPException(status_code=500, detail=str(e))

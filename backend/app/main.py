@@ -13,13 +13,14 @@ from app.routes.ai_generate import router as ai_router
 from app.routes.listing_generate import router as listing_generate_router
 from app.routes.full_generate import router as full_generate_router
 from app.routes.ikpu import router as ikpu_router
-from app.routes import admin
+from app.routers import admin
 
 app = FastAPI(
     title="MarketCard AI",
     debug=True,
     root_path="/api",
 )
+app.include_router(admin.router)
 
 app.add_middleware(
     CORSMiddleware,

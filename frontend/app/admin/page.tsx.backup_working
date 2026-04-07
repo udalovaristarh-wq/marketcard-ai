@@ -1,149 +1,124 @@
-"use client";
+"use client"
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react"
 
 type User = {
-  id: number;
-  email: string;
-  full_name: string | null;
-  tariff_name: string | null;
-  tariff_active?: boolean;
-  generations_total: number;
-  generations_used: number;
-  generations_left: number;
-  is_admin?: boolean;
-  is_banned?: boolean;
-  ban_reason?: string | null;
-  created_at?: string | null;
-  last_login?: string | null;
-
-  tariff_generations_total?: number
-  tariff_generations_used?: number
-  tariff_generations_left?: number
-};
+  id: number
+  email: string
+  full_name: string | null
+  tariff_name: string | null
+  tariff_active?: boolean
+  generations_total: number
+  generations_used: number
+  generations_left: number
+  is_admin?: boolean
+  is_banned?: boolean
+  ban_reason?: string | null
+  created_at?: string | null
+  last_login?: string | null
+}
 
 type UserErrorItem = {
-  id: number;
-  user_id: number;
-  error_type: string;
-  error_message: string;
-  error_trace?: string | null;
-  solution?: string | null;
-  suggested_fix?: string | null;
-  translated_message?: string | null;
-  is_resolved: boolean;
-  created_at?: string | null;
-};
+  id: number
+  user_id: number
+  error_type: string
+  error_message: string
+  error_trace?: string | null
+  solution?: string | null
+  suggested_fix?: string | null
+  translated_message?: string | null
+  is_resolved: boolean
+  created_at?: string | null
+}
 
 export default function AdminPage() {
   const cardStyle = {
     background: "#1e293b",
     borderRadius: "16px",
     boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-  };
+  }
+
 
   const smallStatStyle = {
     background: "#0f172a",
     padding: "16px",
     borderRadius: "12px",
     boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-  };
+  }
 
-  const [checkingPassword, setCheckingPassword] = useState(false);
+
+  const [checkingPassword, setCheckingPassword] = useState(false)
 
   const verifyPassword = async () => {
     try {
-      setCheckingPassword(true);
-      setError("");
+      setCheckingPassword(true)
+      setError("")
       setIsVerified(true)
-      await loadUsers();
     } finally {
-      setCheckingPassword(false);
-    }
-  };
-
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [userErrors, setUserErrors] = useState<UserErrorItem[]>([]);
-  const [errorsOpen, setErrorsOpen] = useState(false);
-  const [errorsLoading, setErrorsLoading] = useState(false);
-  const [errorsMessage, setErrorsMessage] = useState("");
-  const [resolvingErrorId, setResolvingErrorId] = useState<number | null>(null);
-  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
-
-  const filteredUsers = users.filter((u) =>
-    u.email?.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  const formatDate = (value?: string | null) => {
-    if (!value) return "—";
-    try {
-      return new Date(value).toLocaleString();
-    } catch {
-      return value;
-    }
-  };
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const token = localStorage.getItem("access_token");
-
-      if (!token) {
-        setError("Нет access_token");
-        setUsers([]);
-        return;
-      }
-
-      const res = await fetch("https://marketcard.uz/api/admin/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.detail || "Ошибка загрузки пользователей");
-      }
-
-      if (Array.isArray(data)) {
-        setUsers(data);
-      } else {
-        setUsers([]);
-      }
-    } catch (err: any) {
-      console.error("loadUsers error:", err);
-      setError(err?.message || "Ошибка загрузки пользователей");
-      setUsers([]);
-    } finally {
-      setLoading(false);
+      setCheckingPassword(false)
     }
   }
 
-  useEffect(() => {
-    if (isVerified) {
-      loadUsers()
-    }
-  }, [isVerified])
-;
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [adminPassword, setAdminPassword] = useState("")
+  const [isVerified, setIsVerified] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [userErrors, setUserErrors] = useState<UserErrorItem[]>([])
+  const [errorsOpen, setErrorsOpen] = useState(false)
+  const [errorsLoading, setErrorsLoading] = useState(false)
+  const [errorsMessage, setErrorsMessage] = useState("")
+  const [resolvingErrorId, setResolvingErrorId] = useState<number | null>(null)
+    const [actionLoadingId, setActionLoadingId] = useState<number | null>(null)
+  const [search, setSearch] = useState("")
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+const filteredUsers = users.filter((u) =>
+  u.email?.toLowerCase().includes(search.toLowerCase())
+)
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "—"
+    try {
+      return new Date(value).toLocaleString()
+    } catch {
+      return value
+    }
+  }
+
+  const loadUsers = async () => {
+    const token = localStorage.getItem("access_token")
+
+    if (!token) {
+      setError("Нет токена. Сначала войди в аккаунт.")
+      setLoading(false)
+      return
+    }
+
+    const res = await fetch("https://marketcard.uz/api/admin/users", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await res.json().catch(() => null)
+
+    if (!res.ok) {
+      throw new Error(data?.detail || "Ошибка загрузки пользователей")
+    }
+
+    if (!Array.isArray(data)) {
+      throw new Error("Сервер вернул не список пользователей")
+    }
+
+    setUsers(data)
+  }
 
   const banUser = async (userId: number) => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token")
     if (!token) {
-      setError("Нет токена. Сначала войди в аккаунт.");
-      return;
+      setError("Нет токена. Сначала войди в аккаунт.")
+      return
     }
 
     const reasonOptions = [
@@ -154,32 +129,32 @@ export default function AdminPage() {
       "Нарушение правил сервиса",
       "Мошенничество",
       "Другое",
-    ];
+    ]
 
     const reasonText = window.prompt(
       "Причина бана:\n1 - Спам\n2 - Злоупотребление генерацией\n3 - Попытка взлома\n4 - Оскорбления / токсичность\n5 - Нарушение правил сервиса\n6 - Мошенничество\n7 - Другое",
-      "5",
-    );
+      "5"
+    )
 
-    if (reasonText === null) return;
+    if (reasonText === null) return
 
-    let reason = "Нарушение правил сервиса";
+    let reason = "Нарушение правил сервиса"
 
-    if (reasonText.trim() === "1") reason = reasonOptions[0];
-    else if (reasonText.trim() === "2") reason = reasonOptions[1];
-    else if (reasonText.trim() === "3") reason = reasonOptions[2];
-    else if (reasonText.trim() === "4") reason = reasonOptions[3];
-    else if (reasonText.trim() === "5") reason = reasonOptions[4];
-    else if (reasonText.trim() === "6") reason = reasonOptions[5];
+    if (reasonText.trim() === "1") reason = reasonOptions[0]
+    else if (reasonText.trim() === "2") reason = reasonOptions[1]
+    else if (reasonText.trim() === "3") reason = reasonOptions[2]
+    else if (reasonText.trim() === "4") reason = reasonOptions[3]
+    else if (reasonText.trim() === "5") reason = reasonOptions[4]
+    else if (reasonText.trim() === "6") reason = reasonOptions[5]
     else if (reasonText.trim() === "7") {
-      const customReason = window.prompt("Введи свою причину бана:", "Другое");
-      if (customReason === null) return;
-      reason = customReason.trim() || "Другое";
+      const customReason = window.prompt("Введи свою причину бана:", "Другое")
+      if (customReason === null) return
+      reason = customReason.trim() || "Другое"
     }
 
     try {
-      setActionLoadingId(userId);
-      setError("");
+      setActionLoadingId(userId)
+      setError("")
 
       const res = await fetch("https://marketcard.uz/api/admin/ban-user", {
         method: "POST",
@@ -191,143 +166,137 @@ export default function AdminPage() {
           user_id: userId,
           reason,
         }),
-      });
+      })
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json().catch(() => null)
 
       if (!res.ok) {
-        throw new Error(data?.detail || "Ошибка бана");
+        throw new Error(data?.detail || "Ошибка бана")
       }
 
-      await loadUsers();
+      await loadUsers()
     } catch (err: any) {
-      setError(err?.message || "Ошибка");
+      setError(err?.message || "Ошибка")
     } finally {
-      setActionLoadingId(null);
+      setActionLoadingId(null)
     }
-  };
+  }
 
   const unbanUser = async (userId: number) => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setError("Нет токена. Сначала войди в аккаунт.");
-      return;
+  const token = localStorage.getItem("access_token")
+  if (!token) {
+    setError("Нет токена. Сначала войди в аккаунт.")
+    return
+  }
+
+  try {
+    setActionLoadingId(userId)
+    setError("")
+
+    const res = await fetch("https://marketcard.uz/api/admin/unban-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        user_id: userId,
+      }),
+    })
+
+    const data = await res.json().catch(() => null)
+
+    if (!res.ok) {
+      throw new Error(data?.detail || "Ошибка разбана")
     }
 
-    try {
-      setActionLoadingId(userId);
-      setError("");
+    await loadUsers()
+  } catch (err: any) {
+    setError(err?.message || "Ошибка")
+  } finally {
+    setActionLoadingId(null)
+  }
+}
 
-      const res = await fetch("https://marketcard.uz/api/admin/unban-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          user_id: userId,
-        }),
-      });
+const openUserErrors = async (user: User) => {
+  const token = localStorage.getItem("access_token")
+  if (!token) {
+    setError("Нет токена. Сначала войди в аккаунт.")
+    return
+  }
 
-      const data = await res.json().catch(() => null);
+  try {
+    setSelectedUser(user)
+    setErrorsOpen(true)
+    setErrorsLoading(true)
+    setErrorsMessage("")
+    setUserErrors([])
 
-      if (!res.ok) {
-        throw new Error(data?.detail || "Ошибка разбана");
-      }
+    const res = await fetch(`https://marketcard.uz/api/admin/errors/${user.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-      await loadUsers();
-    } catch (err: any) {
-      setError(err?.message || "Ошибка");
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
+    const data = await res.json().catch(() => null)
 
-  const openUserErrors = async (user: User) => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setError("Нет токена. Сначала войди в аккаунт.");
-      return;
+    if (!res.ok) {
+      throw new Error(data?.detail || "Ошибка загрузки ошибок пользователя")
     }
 
-    try {
-      setSelectedUser(user);
-      setErrorsOpen(true);
-      setErrorsLoading(true);
-      setErrorsMessage("");
-      setUserErrors([]);
-
-      const res = await fetch(
-        `https://marketcard.uz/api/admin/errors/${user.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.detail || "Ошибка загрузки ошибок пользователя");
-      }
-
-      if (Array.isArray(data)) {
-        setUserErrors(data);
-      } else {
-        setUserErrors([]);
-      }
-    } catch (err: any) {
-      setErrorsMessage(err?.message || "Ошибка");
-    } finally {
-      setErrorsLoading(false);
+    if (Array.isArray(data)) {
+      setUserErrors(data)
+    } else {
+      setUserErrors([])
     }
-  };
+  } catch (err: any) {
+    setErrorsMessage(err?.message || "Ошибка")
+  } finally {
+    setErrorsLoading(false)
+  }
+}
 
-  const closeUserErrors = () => {
-    setErrorsOpen(false);
-    setSelectedUser(null);
-    setUserErrors([]);
-    setErrorsMessage("");
-  };
+const closeUserErrors = () => {
+  setErrorsOpen(false)
+  setSelectedUser(null)
+  setUserErrors([])
+  setErrorsMessage("")
+}
 
-  const resolveError = async (errorId: number) => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setError("Нет токена. Сначала войди в аккаунт.");
-      return;
+const resolveError = async (errorId: number) => {
+  const token = localStorage.getItem("access_token")
+  if (!token) {
+    setError("Нет токена. Сначала войди в аккаунт.")
+    return
+  }
+
+  try {
+    setResolvingErrorId(errorId)
+
+    const res = await fetch(`https://marketcard.uz/api/admin/errors/${errorId}/resolve`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await res.json().catch(() => null)
+
+    if (!res.ok) {
+      throw new Error(data?.detail || "Ошибка отметки решения")
     }
 
-    try {
-      setResolvingErrorId(errorId);
-
-      const res = await fetch(
-        `https://marketcard.uz/api/admin/errors/${errorId}/resolve`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(data?.detail || "Ошибка отметки решения");
-      }
-
-      setUserErrors((prev) =>
-        prev.map((item) =>
-          item.id === errorId ? { ...item, is_resolved: true } : item,
-        ),
-      );
-    } catch (err: any) {
-      setErrorsMessage(err?.message || "Ошибка");
-    } finally {
-      setResolvingErrorId(null);
-    }
-  };
+    setUserErrors((prev) =>
+      prev.map((item) =>
+        item.id === errorId ? { ...item, is_resolved: true } : item
+      )
+    )
+  } catch (err: any) {
+    setErrorsMessage(err?.message || "Ошибка")
+  } finally {
+    setResolvingErrorId(null)
+  }
+}
 
   if (!isVerified) {
     return (
@@ -346,8 +315,7 @@ export default function AdminPage() {
         }}
       >
         <div
-          style={{
-            position: "absolute",
+          style={{position: "absolute",
             inset: 0,
             background:
               "linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px)",
@@ -391,14 +359,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <div
-                style={{
-                  fontSize: "14px",
-                  opacity: 0.72,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                }}
-              >
+              <div style={{ fontSize: "14px", opacity: 0.72, letterSpacing: "0.12em", textTransform: "uppercase" }}>
                 MarketCard AI
               </div>
               <div style={{ fontSize: "32px", fontWeight: 900 }}>
@@ -413,14 +374,7 @@ export default function AdminPage() {
               padding: "30px",
             }}
           >
-            <div
-              style={{
-                fontSize: "38px",
-                fontWeight: 900,
-                lineHeight: 1.1,
-                marginBottom: "10px",
-              }}
-            >
+            <div style={{ fontSize: "38px", fontWeight: 900, lineHeight: 1.1, marginBottom: "10px" }}>
               Защищённый вход
             </div>
 
@@ -432,8 +386,7 @@ export default function AdminPage() {
                 marginBottom: "24px",
               }}
             >
-              Доступ к управлению пользователями, блокировками и контролю
-              платформы.
+              Доступ к управлению пользователями, блокировками и контролю платформы.
             </div>
 
             <input
@@ -481,8 +434,7 @@ export default function AdminPage() {
               <div
                 style={{
                   marginTop: "18px",
-                  padding: "14px 16px",
-                  borderRadius: "16px",
+                  padding: "14px 16px",borderRadius: "16px",
                   background: "rgba(239,68,68,0.14)",
                   border: "1px solid rgba(239,68,68,0.35)",
                   color: "#fecaca",
@@ -495,7 +447,7 @@ export default function AdminPage() {
           </div>
         </div>
       </main>
-    );
+    )
   }
 
   return (
@@ -520,14 +472,7 @@ export default function AdminPage() {
           }}
         >
           <div>
-            <div
-              style={{
-                fontSize: "14px",
-                opacity: 0.72,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-              }}
-            >
+            <div style={{ fontSize: "14px", opacity: 0.72, letterSpacing: "0.12em", textTransform: "uppercase" }}>
               MarketCard AI
             </div>
             <h1
@@ -549,11 +494,7 @@ export default function AdminPage() {
               minWidth: "280px",
             }}
           >
-            <div
-              style={{ fontSize: "13px", opacity: 0.72, marginBottom: "8px" }}
-            >
-              Быстрый поиск
-            </div>
+            <div style={{ fontSize: "13px", opacity: 0.72, marginBottom: "8px" }}>Быстрый поиск</div>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -583,74 +524,30 @@ export default function AdminPage() {
           }}
         >
           <div style={smallStatStyle}>
-            <div
-              style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}
-            >
-              Всего пользователей
-            </div>
-            <div style={{ fontSize: "36px", fontWeight: 900 }}>
-              {users.length}
-            </div>
+            <div style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}>Всего пользователей</div>
+            <div style={{ fontSize: "36px", fontWeight: 900 }}>{users.length}</div>
           </div>
 
           <div style={smallStatStyle}>
-            <div
-              style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}
-            >
-              Активных тарифов
-            </div>
-            <div
-              style={{ fontSize: "36px", fontWeight: 900, color: "#86efac" }}
-            >
-              {users.filter((u) => u.tariff_active).length}
-            </div>
+            <div style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}>Активных тарифов</div>
+            <div style={{ fontSize: "36px", fontWeight: 900, color: "#86efac" }}>{users.filter((u) => u.tariff_active).length}</div>
           </div>
 
           <div style={smallStatStyle}>
-            <div
-              style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}
-            >
-              Всего генераций
-            </div>
-            <div
-              style={{ fontSize: "36px", fontWeight: 900, color: "#67e8f9" }}
-            >
-              {users.reduce((sum, user) => sum + Number(user.tariff_generations_total ?? user.generations_total ?? 0), 0)}
-            </div>
+            <div style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}>Всего генераций</div>
+            <div style={{ fontSize: "36px", fontWeight: 900, color: "#67e8f9" }}>{0}</div>
           </div>
 
           <div style={smallStatStyle}>
-            <div
-              style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}
-            >
-              Использовано генераций
-            </div>
-            <div
-              style={{ fontSize: "36px", fontWeight: 900, color: "#facc15" }}
-            >
-              {users.reduce(
-                (sum, u) =>
-                  sum +
-                  ((u.tariff_generations_used ?? u.generations_used ?? 0) || 0),
-                0,
-              )}
-            </div>
+            <div style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}>Использовано генераций</div>
+            <div style={{ fontSize: "36px", fontWeight: 900, color: "#facc15" }}>{users.reduce((sum, u) => sum + (u.generations_used || 0), 0)}</div>
           </div>
 
           <div style={smallStatStyle}>
-            <div
-              style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}
-            >
-              Забанено
-            </div>
-            <div
-              style={{ fontSize: "36px", fontWeight: 900, color: "#fca5a5" }}
-            >
-              {users.filter((u) => u.is_banned).length}
-            </div>
+            <div style={{ fontSize: "13px", opacity: 0.72, marginBottom: "10px" }}>Забанено</div>
+            <div style={{ fontSize: "36px", fontWeight: 900, color: "#fca5a5" }}>{users.filter((u) => u.is_banned).length}</div>
           </div>
-        </div>
-        {loading && (
+        </div>{loading && (
           <div
             style={{
               ...cardStyle,
@@ -698,7 +595,7 @@ export default function AdminPage() {
             }}
           >
             {filteredUsers.map((user) => {
-              const isLoadingAction = actionLoadingId === user.id;
+              const isLoadingAction = actionLoadingId === user.id
 
               return (
                 <div
@@ -723,8 +620,8 @@ export default function AdminPage() {
                       background: user.is_banned
                         ? "linear-gradient(90deg, #ef4444, #f97316)"
                         : user.tariff_active
-                          ? "linear-gradient(90deg, #22c55e, #06b6d4)"
-                          : "linear-gradient(90deg, #64748b, #334155)",
+                        ? "linear-gradient(90deg, #22c55e, #06b6d4)"
+                        : "linear-gradient(90deg, #64748b, #334155)",
                     }}
                   />
 
@@ -750,13 +647,7 @@ export default function AdminPage() {
                         Пользователь #{user.id}
                       </div>
 
-                      <div
-                        style={{
-                          fontSize: "24px",
-                          fontWeight: 900,
-                          marginBottom: "8px",
-                        }}
-                      >
+                      <div style={{ fontSize: "24px", fontWeight: 900, marginBottom: "8px" }}>
                         {user.full_name || "Без имени"}
                       </div>
 
@@ -776,16 +667,14 @@ export default function AdminPage() {
                         display: "flex",
                         flexDirection: "column",
                         gap: "10px",
-                        alignItems: "flex-end",
-                      }}
+                        alignItems: "flex-end",}}
                     >
                       {user.is_banned ? (
                         <button
                           onClick={() => unbanUser(user.id)}
                           disabled={isLoadingAction}
                           style={{
-                            background:
-                              "linear-gradient(135deg, #22c55e, #16a34a)",
+                            background: "linear-gradient(135deg, #22c55e, #16a34a)",
                             color: "white",
                             border: "none",
                             padding: "10px 14px",
@@ -794,6 +683,7 @@ export default function AdminPage() {
                             fontWeight: 800,
                             minWidth: "120px",
                           }}
+
                         >
                           {isLoadingAction ? "..." : "Разбанить"}
                         </button>
@@ -809,27 +699,19 @@ export default function AdminPage() {
                             border: "none",
                             padding: "10px 14px",
                             borderRadius: "12px",
-                            cursor:
-                              user.is_admin || isLoadingAction
-                                ? "not-allowed"
-                                : "pointer",
+                            cursor: user.is_admin || isLoadingAction ? "not-allowed" : "pointer",
                             fontWeight: 800,
                             minWidth: "120px",
                           }}
                         >
-                          {isLoadingAction
-                            ? "..."
-                            : user.is_admin
-                              ? "Админ"
-                              : "Забанить"}
+                          {isLoadingAction ? "..." : user.is_admin ? "Админ" : "Забанить"}
                         </button>
                       )}
 
                       <button
                         onClick={() => openUserErrors(user)}
                         style={{
-                          background:
-                            "linear-gradient(135deg, #60a5fa, #2563eb)",
+                          background: "linear-gradient(135deg, #60a5fa, #2563eb)",
                           color: "white",
                           border: "none",
                           padding: "10px 14px",
@@ -837,10 +719,10 @@ export default function AdminPage() {
                           cursor: "pointer",
                           fontWeight: 700,
                           boxShadow: "0 10px 24px rgba(37,99,235,0.35)",
-                        }}
-                      >
-                        Ошибки
-                      </button>
+                      }}
+                    >
+                      Ошибки
+                    </button>
 
                       <div
                         style={{
@@ -857,9 +739,7 @@ export default function AdminPage() {
                             : "1px solid rgba(148,163,184,0.20)",
                         }}
                       >
-                        {user.tariff_active
-                          ? "Активный клиент"
-                          : "Без активного тарифа"}
+                        {user.tariff_active ? "Активный клиент" : "Без активного тарифа"}
                       </div>
                     </div>
                   </div>
@@ -878,15 +758,7 @@ export default function AdminPage() {
                         background: "rgba(255,255,255,0.05)",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          opacity: 0.65,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        Тариф
-                      </div>
+                      <div style={{ fontSize: "12px", opacity: 0.65, marginBottom: "6px" }}>Тариф</div>
                       <div style={{ fontSize: "17px", fontWeight: 800 }}>
                         {user.tariff_name || "Нет"}
                       </div>
@@ -899,40 +771,19 @@ export default function AdminPage() {
                         background: "rgba(255,255,255,0.05)",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          opacity: 0.65,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        Статус
-                      </div>
+                      <div style={{ fontSize: "12px", opacity: 0.65, marginBottom: "6px" }}>Статус</div>
                       <div style={{ fontSize: "17px", fontWeight: 800 }}>
                         {user.is_banned ? "Забанен" : "Нормальный"}
                       </div>
-                    </div>
-                    <div
+                    </div><div
                       style={{
                         padding: "14px",
                         borderRadius: "16px",
                         background: "rgba(255,255,255,0.05)",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          opacity: 0.65,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        Генераций всего
-                      </div>
-                      <div style={{ fontSize: "17px", fontWeight: 800 }}>
-                        {user.tariff_generations_total ??
-                          user.generations_total ??
-                          0}
-                      </div>
+                      <div style={{ fontSize: "12px", opacity: 0.65, marginBottom: "6px" }}>Генераций всего</div>
+                      <div style={{ fontSize: "17px", fontWeight: 800 }}>{user.generations_total}</div>
                     </div>
 
                     <div
@@ -942,20 +793,8 @@ export default function AdminPage() {
                         background: "rgba(255,255,255,0.05)",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          opacity: 0.65,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        Использовано
-                      </div>
-                      <div style={{ fontSize: "17px", fontWeight: 800 }}>
-                        {user.tariff_generations_used ??
-                          user.generations_used ??
-                          0}
-                      </div>
+                      <div style={{ fontSize: "12px", opacity: 0.65, marginBottom: "6px" }}>Использовано</div>
+                      <div style={{ fontSize: "17px", fontWeight: 800 }}>{user.generations_used}</div>
                     </div>
 
                     <div
@@ -965,20 +804,8 @@ export default function AdminPage() {
                         background: "rgba(255,255,255,0.05)",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          opacity: 0.65,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        Осталось
-                      </div>
-                      <div style={{ fontSize: "17px", fontWeight: 800 }}>
-                        {user.tariff_generations_left ??
-                          user.generations_left ??
-                          0}
-                      </div>
+                      <div style={{ fontSize: "12px", opacity: 0.65, marginBottom: "6px" }}>Осталось</div>
+                      <div style={{ fontSize: "17px", fontWeight: 800 }}>{user.generations_left}</div>
                     </div>
 
                     <div
@@ -988,15 +815,7 @@ export default function AdminPage() {
                         background: "rgba(255,255,255,0.05)",
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          opacity: 0.65,
-                          marginBottom: "6px",
-                        }}
-                      >
-                        Роль
-                      </div>
+                      <div style={{ fontSize: "12px", opacity: 0.65, marginBottom: "6px" }}>Роль</div>
                       <div style={{ fontSize: "17px", fontWeight: 800 }}>
                         {user.is_admin ? "Администратор" : "Пользователь"}
                       </div>
@@ -1019,115 +838,115 @@ export default function AdminPage() {
                     <div>Последний вход: {formatDate(user.last_login)}</div>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         )}
       </div>
       {errorsOpen && (
+  <div
+    onClick={closeUserErrors}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.7)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+    }}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        width: "90%",
+        maxWidth: "900px",
+        maxHeight: "80vh",
+        overflowY: "auto",
+        background: "#0f172a",
+        borderRadius: "20px",
+        padding: "20px",
+        color: "white",
+      }}
+    >
+      <h2 style={{ fontSize: "24px", fontWeight: 900, marginBottom: "16px" }}>
+        Ошибки пользователя
+      </h2>
+
+      {errorsLoading && <div>Загрузка...</div>}
+
+      {errorsMessage && (
+        <div style={{ color: "red", marginBottom: "10px" }}>
+          {errorsMessage}
+        </div>
+      )}
+
+      {!errorsLoading && userErrors.length === 0 && (
+        <div>Ошибок нет</div>
+      )}
+
+      {userErrors.map((err) => (
         <div
-          onClick={closeUserErrors}
+          key={err.id}
           style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "12px",
+            padding: "12px",
+            marginBottom: "12px",
           }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: "90%",
-              maxWidth: "900px",
-              maxHeight: "80vh",
-              overflowY: "auto",
-              background: "#0f172a",
-              borderRadius: "20px",
-              padding: "20px",
-              color: "white",
-            }}
-          >
-            <h2
-              style={{
-                fontSize: "24px",
-                fontWeight: 900,
-                marginBottom: "16px",
-              }}
-            >
-              Ошибки пользователя
-            </h2>
+          <div style={{ fontWeight: 800 }}>
+            {err.error_type}
+          </div>
 
-            {errorsLoading && <div>Загрузка...</div>}
+          <div style={{ marginTop: "6px" }}>
+            {err.error_message}
+          </div>
 
-            {errorsMessage && (
-              <div style={{ color: "red", marginBottom: "10px" }}>
-                {errorsMessage}
-              </div>
-            )}
+          <div style={{ marginTop: "6px", color: "#93c5fd" }}>
+            {err.translated_message}
+          </div>
 
-            {!errorsLoading && userErrors.length === 0 && <div>Ошибок нет</div>}
+          <div style={{ marginTop: "6px", color: "#86efac" }}>
+            {err.suggested_fix}
+          </div>
 
-            {userErrors.map((err) => (
-              <div
-                key={err.id}
-                style={{
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "12px",
-                  padding: "12px",
-                  marginBottom: "12px",
-                }}
-              >
-                <div style={{ fontWeight: 800 }}>{err.error_type}</div>
-
-                <div style={{ marginTop: "6px" }}>{err.error_message}</div>
-
-                <div style={{ marginTop: "6px", color: "#93c5fd" }}>
-                  {err.translated_message}
-                </div>
-
-                <div style={{ marginTop: "6px", color: "#86efac" }}>
-                  {err.suggested_fix}
-                </div>
-
-                {!err.is_resolved && (
-                  <button
-                    onClick={() => resolveError(err.id)}
-                    style={{
-                      marginTop: "10px",
-                      background: "#22c55e",
-                      color: "white",
-                      border: "none",
-                      padding: "6px 10px",
-                      borderRadius: "8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Решено
-                  </button>
-                )}
-              </div>
-            ))}
-
+          {!err.is_resolved && (
             <button
-              onClick={closeUserErrors}
+              onClick={() => resolveError(err.id)}
               style={{
                 marginTop: "10px",
-                background: "#ef4444",
+                background: "#22c55e",
                 color: "white",
                 border: "none",
-                padding: "8px 12px",
+                padding: "6px 10px",
                 borderRadius: "8px",
                 cursor: "pointer",
               }}
             >
-              Закрыть
+              Решено
             </button>
-          </div>
+          )}
         </div>
-      )}
+      ))}
+
+      <button
+        onClick={closeUserErrors}
+        style={{
+          marginTop: "10px",
+          background: "#ef4444",
+          color: "white",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "8px",
+          cursor: "pointer",
+        }}
+      >
+        Закрыть
+      </button>
+    </div>
+  </div>
+)}
     </main>
-  );
+  )
 }
