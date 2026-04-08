@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.models import User, UserError
+import psutil
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

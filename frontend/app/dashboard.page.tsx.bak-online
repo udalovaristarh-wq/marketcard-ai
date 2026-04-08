@@ -940,22 +940,6 @@ useEffect(() => {
   window.addEventListener("resize", checkMobile)
   return () => window.removeEventListener("resize", checkMobile)
 }, [])
-
-  useEffect(() => {
-    if (!userEmail) return
-
-    const ping = () => {
-      fetch(`https://marketcard.uz/api/system/ping?email=${encodeURIComponent(userEmail)}`, {
-        method: "POST",
-      }).catch(() => {})
-    }
-
-    ping()
-    const interval = setInterval(ping, 30000)
-
-    return () => clearInterval(interval)
-  }, [userEmail])
-
   const searchIkpu = async () => {
   if (!ikpuQuery) return
 
