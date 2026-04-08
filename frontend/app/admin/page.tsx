@@ -77,6 +77,9 @@ export default function AdminPage() {
   const [search, setSearch] = useState("")
 const [showAnalytics, setShowAnalytics] = useState(false)
 const [systemLoad, setSystemLoad] = useState(35);
+const [onlineCount, setOnlineCount] = useState(0);
+const [onlineWindowMinutes, setOnlineWindowMinutes] = useState(5);
+
 
   const filteredUsers = users.filter((u) =>
     u.email?.toLowerCase().includes(search.toLowerCase()),
@@ -131,20 +134,22 @@ const [systemLoad, setSystemLoad] = useState(35);
   }
 
   useEffect(() => {
-    if (isVerified) {
-      loadUsers()
-    }
-  }, [isVerified])
+  if (!isVerified) return;
 
-  useEffect(() => {
-    if (!isVerified) return;
+  fetchAdminStats();
+  fetchSystemLoad();
+  fetchOnlineCount();
 
-    fetchAdminStats();
-    const interval = setInterval(fetchAdminStats, 10000);
-    setInterval(fetchSystemLoad, 5000);
+  const adminInterval = setInterval(fetchAdminStats, 10000);
+  const systemInterval = setInterval(fetchSystemLoad, 5000);
+  const onlineInterval = setInterval(fetchOnlineCount, 5000);
 
-    return () => clearInterval(interval);
-  }, [isVerified]);
+  return () => {
+    clearInterval(adminInterval);
+    clearInterval(systemInterval);
+    clearInterval(onlineInterval);
+  };
+}, [isVerified]);
 useEffect(() => {
     loadUsers();
   }, []);
@@ -162,6 +167,21 @@ useEffect(() => {
       console.error("fetchSystemLoad error:", err);
     }
   };
+
+
+
+const fetchOnlineCount = async () => {
+  try {
+    const res = await fetch("https://marketcard.uz/api/system/online-count");
+    const data = await res.json().catch(() => null);
+    if (!res.ok) return;
+
+    setOnlineCount(Number(data?.online ?? 0));
+    setOnlineWindowMinutes(Number(data?.window_minutes ?? 5));
+  } catch (err) {
+    console.error("fetchOnlineCount error:", err);
+  }
+};
 
 const fetchAdminStats = async () => {
     try {
@@ -571,6 +591,39 @@ const banUser = async (userId: number) => {
         >
           <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
             Аналитика и мониторинг
+
+<div style={{
+  marginBottom: "20px",
+  padding: "20px",
+  borderRadius: "16px",
+  background: "linear-gradient(135deg,#064e3b,#0f172a)",
+  border: "1px solid rgba(34,197,94,0.3)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center"
+}}>
+  <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+    <div style={{
+      width:"12px",
+      height:"12px",
+      borderRadius:"50%",
+      background:"#22c55e",
+      boxShadow:"0 0 10px #22c55e"
+    }}/>
+    <div>
+      <div style={{fontSize:"12px",opacity:0.7}}>Сейчас онлайн</div>
+      <div style={{fontSize:"26px",fontWeight:900}}>
+        {onlineCount}
+      </div>
+    </div>
+  </div>
+
+  <div style={{fontSize:"12px",opacity:0.7}}>
+    {onlineWindowMinutes} мин
+  </div>
+</div>
+
+
           </h2>
 
           <div
@@ -1310,6 +1363,35 @@ const banUser = async (userId: number) => {
           <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
             Аналитика и мониторинг
           </h2>
+
+<div style={{
+  marginBottom: "20px",
+  padding: "20px",
+  borderRadius: "16px",
+  background: "linear-gradient(135deg,#064e3b,#0f172a)",
+  border: "1px solid rgba(34,197,94,0.3)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center"
+}}>
+  <div style={{display:"flex",alignItems:"center",gap:"10px"}}>
+    <div style={{
+      width:"12px",
+      height:"12px",
+      borderRadius:"50%",
+      background:"#22c55e",
+      boxShadow:"0 0 10px #22c55e"
+    }}/>
+    <div>
+      <div style={{fontSize:"12px",opacity:0.7}}>Сейчас онлайн</div>
+      <div style={{fontSize:"26px",fontWeight:900}}>{onlineCount}</div>
+    </div>
+  </div>
+  <div style={{fontSize:"12px",opacity:0.7}}>
+    {onlineWindowMinutes} мин
+  </div>
+</div>
+
 
           <div
             style={{
