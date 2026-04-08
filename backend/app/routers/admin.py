@@ -220,3 +220,36 @@ def unban_user(
     session.refresh(user)
 
     return {"success": True, "user_id": user.id, "is_banned": user.is_banned}
+
+
+@router.get("/stats")
+def get_admin_stats(session: Session = Depends(get_session)):
+    users = session.exec(select(User)).all()
+
+    total_users = len(users)
+    total_generations = sum(u.tariff_generations_total or 0 for u in users)
+    used_generations = sum(u.tariff_generations_used or 0 for u in users)
+    without_tariff = len([u for u in users if not u.tariff_name])
+
+    cpu = psutil.cpu_percent(interval=0.5)
+    memory = psutil.virtual_memory().percent
+    disk = psutil.disk_usage('/').percent
+
+    load_percent = int((cpu + memory + disk) / 3)
+
+    return {
+        "users": {
+            "total": total_users,
+            "without_tariff": without_tariff
+        },
+        "generations": {
+            "total": total_generations,
+            "used": used_generations
+        },
+        "system": {
+            "cpu": cpu,
+            "memory": memory,
+            "disk": disk,
+            "load_percent": load_percent
+        }
+    }

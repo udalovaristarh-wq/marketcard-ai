@@ -55,7 +55,8 @@ export default function AdminPage() {
     try {
       setCheckingPassword(true);
       setError("");
-      setIsVerified(true);
+      setIsVerified(true)
+      await loadUsers();
     } finally {
       setCheckingPassword(false);
     }
@@ -141,29 +142,22 @@ const [systemLoad, setSystemLoad] = useState(35);
 
     fetchAdminStats();
     const interval = setInterval(fetchAdminStats, 10000);
-    setInterval(fetchSystemLoad, 5000);
 
     return () => clearInterval(interval);
   }, [isVerified]);
-useEffect(() => {
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+  }, [])
+
+;
+
+  useEffect(() => {
     loadUsers();
   }, []);
 
   
-  
-  const fetchSystemLoad = async () => {
-    try {
-      const res = await fetch("https://marketcard.uz/api/system/stats");
-      const data = await res.json().catch(() => null);
-      if (!res.ok) return;
-
-      setSystemLoad(Number(data?.load_percent ?? 0));
-    } catch (err) {
-      console.error("fetchSystemLoad error:", err);
-    }
-  };
-
-const fetchAdminStats = async () => {
+  const fetchAdminStats = async () => {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) return;

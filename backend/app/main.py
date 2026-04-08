@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI
+from app.routers.system import router as system_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -54,3 +55,6 @@ app.include_router(admin.router)
 @app.on_event("startup")
 def on_startup() -> None:
     create_db_and_tables()
+
+
+app.include_router(system_router)
