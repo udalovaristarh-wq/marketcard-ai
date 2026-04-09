@@ -217,4 +217,9 @@ def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
         "scene_tags": series_plan.get("scene_tags", []),
         "visual_profile": visual_profile,
         "listing": listing,
+    "cost": {
+        "text_cost": text_cost,
+        "image_cost": image_cost,
+        "total_cost": total_cost,
+    },
     }

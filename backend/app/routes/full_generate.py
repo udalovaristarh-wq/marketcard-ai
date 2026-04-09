@@ -70,6 +70,7 @@ async def full_generate_endpoint(
         }
 
         result = full_generate(payload)
+        cost = result.get("cost", {})
 
         if result.get("success"):
             with Session(engine) as session:
@@ -89,9 +90,9 @@ async def full_generate_endpoint(
                         variants_count=variant_count,
                         text_model=None,
                         image_model=None,
-                        text_cost_usd=0.0,
-                        image_cost_usd=0.0,
-                        total_cost_usd=0.0,
+                        text_cost_usd=cost.get("text_cost", 0.0),
+                        image_cost_usd=cost.get("image_cost", 0.0),
+                        total_cost_usd=cost.get("total_cost", 0.0),
                         source="full_generate_pending_cost",
                     )
                     session.add(expense)
