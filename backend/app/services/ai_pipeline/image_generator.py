@@ -95,12 +95,18 @@ def generate_card_image(
         raise RuntimeError(f"PNG was not saved: {output_file}")
 
     return {
-        "success": True,
-        "output_path": str(output_file),
-        "filename": output_file.name,
-        "width": img.width,
-        "height": img.height,
-    }
+    "success": True,
+    "output_path": str(output_file),
+    "filename": output_file.name,
+    "width": img.width,
+    "height": img.height,
+    "_openai_meta": {
+        "provider": "openai",
+        "model": "gpt-image-1",
+        "response_id": payload.get("id"),
+        "usage": payload.get("usage", {}),
+    },
+}
 
 
 def generate_series_images(

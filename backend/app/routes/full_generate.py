@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 
 from app.db import engine
 from app.models import User
+from app.models.generationexpense import GenerationExpense
 from app.services.ai_pipeline.full_generate_service import full_generate
 
 router = APIRouter(tags=["AI Full Generate"])
@@ -78,6 +79,23 @@ async def full_generate_endpoint(
                     session.add(user)
                     session.commit()
                     session.refresh(user)
+
+                    expense = GenerationExpense(
+                        user_id=user.id,
+                        email=user.email,
+                        tariff_name=user.tariff_name,
+                        marketplace=marketplace,
+                        language_mode=language_mode,
+                        variants_count=variant_count,
+                        text_model=None,
+                        image_model=None,
+                        text_cost_usd=0.0,
+                        image_cost_usd=0.0,
+                        total_cost_usd=0.0,
+                        source="full_generate_pending_cost",
+                    )
+                    session.add(expense)
+                    session.commit()
 
         return result
 

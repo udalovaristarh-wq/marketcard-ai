@@ -136,6 +136,18 @@ def activate_tariff(
     session.commit()
     session.refresh(user)
 
+    from app.models.finance_income import TariffIncome
+    income = TariffIncome(
+        user_id=user.id,
+        email=user.email,
+        tariff_name=user.tariff_name,
+        amount_uzs={"Start":249000,"Business":799000,"Premium":1900000}.get(user.tariff_name, 0),
+        generations_total=user.tariff_generations_total,
+        source="tariff_activation",
+    )
+    session.add(income)
+    session.commit()
+
     return {
         "message": "Tariff activated",
         "tariff_name": user.tariff_name,
@@ -145,7 +157,6 @@ def activate_tariff(
             user.tariff_generations_total - user.tariff_generations_used, 0
         ),
     }
-
 
 @router.post("/forgot-password")
 def forgot_password(
@@ -189,6 +200,29 @@ def reset_password(
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    from app.models.finance_income import TariffIncome
+
+    income = TariffIncome(
+
+        user_id=user.id,
+
+        email=user.email,
+
+        tariff_name=user.tariff_name,
+
+        amount_uzs={"Start":249000,"Business":799000,"Premium":1900000}.get(user.tariff_name,0),
+
+        generations_total=user.tariff_generations_total,
+
+        source="tariff_activation",
+
+    )
+
+    session.add(income)
+
+    session.commit()
+
 
     return {"message": "Пароль успешно обновлён"}
 

@@ -132,6 +132,9 @@ def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
         output_dir=str(output_dir),
         size=size,
     )
+
+    print("IMAGE OPENAI META:", [item.get("_openai_meta") for item in image_results if item.get("_openai_meta")])
+
     listing = generate_listing(
         product_title=product_title,
         brand=brand,
@@ -139,6 +142,44 @@ def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
         marketplace=marketplace,
         language=language_mode,
     )
+
+    print("SEO OPENAI META:", listing.get("_openai_meta"))
+
+    # ===== COST CALCULATION =====
+    text_meta = listing.get("_openai_meta") or {}
+    text_usage = text_meta.get("usage", {})
+
+    text_input = text_usage.get("input_tokens", 0)
+    text_output = text_usage.get("output_tokens", 0)
+
+    text_cost = (text_input / 1_000_000 * 2.5) + (text_output / 1_000_000 * 15)
+
+    image_cost = 0.0
+
+    for item in image_results:
+        meta = item.get("_openai_meta") or {}
+        usage = meta.get("usage", {})
+        details = usage.get("input_tokens_details", {})
+
+        text_tokens = details.get("text_tokens", 0)
+        image_tokens = details.get("image_tokens", 0)
+        output_tokens = usage.get("output_tokens", 0)
+
+        cost = (
+            (text_tokens / 1_000_000 * 5)
+            + (image_tokens / 1_000_000 * 10)
+            + (output_tokens / 1_000_000 * 40)
+        )
+
+        image_cost += cost
+
+    total_cost = text_cost + image_cost
+
+    print("COST DEBUG:", {
+        "text_cost": text_cost,
+        "image_cost": image_cost,
+        "total_cost": total_cost,
+    })
 
     rendered_slides = [
         item for item in image_results

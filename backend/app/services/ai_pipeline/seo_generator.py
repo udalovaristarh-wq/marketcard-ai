@@ -282,7 +282,16 @@ def _call_openai_for_listing(
     if not text:
         raise RuntimeError("OpenAI returned empty SEO text")
 
-    return _parse_json_text(text)
+    parsed = _parse_json_text(text)
+    parsed["_openai_meta"] = {
+        "provider": "openai",
+        "model": data.get("model"),
+        "response_id": payload.get("id"),
+        "usage": payload.get("usage", {}),
+    }
+
+    return parsed
+
 
 
 def generate_listing(
@@ -314,6 +323,7 @@ def generate_listing(
         "full_description": parsed["full_description"],
         "characteristics": characteristics,
         "keywords": parsed["keywords"],
+        "_openai_meta": parsed.get("_openai_meta"),
         "variants": [],
         "style": "ai_generated",
         "limits": {
