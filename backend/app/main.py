@@ -13,6 +13,8 @@ from app.routers.products import router as products_router
 from app.routes.ai_generate import router as ai_router
 from app.routes.listing_generate import router as listing_generate_router
 from app.routes.full_generate import router as full_generate_router
+from app.routes.queue_generate import router as queue_generate_router
+from app.routes.queue_generate import router as queue_generate_router
 from app.routes.ikpu import router as ikpu_router
 from app.routers import admin
 from app.routers.admin_finance import router as admin_finance_router
@@ -52,6 +54,9 @@ app.include_router(products_router, prefix="/products", tags=["products"])
 app.include_router(ai_router, prefix="/ai", tags=["ai"])
 app.include_router(listing_generate_router, prefix="/listing", tags=["listing"])
 app.include_router(full_generate_router, prefix="", tags=["full_generate"])
+app.include_router(queue_generate_router)
+app.include_router(queue_generate_router)
+from app.routes.queue_generate import router as queue_generate_router
 app.include_router(ikpu_router)
 app.include_router(admin.router)
 app.include_router(admin_finance_router)
