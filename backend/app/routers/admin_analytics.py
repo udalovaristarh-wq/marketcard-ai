@@ -1,4 +1,5 @@
 from collections import defaultdict
+import requests
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 
@@ -113,3 +114,86 @@ def get_top_users(session: Session = Depends(get_session)):
         "count": len(rows),
         "items": rows[:20],
     }
+
+@router.get("/growth-timeseries")
+def get_growth_timeseries(session: Session = Depends(get_session)):
+    users = session.exec(select(User)).all()
+    incomes = session.exec(select(TariffIncome)).all()
+    expenses = session.exec(select(GenerationExpense)).all()
+
+    registrations = defaultdict(int)
+    activations = defaultdict(int)
+    income_by_day = defaultdict(int)
+    expense_by_day = defaultdict(float)
+
+    def safe_date(value):
+        if not value:
+            return ""
+        try:
+            return value.strftime("%Y-%m-%d")
+        except Exception:
+            return str(value)[:10]
+
+    for user in users:
+        day = safe_date(getattr(user, "created_at", None))
+        if day:
+            registrations[day] += 1
+
+    for income in incomes:
+        day = safe_date(getattr(income, "created_at", None))
+        if day:
+            activations[day] += 1
+            income_by_day[day] += int(income.amount_uzs or 0)
+
+    for expense in expenses:
+        day = safe_date(getattr(expense, "created_at", None))
+        if day:
+            expense_by_day[day] += float(expense.total_cost_usd or 0)
+
+    return {
+        "registrations": [
+            {"date": day, "count": registrations[day]}
+            for day in sorted(registrations.keys())
+        ],
+        "activations": [
+            {"date": day, "count": activations[day]}
+            for day in sorted(activations.keys())
+        ],
+        "income": [
+            {"date": day, "amount": income_by_day[day]}
+            for day in sorted(income_by_day.keys())
+        ],
+        "expense": [
+            {"date": day, "amount": round(expense_by_day[day], 6)}
+            for day in sorted(expense_by_day.keys())
+        ],
+    }
+
+@router.get("/usd-rate")
+def get_usd_rate():
+    try:
+        r = requests.get("https://cbu.uz/ru/arkhiv-kursov-valyut/json/", timeout=10)
+        r.raise_for_status()
+        rows = r.json()
+
+        usd_rows = [x for x in rows if str(x.get("Ccy", "")).upper() == "USD"]
+        if not usd_rows:
+            return {"rate": None, "date": None, "source": "CBU"}
+
+        def sort_key(item):
+            return str(item.get("Date", ""))
+
+        latest = sorted(usd_rows, key=sort_key, reverse=True)[0]
+        rate_raw = str(latest.get("Rate", "")).replace(",", ".").strip()
+
+        return {
+            "rate": float(rate_raw) if rate_raw else None,
+            "date": latest.get("Date"),
+            "source": "CBU"
+        }
+    except Exception:
+        return {
+            "rate": None,
+            "date": None,
+            "source": "CBU"
+        }

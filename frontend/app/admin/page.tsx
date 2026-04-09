@@ -3,6 +3,8 @@
 import TariffStatsBlock from "./TariffStatsBlock";
 import ArpuStatsBlock from "./ArpuStatsBlock";
 import TopUsersBlock from "./TopUsersBlock";
+import UsdRateBlock from "./UsdRateBlock";
+import ChartsBlock from "./ChartsBlock";
 
 import FinanceBlock from "./FinanceBlock";
 
@@ -1472,6 +1474,10 @@ const banUser = async (userId: number) => {
         <TariffStatsBlock />
 
         <ArpuStatsBlock />\n\n        <TopUsersBlock />
+
+        <UsdRateBlock />
+
+        <ChartsBlock />
         </div>
       )}
 

@@ -43,6 +43,15 @@ function cardStyle(background: string): React.CSSProperties {
 }
 
 export default function FinanceBlock() {
+  const [realUsdRate, setRealUsdRate] = useState<number>(0);
+
+  useEffect(() => {
+    fetch("/api/admin/usd-rate", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((d) => setRealUsdRate(Number(d?.rate || 0)))
+      .catch(() => setRealUsdRate(0));
+  }, []);
+
   const [summary, setSummary] = useState<FinanceSummary | null>(null);
   const [timeseries, setTimeseries] = useState<FinanceTimeseries | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,7 +126,7 @@ export default function FinanceBlock() {
   const totalExpenseUsd = Number(summary?.total_expense_usd || 0);
   const totalGenerations = Number(summary?.total_generations || 0);
 
-  const usdRate = 12500;
+  const usdRate = realUsdRate || 0;
   const approxIncomeUsd = totalIncomeUzs / usdRate;
   const approxProfitUsd = approxIncomeUsd - totalExpenseUsd;
   const avgCostPerGeneration =
