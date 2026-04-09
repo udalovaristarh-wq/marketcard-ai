@@ -1,4 +1,6 @@
-"use client";
+"use client"
+
+import FinanceBlock from "./FinanceBlock";;
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -1460,6 +1462,8 @@ const banUser = async (userId: number) => {
               {systemLoad}% загрузка
             </div>
           </div>
+
+        <FinanceBlock />
         </div>
       )}
 
