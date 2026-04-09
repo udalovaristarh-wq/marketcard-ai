@@ -16,6 +16,7 @@ from app.routes.full_generate import router as full_generate_router
 from app.routes.ikpu import router as ikpu_router
 from app.routers import admin
 from app.routers.admin_finance import router as admin_finance_router
+from app.routers.admin_analytics import router as admin_analytics_router
 
 
 app = FastAPI(
@@ -54,6 +55,7 @@ app.include_router(full_generate_router, prefix="", tags=["full_generate"])
 app.include_router(ikpu_router)
 app.include_router(admin.router)
 app.include_router(admin_finance_router)
+app.include_router(admin_analytics_router)
 
 @app.on_event("startup")
 def on_startup() -> None:

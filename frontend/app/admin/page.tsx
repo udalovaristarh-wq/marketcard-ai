@@ -1,6 +1,10 @@
 "use client"
 
-import FinanceBlock from "./FinanceBlock";;
+import TariffStatsBlock from "./TariffStatsBlock";
+import ArpuStatsBlock from "./ArpuStatsBlock";
+import TopUsersBlock from "./TopUsersBlock";
+
+import FinanceBlock from "./FinanceBlock";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -1464,6 +1468,10 @@ const banUser = async (userId: number) => {
           </div>
 
         <FinanceBlock />
+
+        <TariffStatsBlock />
+
+        <ArpuStatsBlock />\n\n        <TopUsersBlock />
         </div>
       )}
 
