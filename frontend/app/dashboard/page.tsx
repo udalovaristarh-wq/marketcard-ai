@@ -477,6 +477,31 @@ const tariffs: Record<
   },
 }
 
+
+function getTariffFeatureLines(tariff: TariffName, lang: Lang): string[] {
+  if (lang === "ru") {
+    if (tariff === "Start") return ["1 фото за 1 генерацию", "Пауза 3 минуты"]
+    if (tariff === "Business") return ["1 или 3 фото за генерацию", "Пауза 3 минуты"]
+    return ["1, 3 или 5 фото за генерацию", "Пауза 3 минуты"]
+  }
+
+  if (lang === "uz") {
+    if (tariff === "Start") return ["1 generatsiya = 1 rasm", "3 daqiqa kutish"]
+    if (tariff === "Business") return ["1 yoki 3 rasm", "3 daqiqa kutish"]
+    return ["1, 3 yoki 5 rasm", "3 daqiqa kutish"]
+  }
+
+  if (tariff === "Start") return ["1 image per generation", "3 min delay"]
+  if (tariff === "Business") return ["1 or 3 images", "3 min delay"]
+  return ["1, 3 or 5 images", "3 min delay"]
+}
+
+function getTariffNote(lang: Lang): string {
+  if (lang === "ru") return "Чем больше вариантов — тем быстрее расходуется лимит"
+  if (lang === "uz") return "Ko‘p variant — tezroq limit tugaydi"
+  return "More variants = faster limit usage"
+}
+
 function MarketplaceButton({
   label,
   selected,
@@ -1001,6 +1026,16 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const t = dict[lang]
   const currentFormat = marketplaceFormats[selectedMarketplace]
 
+  const allowedVariantOptions = (() => {
+    const tariff = profile?.tariff_name || ""
+
+    if (tariff === "Start") return [1]
+    if (tariff === "Business") return [1, 3]
+    if (tariff === "Premium") return [1, 3, 5]
+
+    return [1]
+  })()
+
   const formatCooldown = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
@@ -1155,6 +1190,12 @@ const res = await fetch(
     setAuthChecked(true)
     loadProfile()
   }, [router])
+
+  useEffect(() => {
+    if (!allowedVariantOptions.includes(variantCount)) {
+      setVariantCount(allowedVariantOptions[0])
+    }
+  }, [profile?.tariff_name, variantCount])
 
   useEffect(() => {
     if (!selectedFile) {
@@ -1923,6 +1964,16 @@ const ikpuPromise = Promise.resolve()
         </div>
       </div>
 
+      <div
+        style={{
+          marginTop: "14px",
+          fontSize: "14px",
+          color: "#fbbf24",
+          fontWeight: 800,
+        }}
+      >
+        ⚠️ {getTariffNote(lang)}
+      </div>
       <div
         style={{
           marginTop: "22px",
@@ -3167,6 +3218,13 @@ const ikpuPromise = Promise.resolve()
 
               <div style={{ fontSize: "17px", marginBottom: "8px" }}>
                 {item.generations} генераций
+              <div style={{ marginTop: "10px", display: "grid", gap: "6px" }}>
+                {getTariffFeatureLines(tariff, lang).map((line) => (
+                  <div key={line} style={{ fontSize: "14px", fontWeight: 700 }}>
+                    • {line}
+                  </div>
+                ))}
+              </div>
               </div>
 
               <div style={{ fontSize: "15px", opacity: 0.95 }}>

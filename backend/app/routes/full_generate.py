@@ -23,6 +23,39 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 COOLDOWN_SECONDS = 180
 
+def normalize_variant_count(tariff_name: str | None, variant_count: int) -> int:
+    tariff = (tariff_name or "").strip()
+
+    if tariff == "Start":
+        if variant_count != 1:
+            raise HTTPException(
+                status_code=403,
+                detail="Тариф Start позволяет только 1 фото за генерацию",
+            )
+        return 1
+
+    if tariff == "Business":
+        if variant_count not in (1, 3):
+            raise HTTPException(
+                status_code=403,
+                detail="Тариф Business позволяет только 1 или 3 фото за генерацию",
+            )
+        return variant_count
+
+    if tariff == "Premium":
+        if variant_count not in (1, 3, 5):
+            raise HTTPException(
+                status_code=403,
+                detail="Тариф Premium позволяет только 1, 3 или 5 фото за генерацию",
+            )
+        return variant_count
+
+    raise HTTPException(
+        status_code=403,
+        detail="Тариф не активирован или не поддерживается",
+    )
+
+
 def ensure_cooldown(session: Session, user_id: int) -> None:
     latest_job = session.exec(
         select(GenerationJob)
@@ -91,6 +124,7 @@ async def full_generate_endpoint(
             if remaining <= 0:
                 raise HTTPException(status_code=403, detail="Лимит генераций исчерпан")
 
+            variant_count = normalize_variant_count(user.tariff_name, int(variant_count))
             ensure_cooldown(session, int(user.id))
 
             payload = {
