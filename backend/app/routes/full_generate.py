@@ -5,6 +5,7 @@ import json
 import shutil
 import uuid
 from pathlib import Path
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from sqlmodel import Session, select
@@ -19,6 +20,33 @@ router = APIRouter(tags=["AI Full Generate"])
 
 TEMP_DIR = Path("temp")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+COOLDOWN_SECONDS = 180
+
+def ensure_cooldown(session: Session, user_id: int) -> None:
+    latest_job = session.exec(
+        select(GenerationJob)
+        .where(GenerationJob.user_id == user_id)
+        .order_by(GenerationJob.created_at.desc())
+    ).first()
+
+    if not latest_job:
+        return
+
+    now = datetime.utcnow()
+    next_allowed_at = latest_job.created_at + timedelta(seconds=COOLDOWN_SECONDS)
+
+    if next_allowed_at > now:
+        remaining_seconds = int((next_allowed_at - now).total_seconds())
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "message": "Следующая генерация будет доступна позже",
+                "remaining_seconds": remaining_seconds,
+                "cooldown_seconds": COOLDOWN_SECONDS,
+            },
+        )
+
 
 
 @router.post("/full-generate")
@@ -62,6 +90,8 @@ async def full_generate_endpoint(
             remaining = user.tariff_generations_total - user.tariff_generations_used
             if remaining <= 0:
                 raise HTTPException(status_code=403, detail="Лимит генераций исчерпан")
+
+            ensure_cooldown(session, int(user.id))
 
             payload = {
                 "product_title": product_title,
@@ -140,6 +170,7 @@ async def full_generate_endpoint(
                             session.add(expense)
                             session.commit()
 
+                    result["cooldown_seconds"] = COOLDOWN_SECONDS
                     return result
         raise HTTPException(
             status_code=504,

@@ -1001,6 +1001,92 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const t = dict[lang]
   const currentFormat = marketplaceFormats[selectedMarketplace]
 
+  const formatCooldown = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+  }
+
+  const showCooldownPopup = (seconds: number) => {
+    let remaining = Math.max(0, Number(seconds || 0))
+
+    const old = document.getElementById("mc-cooldown-overlay")
+    if (old) old.remove()
+
+    const overlay = document.createElement("div")
+    overlay.id = "mc-cooldown-overlay"
+    overlay.style.cssText = [
+      "position:fixed",
+      "inset:0",
+      "background:rgba(0,0,0,0.55)",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "z-index:999999"
+    ].join(";")
+
+    const box = document.createElement("div")
+    box.style.cssText = [
+      "width:min(92vw,420px)",
+      "background:#111827",
+      "border:1px solid rgba(255,255,255,0.12)",
+      "border-radius:20px",
+      "padding:24px",
+      "box-shadow:0 20px 60px rgba(0,0,0,0.35)",
+      "color:white",
+      "font-family:Arial,sans-serif",
+      "text-align:center"
+    ].join(";")
+
+    const title = document.createElement("div")
+    title.textContent = "Ограничение генерации"
+    title.style.cssText = "font-size:24px;font-weight:900;margin-bottom:14px;"
+
+    const textNode = document.createElement("div")
+    textNode.style.cssText = "font-size:18px;line-height:1.5;margin-bottom:18px;opacity:0.95;"
+
+    const closeBtn = document.createElement("button")
+    closeBtn.textContent = "Понятно"
+    closeBtn.style.cssText = [
+      "padding:12px 18px",
+      "border:none",
+      "border-radius:12px",
+      "background:linear-gradient(135deg,#06b6d4,#2563eb)",
+      "color:white",
+      "font-size:16px",
+      "font-weight:800",
+      "cursor:pointer"
+    ].join(";")
+
+    const render = () => {
+      textNode.textContent = `Следующая генерация будет доступна через ${formatCooldown(remaining)}`
+    }
+
+    render()
+
+    let timer: number | null = window.setInterval(() => {
+      remaining -= 1
+      if (remaining <= 0) {
+        if (timer) window.clearInterval(timer)
+        overlay.remove()
+        localStorage.removeItem("generate_cooldown_until")
+        return
+      }
+      render()
+    }, 1000)
+
+    closeBtn.onclick = () => {
+      if (timer) window.clearInterval(timer)
+      overlay.remove()
+    }
+
+    box.appendChild(title)
+    box.appendChild(textNode)
+    box.appendChild(closeBtn)
+    overlay.appendChild(box)
+    document.body.appendChild(overlay)
+  }
+
   const loadProfile = async () => {
     try {
       setProfileLoading(true)
@@ -1174,6 +1260,15 @@ const ikpuPromise = Promise.resolve()
   }
 
     const handleGenerate = async () => {
+  const cooldownUntil = Number(localStorage.getItem("generate_cooldown_until") || "0")
+  const now = Date.now()
+
+  if (cooldownUntil > now) {
+    const remaining = Math.ceil((cooldownUntil - now) / 1000)
+    showCooldownPopup(remaining)
+    return
+  }
+
   console.log("GEN 0 PROFILE", profile)
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
@@ -1231,6 +1326,13 @@ const ikpuPromise = Promise.resolve()
 
     setGeneratedVariants(images)
     setPngReady(images.length > 0)
+
+    if (data?.cooldown_seconds) {
+      localStorage.setItem(
+        "generate_cooldown_until",
+        String(Date.now() + Number(data.cooldown_seconds) * 1000)
+      )
+    }
 
     // ✅ SEO / ОПИСАНИЕ
     if (data.listing) {
