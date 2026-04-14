@@ -1,3 +1,6 @@
+from sqlalchemy import text
+from fastapi import HTTPException
+
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from sqlmodel import Session, select
 from sqlalchemy import func
@@ -9,6 +12,15 @@ import json
 import uuid
 from pathlib import Path
 import shutil
+
+def check_queue_limit(db):
+    result = db.execute(text("""
+        SELECT COUNT(*) FROM generationjob
+        WHERE status IN ('queued', 'processing')
+    """))
+    return result.scalar()
+
+QUEUE_LIMIT = 20
 
 router = APIRouter(tags=["Queue Generate"])
 
