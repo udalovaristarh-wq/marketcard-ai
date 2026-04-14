@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import requests
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -45,6 +45,7 @@ def generate_card_image(
     prompt: str,
     output_path: str,
     size: str = "1024x1536",
+    final_size: tuple[int, int] | None = None,
 ) -> dict[str, Any]:
     if not OPENAI_API_KEY:
         raise RuntimeError("OPENAI_API_KEY is not set")
@@ -89,6 +90,8 @@ def generate_card_image(
 
     payload = response.json()
     img = _decode_response_image(payload)
+    if final_size:
+        img = ImageOps.fit(img, final_size, method=Image.LANCZOS)
     img.save(output_file, "PNG")
 
     if not output_file.exists():
@@ -115,6 +118,7 @@ def generate_series_images(
     prompts: list[dict[str, Any]],
     output_dir: str,
     size: str = "1024x1536",
+    final_size: tuple[int, int] | None = None,
 ) -> list[dict[str, Any]]:
     out_dir = Path(output_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -137,6 +141,7 @@ def generate_series_images(
                 prompt=prompt,
                 output_path=str(output_path),
                 size=size,
+                final_size=final_size,
             )
 
             results.append(

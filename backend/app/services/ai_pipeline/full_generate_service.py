@@ -124,13 +124,18 @@ def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
     output_dir = (GENERATED_DIR / generation_id).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    size = _resolve_output_size(series_plan["marketplace_profile"])
+    openai_size = _resolve_output_size(series_plan["marketplace_profile"])
+    final_size = (
+        int(series_plan["marketplace_profile"].get("width", 1080)),
+        int(series_plan["marketplace_profile"].get("height", 1440)),
+    )
 
     image_results = generate_series_images(
         product_image_path=str(product_image_path),
         prompts=prompts,
         output_dir=str(output_dir),
-        size=size,
+        size=openai_size,
+        final_size=final_size,
     )
 
     print("IMAGE OPENAI META:", [item.get("_openai_meta") for item in image_results if item.get("_openai_meta")])
