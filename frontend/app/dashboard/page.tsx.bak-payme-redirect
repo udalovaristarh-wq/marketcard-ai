@@ -994,21 +994,6 @@ useEffect(() => {
 
     console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
-      if (selectedPayment === "payme" && data?.payme_url) {
-        window.location.href = data.payme_url
-        return
-      }
-
-      if (selectedPayment === "click") {
-        alert("Click будет подключён следующим шагом")
-        return
-      }
-
-      if (selectedPayment === "visa") {
-        alert("Visa пока недоступна. Выберите Payme или Click.")
-        return
-      }
-
 
     let items: any[] = []
 
@@ -1277,22 +1262,6 @@ const ikpuPromise = Promise.resolve()
     console.log("ACTIVATE 5 AFTER FETCH", res.status)
     console.log("GEN 3 STATUS", res.status)
       const data = await res.json().catch(() => null)
-
-      if (selectedPayment === "payme" && data?.payme_url) {
-        window.location.href = data.payme_url
-        return
-      }
-
-      if (selectedPayment === "click") {
-        alert("Click будет подключён следующим шагом")
-        return
-      }
-
-      if (selectedPayment === "visa") {
-        alert("Visa пока недоступна. Выберите Payme или Click.")
-        return
-      }
-
     console.log("ACTIVATE 6 RESPONSE DATA", data)
 
       if (!res.ok) {
