@@ -1,4 +1,4 @@
-from __future__ import annotations
+from app.routers.payments import router as payments_router
 
 from pathlib import Path
 
@@ -50,6 +50,7 @@ app.mount(
 )
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(payments_router)
 app.include_router(products_router, prefix="/products", tags=["products"])
 app.include_router(ai_router, prefix="/ai", tags=["ai"])
 app.include_router(listing_generate_router, prefix="/listing", tags=["listing"])

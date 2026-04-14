@@ -1253,9 +1253,16 @@ const ikpuPromise = Promise.resolve()
 
     console.log("ACTIVATE 4 BEFORE FETCH")
       const res = await fetch(
-        `https://marketcard.uz/api/payments/create-order?email=${encodeURIComponent(emailToUse)}&tariff_name=${encodeURIComponent(selectedTariff)}&provider=${encodeURIComponent(selectedPayment || "unknown")}`,
+        `https://marketcard.uz/api/auth/activate-tariff?email=${encodeURIComponent(emailToUse)}`,
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            
+            tariff_name: selectedTariff,
+          }),
         }
       )
 
