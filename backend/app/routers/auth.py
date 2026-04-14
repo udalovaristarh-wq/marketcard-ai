@@ -13,6 +13,7 @@ from app.schemas import (
     ResetPasswordRequest,
 )
 from app.security import (
+    get_current_user,
     hash_password,
     verify_password,
     create_access_token,
@@ -92,10 +93,10 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
 
 @router.get("/me", response_model=ProfileResponse)
 def get_profile(
-    email: str = Query(...),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = session.exec(select(User).where(User.id == current_user.id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -115,10 +116,10 @@ def get_profile(
 @router.post("/activate-tariff")
 def activate_tariff(
     data: TariffActivateRequest,
-    email: str = Query(...),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = session.exec(select(User).where(User.id == current_user.id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -192,7 +193,7 @@ def reset_password(
         raise HTTPException(status_code=400,
                             detail="Неверный или просроченный токен")
 
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = session.exec(select(User).where(User.id == current_user.id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
