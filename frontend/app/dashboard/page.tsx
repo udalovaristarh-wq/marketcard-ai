@@ -999,8 +999,13 @@ useEffect(() => {
         return
       }
 
+      if (selectedPayment === "click" && data?.click_url) {
+        window.location.href = data.click_url
+        return
+      }
+
       if (selectedPayment === "click") {
-        alert("Click будет подключён следующим шагом")
+        alert("Click ссылка не получена")
         return
       }
 
@@ -1283,8 +1288,12 @@ const ikpuPromise = Promise.resolve()
         return
       }
 
+      if (selectedPayment === "click" && data?.click_url) {
+        window.location.href = data.click_url
+        return
+      }
       if (selectedPayment === "click") {
-        alert("Click будет подключён следующим шагом")
+        alert("Click ссылка не получена")
         return
       }
 

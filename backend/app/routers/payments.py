@@ -10,6 +10,8 @@ import base64
 
 PAYME_MERCHANT_ID = "TEST_MERCHANT_ID"
 PAYME_BASE_URL = "https://test.paycom.uz"
+CLICK_SERVICE_ID = "TEST_SERVICE_ID"
+CLICK_MERCHANT_ID = "TEST_MERCHANT_ID"
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -54,12 +56,21 @@ def create_order(
     payme_encoded = base64.b64encode(payme_data.encode()).decode()
     payme_url = f"{PAYME_BASE_URL}/{payme_encoded}"
 
+    click_url = (
+        f"https://my.click.uz/services/pay"
+        f"?service_id={CLICK_SERVICE_ID}"
+        f"&merchant_id={CLICK_MERCHANT_ID}"
+        f"&amount={order.amount_uzs}"
+        f"&transaction_param={order.id}"
+    )
+
     return {
         "success": True,
         "order_id": order.id,
         "amount": order.amount_uzs,
         "provider": provider,
         "payme_url": payme_url,
+        "click_url": click_url,
     }
 
 
