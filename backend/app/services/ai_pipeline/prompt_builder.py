@@ -5,7 +5,6 @@ from typing import Any
 
 def _language_rule(language_mode: str) -> str:
     mode = (language_mode or "ru").strip().lower()
-
     if mode == "uz":
         return (
             "All visible text on the card must be in Uzbek latin only. "
@@ -13,14 +12,14 @@ def _language_rule(language_mode: str) -> str:
             "Use clean marketplace wording. "
             "All Uzbek latin text must be grammatically correct, natural, and easy to read."
         )
-
     if mode in {"ru+uz", "uz+ru", "both"}:
         return (
             "All visible text on the card must be bilingual: Russian and Uzbek latin. "
-            "Russian line first, Uzbek latin line second where appropriate. "
+            "Do not duplicate the exact same meaning line by line in both languages. "
+            "Russian and Uzbek must complement each other. "
+            "One language may carry the main selling idea, while the second language may support it with benefit, comfort, trust, or usage meaning. "
             "Keep text short, readable, commercially strong, and grammatically correct in both languages."
         )
-
     return (
         "All visible text on the card must be in Russian only. "
         "Use strong marketplace wording, short phrases, and clean readable typography. "
@@ -121,23 +120,35 @@ def _slide_goal_rule(slide: dict[str, Any]) -> str:
     mapping = {
         "hero": (
             "This is the main hero slide. "
-            "Use the strongest composition in the series. "
-            "Large product, strong visual focus, premium background, high CTR feeling."
+            "Make it visually explosive, premium, and highly clickable. "
+            "The product must be large, dominant, and instantly readable. "
+            "Use the strongest premium marketplace composition for this exact product automatically. "
+            "Use premium text styling, strong headline hierarchy, accent text colors, elegant infographic plates, refined badges, and stylish decorative graphic elements where they improve the design. "
+            "Use beautiful premium shapes, circles, highlight blocks, glow accents, or clean geometry if they make the card look more expensive. "
+            "The slide must feel like top-level business infographic design created by an elite marketplace art director."
         ),
         "benefits": (
-            "This slide must show 3 or 4 key selling benefits in infographic style. "
-            "The product must still be clearly visible and dominant."
+            "This slide must explain 3 or 4 key product benefits in a strong infographic style. "
+            "Keep the product clearly visible and commercially dominant. "
+            "Use premium benefit cards, elegant icon zones, accent bullets, colored text hierarchy, and visually rich infographic blocks. "
+            "The layout must feel premium, designer-made, and visually more advanced than standard marketplace cards."
         ),
         "specs": (
-            "This slide must show key characteristics or safe specifications in a structured and easy-to-scan infographic style."
+            "This slide must present safe characteristics or practical parameters in a structured premium infographic layout. "
+            "Use stylish specification blocks, clean premium labels, contrast hierarchy, decorative support lines, and refined graphic grouping. "
+            "The information must be easy to scan, visually expensive, and business-level polished."
         ),
         "usage": (
-            "This slide must show use case, scenario, context, or lifestyle application. "
-            "It should feel believable, commercial, and visually engaging."
+            "This slide must show believable real-life use, context, or lifestyle application. "
+            "If appropriate, show a person, hand, interior, or real usage setup that fits this product category. "
+            "Combine the scene with premium infographic overlays, elegant text blocks, stylish accents, and strong visual storytelling. "
+            "The slide must feel alive, persuasive, and commercially powerful."
         ),
         "trust": (
-            "This slide must create confidence and a final buying impulse. "
-            "Use quality, reliability, comfort, compatibility, or trust messaging."
+            "This slide must create confidence and final buying motivation. "
+            "Focus on reliability, comfort, quality, durability, trust, or confidence-building value. "
+            "Use premium trust badges, refined labels, soft highlight elements, polished graphic accents, and strong closing composition. "
+            "The result must feel expensive, credible, and conversion-oriented."
         ),
     }
     return mapping.get(key, "Create a premium marketplace card.")
@@ -167,22 +178,21 @@ def _angle_rule(slide_key: str) -> str:
 
 def _anti_bad_rule() -> str:
     return (
-        "Do not create template-looking layouts. "
-        "Do not create ugly white empty backgrounds unless visually justified. "
-        "Do not make the product too small. "
-        "Do not distort the product. "
-        "Do not invent fake logo badges. "
+        "Do not create boring, empty, flat, template-looking layouts. "
+        "Do not create plain single-color backgrounds with just text and product. "
+        "Do not use simple default bullet lists as the main infographic solution. "
+        "Do not make the card look like a document, poster, or Canva beginner template. "
+        "Do not make the composition predictable, weak, or static. "
+        "Do not keep all text in one boring block. "
+        "Do not use cheap gradients, childish effects, ugly random decorations, or chaotic clutter. "
+        "Do not distort, replace, redraw incorrectly, or visually corrupt the real product. "
+        "Do not invent fake product parts, fake accessories, fake logos, or fake packaging details. "
         "Do not use gibberish text. "
-        "Do not overload with tiny unreadable text. ""Do not overload the card with too many text blocks. "
-        "Do not repeat exactly the same composition across all 5 slides. "
-        "Do not place marketplace names like OZON, UZUM, Wildberries, Yandex Market inside the image. "
-        "Do not place marketplace logos inside the image. "
-        "Do not create buttons, buy now buttons, UI cards, app interface elements, fake website elements, or fake CTA blocks. "
-        "Do not add words like Купить, Buy, Order, Add to cart, Shop now inside the card. "
-        "Do not generate long paragraphs. "
-        "Do not use visual clutter. "
-        "Do not make the design cheap, generic, flat, weak, or amateur. "
-        "This must be a clean marketplace infographic, not an app screenshot."
+        "Do not overload with tiny unreadable text. "
+        "Do not place marketplace names or marketplace logos inside the image. "
+        "Do not create buttons, app interface elements, fake website blocks, or fake CTA widgets. "
+        "Do not add words like Buy, Order, Add to cart, Shop now, Купить inside the card. "
+        "At the same time, premium infographic plates, elegant badges, accent labels, decorative circles, refined shapes, layered text blocks, and stylish commercial design elements ARE ALLOWED and SHOULD be used when they make the card more premium and visually stronger."
     )
 
 
@@ -252,65 +262,113 @@ def _visual_profile_rule(visual_profile: dict[str, Any]) -> str:
 
 def _premium_design_rule() -> str:
     return (
-        "Push visual quality higher than standard marketplace cards. "
-        "Use premium commercial art direction, better spacing, stronger hierarchy, cleaner typography zones, richer lighting, realistic shadows, premium material rendering, stronger product separation from background, and more refined composition. ""Make the design look expensive, polished, modern, and highly clickable. "
-        "Avoid weak generic layouts. "
-        "Each slide must feel intentionally designed by a strong commercial designer."
+        "Push visual quality to elite marketplace level. "
+
+        "VISUAL IMPACT RULES:
+"
+        "- Make the design visually rich, premium, bold, and scroll-stopping.
+"
+        "- Avoid sterile minimalism if it makes the card boring.
+"
+        "- Use layered composition, depth, premium lighting, contrast, and strong product focus.
+"
+        "- Use beautiful premium backgrounds, not flat empty backgrounds.
+"
+        "- The design must feel intentionally art-directed and visually expensive.
+"
+
+        "GRAPHIC SYSTEM:
+"
+        "- Use premium infographic plates, elegant badges, stylish callout blocks, accent shapes, and refined highlight zones.
+"
+        "- Use different visual concepts for different slides and products.
+"
+        "- Vary composition, badge style, block shapes, text placement, accent lines, and hierarchy.
+"
+        "- Use controlled design variety, not one repetitive template.
+"
+
+        "COLOR AND TYPOGRAPHY:
+"
+        "- Use strong premium color combinations chosen specifically for the product.
+"
+        "- Accent colors, support colors, and text colors may vary when it improves the design.
+"
+        "- Use different text hierarchy levels: strong headline, clean support text, premium badges, benefit accents.
+"
+        "- Typography may vary in scale, weight, emphasis, and placement to create a more premium result.
+"
+
+        "STYLE VARIATION:
+"
+        "- Some products may look better in dark premium style, some in bright premium style, some in bold commercial style.
+"
+        "- Choose the most beautiful and commercially strong style for this exact product automatically.
+"
+        "- Every result must feel unique, premium, and designer-made.
+"
+
+        "IMPORTANT:
+"
+        "- The result must not look cheap, generic, flat, basic, or template-generated.
+"
+        "- The final card must make designers respect the quality."
     )
 
 
 def _copy_guidance(category_type: str) -> str:
-    mapping = {
-        "electronics": (
-            "Generate strong marketplace copy automatically: "
-            "1 short selling headline, 2 to 4 benefits, 2 to 4 safe characteristics if supported by the product name or image, "
-            "and a short product-description feeling. "
-            "If exact specs are unknown, do not invent precise technical numbers. "
-            "Use realistic wording like bright display, comfort, daily use, useful functions, convenient design, stable performance."
-        ),
-        "auto": (
-            "Generate practical marketplace copy automatically: "
-            "headline, benefits, safe characteristics, compatibility-oriented wording when appropriate. "
-            "Do not invent exact fitments or OEM numbers unless clearly known."
-        ),
-        "fashion": (
-            "Generate style, comfort, fit, and material-oriented copy automatically. "
-            "Do not invent precise fabric composition if unknown."
-        ),
-        "beauty": (
-            "Generate polished beauty-commercial copy automatically: "
-            "benefits, care effect, comfort, soft premium wording. "
-            "Do not invent ingredients or medical claims."
-        ),
-        "home": (
-            "Generate comfort and practical-use copy automatically: "
-            "headline, 3 to 4 benefits, 2 to 4 safe characteristics, short descriptive wording."
-        ),
-        "books": (
-            "Generate editorial selling copy automatically: "
-            "who this product is for, why it is useful, and what kind of value it gives. "
-            "Do not invent exact publisher or page count if unknown."
-        ),
-        "kids": (
-            "Generate friendly parent-oriented commercial copy automatically. "
-            "Do not invent unsupported claims."
-        ),
-        "sports": (
-            "Generate energetic use-case-oriented commercial copy automatically."
-        ),
-        "tools": (
-            "Generate utility-focused copy automatically with practical benefits and safe characteristics."
-        ),
-        "food": (
-            "Generate appetizing commercial copy automatically without inventing ingredients or nutrition facts."
-        ),
-        "general": (
-            "Generate short marketplace-ready selling copy automatically: "
-            "headline, benefits, safe characteristics, and a short descriptive line. "
-            "Never invent exact specs if they are not known."
-        ),
-    }
-    return mapping.get(category_type, mapping["general"])
+    return (
+        "Generate HIGH-CONVERSION marketplace copy. "
+        "Focus ONLY on benefits, emotions, and real user value. "
+
+        "STRICT RULES:
+"
+        "- Do NOT use generic phrases like 'high quality', 'optimal', 'good material'.
+"
+        "- Do NOT describe obvious things.
+"
+        "- Do NOT repeat product name.
+"
+        "- Do NOT sound like a catalog.
+"
+
+        "COPY STYLE:
+"
+        "- Speak like a top marketplace seller.
+"
+        "- Each phrase must answer: WHY SHOULD I BUY THIS?
+"
+        "- Use real-life benefits (comfort, time saving, durability, ease of use).
+"
+        "- Use short powerful phrases.
+"
+
+        "EXAMPLES OF GOOD COPY:
+"
+        "- comfortable sleep every night
+"
+        "- does not lose shape over time
+"
+        "- soft support for neck and head
+"
+        "- suitable for daily use
+"
+
+        "EXAMPLES OF BAD COPY (FORBIDDEN):
+"
+        "- high quality material
+"
+        "- optimal height
+"
+        "- modern design
+"
+        "- good product
+"
+
+        "If you are unsure — simplify and make it more human.
+"
+        "All text must feel natural, trustworthy, and commercially strong."
+    )
 
 
 def build_card_prompt(
@@ -332,6 +390,92 @@ def build_card_prompt(
     feature_text = ", ".join(extra_features or [])
 
     parts = [
+        (
+            "CRITICAL DESIGN REQUIREMENT: "
+            "The infographic MUST include visible premium plates, badges, or text containers. "
+            "Do NOT leave text floating directly on background. "
+
+            "Each key text element (headline, benefits, labels) should be placed inside or near a visual structure: "
+            "rounded plates, soft rectangles, gradient blocks, glass-style panels, or premium label badges. "
+
+            "At least one of the following MUST be present: "
+            "- product badge (example: '2 шт', 'комплект', size, feature label) "
+            "- benefit plates (text inside styled blocks) "
+            "- highlight labels or accent tags "
+
+            "The design must feel layered, structured, and visually rich — not flat text over background."
+        ),
+        (
+            "Typography must feel premium, rich, and visually designed. "
+            "Use multiple typography levels: dominant headline, stylish subheadline, premium labels, benefit text, accent words, and support text. "
+            "Do not keep all text in one identical font style or one identical color. "
+            "Use contrast in size, weight, spacing, and emphasis. "
+            "Use different text colors for main headline, support text, badges, highlight words, and benefit blocks when it makes the design stronger. "
+            "Use beautiful premium text styling, elegant hierarchy, and expensive commercial typography. "
+            "The text system must look like it was designed by a senior marketplace designer, not auto-generated."
+        ),
+        (
+            "Background and color direction must feel premium, deep, and designer-made. "
+            "Do not use boring plain backgrounds unless the concept is intentionally luxury-minimal. "
+            "Use gradient depth, light zones, premium shadows, layered color transitions, subtle texture, glow accents, or elegant abstract graphic background elements when they improve the design. "
+            "Choose a strong color concept specifically for this product: dark premium, bright premium, bold commercial, luxury minimal, or modern rich contrast. "
+            "The background must support the product and make the whole card look expensive and visually powerful."
+        ),
+        (
+            "Use a rich premium infographic graphic system. "
+            "Actively use elegant text plates, premium badges, highlight labels, decorative circles, soft squares, refined accent shapes, clean lines, layered graphic blocks, and stylish visual separators. "
+            "Use multi-level typography with different font scales, weights, and emphasis. "
+            "Use different text colors for headline, support text, benefits, labels, and accents when it improves the design. "
+            "Do not keep all text in the same style. "
+            "Make the typography and graphic layout feel designer-made, visually rich, and commercially premium."
+        ),
+        (
+            "This design must maximize click-through rate and conversion. "
+            "Every element must help the product sell: composition, text, lighting, color, and emphasis. "
+            "If something does not improve sales clarity, do not include it. "
+            "The final result must look like a top-performing marketplace product card, not just a beautiful image."
+        ),
+        (
+            "All slides in the series must feel like one premium product story. "
+            "Keep one visual DNA across the series: related palette, related lighting mood, related graphic language, and brand consistency. "
+            "At the same time, each slide must have a different composition, different message role, and different visual emphasis. "
+            "The series must feel cohesive, premium, and intentionally art-directed."
+        ),
+        (
+            "Use premium marketplace infographic structure with strong visual hierarchy. "
+            "Use bold headline zones, clean benefit blocks, premium badges, refined callout cards, and visually strong selling accents. "
+            "The card must look intentionally designed, expensive, modern, and highly clickable. "
+            "Use graphic elements only when they improve sales clarity and product focus."
+        ),
+        (
+            "Choose the best visual scenario for this exact product automatically. "
+            "If the product is wearable, consider lifestyle presentation on a person when commercially appropriate. "
+            "If the product is used in context, show believable real-life usage when it improves sales. "
+            "If the product sells better as a clean isolated hero object, keep the product dominant without unnecessary people. "
+            "Always choose the visual direction that best helps this product sell."
+        ),
+        (
+            "Visible text on the infographic must be extremely error-resistant. "
+            "Use only short, simple, common, low-risk words. "
+            "Avoid rare, complex, ambiguous, or hard-to-spell words. "
+            "If any word may be misspelled, replace it with a simpler synonym or remove it. "
+            "If text quality is uncertain, use less text, not more text. "
+            "Do not generate broken words, mixed alphabets, random symbols, or unreadable text."
+        ),
+        (
+            "Never replace, redesign, or visually corrupt the real product. "
+            "Use the uploaded product as the true reference. "
+            "Preserve its real shape, proportions, material feel, details, and identity. "
+            "Do not invent false specifications, false accessories, false packaging, or false product features. "
+            "If some fact is unknown, do not claim it."
+        ),
+        (
+            "You are a world-class marketplace art director, senior infographic designer, "
+            "top e-commerce marketer, and conversion-focused visual strategist. "
+            "Think like a top seller who knows what design will attract clicks and sales. "
+            "Choose the best visual composition, the best commercial style, and the best type of infographic for this exact product automatically. "
+            "Make the card look premium, expensive, highly clickable, and professionally designed."
+        ),
         _marketplace_rule(marketplace, marketplace_profile),
         _language_rule(language_mode),
         _text_quality_rule(language_mode),
