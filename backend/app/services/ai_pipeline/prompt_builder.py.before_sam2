@@ -1,0 +1,543 @@
+from __future__ import annotations
+
+from typing import Any
+
+
+def _language_rule(language_mode: str) -> str:
+    mode = (language_mode or "ru").strip().lower()
+    if mode == "uz":
+        return (
+            "All visible text on the card must be in Uzbek latin only. "
+            "Do not mix Russian. "
+            "Use natural, short, commercially strong Uzbek latin phrasing only. "
+            "Use elegant marketplace wording with very high readability."
+        )
+    if mode in {"ru+uz", "uz+ru", "both"}:
+        return (
+            "All visible text on the card must be bilingual: Russian and Uzbek latin. "
+            "Do not translate the same short phrase line-by-line. "
+            "Do not duplicate the same meaning in both languages. "
+            "Use Russian for some headline or selling blocks, and Uzbek latin for other supporting blocks. "
+            "Both languages must complement each other, not mirror each other. "
+            "Keep the card visually clean, premium, and easy to scan."
+        )
+    return (
+        "All visible text on the card must be in Russian only. "
+        "Use short, powerful, clean marketplace wording with premium commercial tone. "
+        "Typography must feel expensive, readable, and high-converting."
+    )
+
+def _text_quality_rule(language_mode: str) -> str:
+    mode = (language_mode or "ru").strip().lower()
+    if mode == "uz":
+        return (
+            "All visible text must be grammatically correct Uzbek latin only. "
+            "Do not use Cyrillic, transliteration mistakes, broken words, mixed alphabets, gibberish, random symbols, or spelling mistakes. "
+            "Use only ultra-short commercial phrases. "
+            "Avoid long text. "
+            "Use 1 strong headline, 2 to 4 short selling fragments, and short feature labels only. "
+            "If wording is uncertain, reduce text and rely more on icons, badges, and numbers."
+        )
+    if mode in {"ru+uz", "uz+ru", "both"}:
+        return (
+            "All visible text must be grammatically correct in both Russian and Uzbek latin. "
+            "Do not translate line-by-line. "
+            "Do not repeat the same statement in both languages. "
+            "Use short commercial phrases only. "
+            "Use one language for one block and the second language for another block where useful. "
+            "Do not mix both languages inside one short line. "
+            "If wording is uncertain, reduce text and rely more on numbers, icons, badges, and visual hierarchy."
+        )
+    return (
+        "All visible text must be grammatically correct Russian only. "
+        "Do not use transliteration, broken words, mixed alphabets, gibberish, random symbols, or spelling mistakes. "
+        "Use only ultra-short commercial phrases. "
+        "Avoid long text. "
+        "Use 1 strong headline, 2 to 4 short selling fragments, and short feature labels only. "
+        "If wording is uncertain, reduce text and rely more on icons, badges, and numbers."
+    )
+
+def _marketplace_rule(marketplace: str, profile: dict[str, Any]) -> str:
+
+    mp = (marketplace or "uzum").strip().lower()
+    width = profile.get("width", 1080)
+    height = profile.get("height", 1440)
+    ratio = profile.get("ratio", "3:4")
+
+    return (
+        f"Create a premium marketplace infographic for {mp}. "
+        f"Canvas size {width}x{height}, aspect ratio {ratio}. "
+        "This must look like a real high-converting e-commerce product card. "
+        "Not a flyer. Not UI. Not a wireframe. Not a simple poster. "
+        "The product must remain the main object. "
+        "The result must feel commercially polished, expensive, premium, and marketplace-ready."
+    )
+
+
+def _category_rule(category_type: str) -> str:
+    rules = {
+        "electronics": (
+            "Visual direction: premium tech, cinematic highlights, controlled glow accents, premium materials, high contrast, modern commercial design."
+        ),
+        "auto": (
+            "Visual direction: industrial premium, technical mood, metallic accents, precision, power, reliability, performance atmosphere."),
+        "fashion": (
+            "Visual direction: editorial premium, stylish, elegant, clean luxury, commercial fashion campaign feel."
+        ),
+        "beauty": (
+            "Visual direction: clean luxury, polished, elegant, refined beauty-commercial style with premium packaging feel."
+        ),
+        "home": (
+            "Visual direction: cozy premium, warm, modern, interior-friendly commercial presentation with tasteful styling."
+        ),
+        "books": (
+            "Visual direction: editorial minimal, elegant, intelligent, clean readable style with premium layout hierarchy."
+        ),
+        "kids": (
+            "Visual direction: premium playful, bright but clean, cheerful, colorful commercial energy without chaos."
+        ),
+        "sports": (
+            "Visual direction: dynamic, energetic, motion-driven commercial sports style with strong impact."
+        ),
+        "tools": (
+            "Visual direction: bold industrial utility style, practical premium infographic, strong functional presentation."
+        ),
+        "food": (
+            "Visual direction: appetizing premium commercial look, fresh, attractive, rich product presentation."
+        ),
+        "general": (
+            "Visual direction: premium marketplace commercial design, clean, strong, product-first, polished and high-converting."
+        ),
+    }
+    return rules.get(category_type, rules["general"])
+
+
+def _slide_goal_rule(slide: dict[str, Any]) -> str:
+    key = slide.get("key", "hero")
+    mapping = {
+        "hero": (
+            "This is the main hero slide. "
+            "Use the strongest composition in the series. "
+            "Large product, strong visual focus, premium background, high CTR feeling."
+        ),
+        "benefits": (
+            "This slide must show 3 or 4 key selling benefits in infographic style. "
+            "The product must still be clearly visible and dominant."
+        ),
+        "specs": (
+            "This slide must show key characteristics or safe specifications in a structured and easy-to-scan infographic style."
+        ),
+        "usage": (
+            "This slide must show use case, scenario, context, or lifestyle application. "
+            "It should feel believable, commercial, and visually engaging."
+        ),
+        "trust": (
+            "This slide must create confidence and a final buying impulse. "
+            "Use quality, reliability, comfort, compatibility, or trust messaging."
+        ),
+    }
+    return mapping.get(key, "Create a premium marketplace card.")
+
+
+def _angle_rule(slide_key: str) -> str:
+    mapping = {
+        "hero": (
+            "Use a main front-facing or powerful three-quarter premium angle. "
+            "Large dominant product presentation."
+        ),
+        "benefits": (
+            "Use a slightly rotated angle or visually dynamic angle different from the hero slide."
+        ),
+        "specs": (
+            "Use a clean structured angle, possibly top-front or technical angle, suitable for showing details."
+        ),
+        "usage": (
+            "Use a contextual angle or believable usage angle, different from hero and benefits."
+        ),
+        "trust": (
+            "Use a clean premium final angle, possibly close-up or polished confidence-building angle."
+        ),
+    }
+    return mapping.get(slide_key, "Use a distinct product angle.")
+
+
+def _context_scene_rule(category_type: str, slide_key: str) -> str:
+    if slide_key != "usage":
+        return (
+            "Visual support elements may reflect the product category, but the product must remain dominant."
+        )
+    mapping = {
+        "beauty": "For usage slide, show premium skincare or beauty context, elegant face-care atmosphere, soft beauty-commercial scene, possibly a model or clean skin-care environment.",
+        "auto": "For usage slide, show believable auto context: car body, garage, workshop, dashboard, wheel area, or installation environment relevant to the part.",
+        "tools": "For usage slide, show workshop, hand interaction, workbench, repair context, industrial or practical environment.",
+        "fashion": "For usage slide, show believable styling or wearing context with premium fashion-commercial energy.",
+        "home": "For usage slide, show tasteful interior, household use, comfort context, or realistic home environment.",
+        "electronics": "For usage slide, show real product use context, hand interaction, desktop, lifestyle tech setup, or premium gadget environment.",
+        "sports": "For usage slide, show active use, motion, training context, or energetic lifestyle scene.",
+        "kids": "For usage slide, show family-safe playful environment or believable child-use context.",
+        "food": "For usage slide, show appetizing serving or lifestyle food context.",
+        "general": "For usage slide, show believable real-life commercial context relevant to the product."
+    }
+    return mapping.get(category_type, mapping["general"])
+
+def _safety_rule() -> str:
+    return (
+        "Safety rule: do not generate marketplace cards for weapons, ammunition, explosives, drugs, drug paraphernalia, pornographic content, explicit sexual products, fetish products, violent goods, or illegal dangerous goods. "
+        "Do not sexualize people. "
+        "Do not create erotic, pornographic, or unsafe commercial imagery. "
+        "If the product appears to belong to a prohibited category, refuse internally and do not generate unsafe content."
+    )
+
+
+def _anti_bad_rule() -> str:
+    return (
+        "Do not create template-looking layouts. "
+        "Do not create ugly white empty backgrounds unless visually justified. "
+        "Do not make the product too small. "
+        "Do not distort the product. "
+        "Do not invent fake logo badges. "
+        "Do not use gibberish text. "
+        "Do not overload with tiny unreadable text. "
+        "Do not overload the card with too many text blocks. "
+        "Do not repeat exactly the same composition across all slides. "
+        "Do not place marketplace names like OZON, UZUM, Wildberries, Yandex Market inside the image. "
+        "Do not place marketplace logos inside the image. "
+        "Do not create buttons, fake app UI, fake website UI, fake CTA banners, or fake buy-now elements. "
+        "Do not generate long paragraphs. "
+        "Do not use plain white typography everywhere. "
+        "Do not make the design cheap, generic, flat, weak, amateur, poster-like, or empty. "
+        "Do not make bilingual text line-by-line translation. "
+        "Use contrast blocks, premium badges, chips, callout labels, number highlights, and infographic markers. "
+        "This must feel like a top-selling marketplace infographic card, not an AI poster."
+    )
+
+def _series_uniqueness_rule() -> str:
+
+    return (
+        "Each slide in this series must contain different visible text. "
+        "Do not repeat the same headline, subtitle, bullets, footer, or short marketing phrases across slides. "
+        "Every slide must have a unique communication role. "
+        "Slide 1 must be the hero offer. "
+        "Slide 2 must focus on benefits. "
+        "Slide 3 must focus on specs. "
+        "Slide 4 must focus on usage scenarios. "
+        "Slide 5 must focus on trust and closing message. "
+        "Do not reuse the same wording across multiple slides."
+    )
+
+
+def _slide_text_role_rule(slide_key: str) -> str:
+    mapping = {
+        "hero": (
+            "For this hero slide, use one strong headline and 2 or 3 short selling points only. "
+            "Do not overload with technical details."
+        ),
+        "benefits": (
+            "For this benefits slide, focus on advantages, convenience, useful functions, and strong selling points. "
+            "Do not repeat the hero headline or the same bullets."
+        ),
+        "specs": (
+            "For this specs slide, focus on characteristics, parameters, materials, construction, size, compatibility, runtime, or other safe technical details. "
+            "Do not repeat previous wording."
+        ),
+        "usage": (
+            "For this usage slide, focus on where, how, or in what situations the product is useful. "
+            "Use scenario-oriented wording and do not repeat previous wording."
+        ),
+        "trust": (
+            "For this trust slide, focus on reliability, comfort, quality feeling, confidence, or final purchase motivation. "
+            "Do not repeat previous wording."
+        ),
+    }
+    return mapping.get(
+        slide_key,
+        "Use unique visible text for this slide and do not repeat wording from the rest of the series.",
+    )
+
+
+def _visual_profile_rule(visual_profile: dict[str, Any]) -> str:
+    palette = visual_profile.get("palette", {})
+    base = palette.get("base", "adaptive base color")
+    accent = palette.get("accent", "adaptive accent color")
+    support = palette.get("support", "support color")
+    background = palette.get("background", "premium adaptive background")
+    lighting = palette.get("lighting", "commercial premium light")
+
+    return (
+        f"Visual DNA for this product series: "
+        f"base color family = {base}; "
+        f"accent color = {accent}; "
+        f"support color = {support}; "
+        f"background direction = {background}; "
+        f"lighting style = {lighting}. "
+        f"Style family = {visual_profile.get('style_family', 'premium marketplace')}. "
+        f"Graphic accents = {visual_profile.get('graphic_accent_style', 'clean commercial accents')}. "
+        f"{visual_profile.get('series_consistency_rule', '')}"
+    )
+
+
+def _premium_design_rule() -> str:
+    return (
+        "Push visual quality far above standard marketplace cards. "
+        "Use top-tier e-commerce art direction, strong product hierarchy, bold premium lighting, rich shadows, polished reflections, and visually expensive composition. "
+        "Use colored callout blocks, glossy feature chips, premium badges, number accents, contrast panels, strong infographic hierarchy, and high-converting visual structure. "
+        "The card must feel unique, memorable, and more impressive than typical marketplace designer work. "
+        "Each generation should look fresh and not repeat the exact same visual idea. "
+        "Keep the design premium, commercially aggressive, and visually irresistible."
+    )
+
+def _copy_guidance(category_type: str) -> str:
+
+    mapping = {
+        "electronics": (
+            "Generate strong marketplace copy automatically: "
+            "1 short selling headline, 2 to 4 benefits, 2 to 4 safe characteristics if supported by the product name or image, "
+            "and a short product-description feeling. "
+            "If exact specs are unknown, do not invent precise technical numbers. "
+            "Use realistic wording like bright display, comfort, daily use, useful functions, convenient design, stable performance."
+        ),
+        "auto": (
+            "Generate practical marketplace copy automatically: "
+            "headline, benefits, safe characteristics, compatibility-oriented wording when appropriate. "
+            "Do not invent exact fitments or OEM numbers unless clearly known."
+        ),
+        "fashion": (
+            "Generate style, comfort, fit, and material-oriented copy automatically. "
+            "Do not invent precise fabric composition if unknown."
+        ),
+        "beauty": (
+            "Generate polished beauty-commercial copy automatically: "
+            "benefits, care effect, comfort, soft premium wording. "
+            "Do not invent ingredients or medical claims."
+        ),
+        "home": (
+            "Generate comfort and practical-use copy automatically: "
+            "headline, 3 to 4 benefits, 2 to 4 safe characteristics, short descriptive wording."
+        ),
+        "books": (
+            "Generate editorial selling copy automatically: "
+            "who this product is for, why it is useful, and what kind of value it gives. "
+            "Do not invent exact publisher or page count if unknown."
+        ),
+        "kids": (
+            "Generate friendly parent-oriented commercial copy automatically. "
+            "Do not invent unsupported claims."
+        ),
+        "sports": (
+            "Generate energetic use-case-oriented commercial copy automatically."
+        ),
+        "tools": (
+            "Generate utility-focused copy automatically with practical benefits and safe characteristics."
+        ),
+        "food": (
+            "Generate appetizing commercial copy automatically without inventing ingredients or nutrition facts."
+        ),
+        "general": (
+            "Generate short marketplace-ready selling copy automatically: "
+            "headline, benefits, safe characteristics, and a short descriptive line. "
+            "Never invent exact specs if they are not known."
+        ),
+    }
+    return mapping.get(category_type, mapping["general"])
+
+
+def build_card_prompt(
+    *,
+    product_title: str,
+    brand: str,
+    category: str,
+    category_type: str,
+    marketplace: str,
+    marketplace_profile: dict[str, Any],
+    language_mode: str,
+    slide: dict[str, Any],
+    scene_tags: list[str] | None = None,
+    extra_features: list[str] | None = None,
+    visual_profile: dict[str, Any] | None = None,
+) -> str:
+    slide_key = slide.get("key", "hero")
+    scene_text = ", ".join(scene_tags or [])
+    feature_text = ", ".join(extra_features or [])
+
+    parts = [
+        _marketplace_rule(marketplace, marketplace_profile),
+        _language_rule(language_mode),
+        _text_quality_rule(language_mode),
+        _series_uniqueness_rule(),
+        _premium_design_rule(),
+        _category_rule(category_type),
+        _slide_goal_rule(slide),
+        _slide_text_role_rule(slide_key),
+        _angle_rule(slide_key),
+        _context_scene_rule(category_type, slide_key),
+        _copy_guidance(category_type),
+        _anti_bad_rule(),
+        _safety_rule(),
+        (
+            f"Product title: {product_title or 'Товар'}. "f"Brand: {brand or 'not specified'}. "
+            f"Category: {category or 'general product'}. "
+            f"Category type: {category_type}."
+        ),
+        (
+            "Do not render any visible text, letters, words, numbers, labels, badges, slogans, or typographic content inside the generated image. "
+            "Create only the visual product card design, composition, lighting, product placement, shapes, decorative UI-like blocks, and infographic containers without any readable text. "
+            "Leave clean visual areas where text can be added later by the system."
+        ),
+        (
+            "Use the uploaded product photo as the real product reference. "
+            "Preserve the actual product identity, shape, material impression, and core appearance."
+        ),
+        (
+            "Use only short, clean, readable marketplace text. "
+            "Prefer fewer text blocks over many text blocks. "
+            "Do not repeat exact product naming on every slide. "
+            "Do not reuse the same bullet points across the series. "
+            "Do not duplicate the same marketing phrases."
+        ),
+        (
+            "Typography must be visually clean and readable. "
+            "Do not place too much text near edges. "
+            "Do not let text collide with the product. "
+            "Keep clear hierarchy between headline, bullets, and supporting text."
+        ),
+        (
+            "CRITICAL TEXT QUALITY RULES: "
+"ULTRA TEXT VALIDATION RULES: "
+"FORBIDDEN GENERIC WORDS: "
+"Do not use generic phrases like: powerful, amazing, best, great, premium, high quality. "
+"Always replace with specific, concrete, factual phrases. "
+"Use numbers, specs, measurable benefits instead of vague marketing. "
+
+"Before rendering any text, internally validate spelling and grammar at least 3 times. "
+"Never output distorted, broken, or mixed-language words. "
+"Use only clean Russian language or selected UI language. "
+"Prefer short, clear, high-impact phrases (1-3 words). "
+"If unsure about spelling — simplify or remove the text. "
+"All numbers, units, and symbols must be accurate and correctly formatted. "
+"Text must look like professional marketplace typography, not AI-generated. "
+"Absolutely no typos, no strange letters, no artifacts. "
+
+            "All text must be perfectly readable, clean, and error-free. "
+            "Do not generate broken words, distorted letters, mixed alphabets, fake symbols, or corrupted brand names. "
+            "Use only very simple marketplace-friendly wording. "
+            "Prefer 1 to 3 word phrases instead of long sentences. "
+            "If wording is uncertain, reduce text instead of guessing. "
+            "If a brand name is uncertain, do not show the brand text."
+        ),
+        (
+            "VISUAL TEXT STYLE RULES: "
+"PREMIUM VISUAL STYLE: "
+"TYPOGRAPHY VARIATION RULES: "
+"Use varied typography styles: bold titles, minimal captions, badge text. "
+"Use different text containers: glass, neon, solid, gradient, minimal. "
+"Do not repeat the same text style across cards. "
+
+"Use cinematic lighting, reflections, soft shadows, glow effects. "
+"Use premium gradients, depth, and realistic highlights. "
+"The product must look expensive and high-end. "
+"Avoid flat and boring compositions. "
+
+            "Use varied premium typography hierarchy: bold title, semi-bold feature lines, compact supporting labels. "
+            "Use contrasting text colors, accent labels, colored pills, glossy badges, and highlight blocks. "
+            "Do not rely on flat white text everywhere. "
+            "Use glow, shadow, dark backing plates, or contrast chips when needed for readability."
+        ),
+        (
+            "PREMIUM DESIGN ENHANCEMENT RULES: "
+"LAYOUT RANDOMIZATION RULES: "
+"SLIDE TYPE RULES: "
+"Generate different types of slides: HERO, BENEFITS, SPECS, CLOSE-UP, LIFESTYLE. "
+"Each slide must follow its own design logic and composition. "
+"HERO: strong visual focus and main selling point. "
+"BENEFITS: feature highlights with badges. "
+"SPECS: clean technical blocks with numbers. "
+"CLOSE-UP: product details and materials. "
+"LIFESTYLE: usage context and emotional appeal. "
+
+"Each generated card must randomly vary layout structure. "
+"Randomize: text position (top, side, bottom), product angle, composition style. "
+"Use different layout types: centered, diagonal, asymmetric, floating. "
+"Each card must look like a unique design, not a template. "
+
+            "Add strong marketplace selling elements: premium badges, feature chips, info cards, number highlights, and clean selling callouts. "
+            "Use richer depth, reflections, shadows, and premium commercial lighting. "
+            "The card must feel visually expensive, high-converting, and more impressive than standard marketplace designer work."
+        ),
+        (
+            "PRODUCT INTEGRITY RULES: "
+            "Preserve the uploaded product exactly as the main object. "
+            "Do not redesign, reshape, stylize, deform, or reinterpret the product. "
+            "Do not change product proportions, camera block layout, materials, or core identity."
+        ),
+        (
+            "FACTUAL SAFETY RULES: "
+            "Do not invent exact specifications, model details, performance numbers, battery life, or technical facts unless clearly known from the product itself. "
+            "Prefer safe generic commercial wording over fake precision."
+        ),
+        (
+            "GENERATION VARIATION RULES: "
+            "Each new generation must feel visually fresh and unique. "
+            "Use different compositions, lighting setups, badge styles, accent arrangements, and graphic treatments across separate generations. "
+            "Within one series keep visual DNA consistent, but across new generations avoid repeating the same exact look."
+        ),
+    ]
+
+    if visual_profile:
+        parts.append(_visual_profile_rule(visual_profile))
+
+    if scene_text:
+        parts.append(f"Preferred scene and mood tags: {scene_text}.")
+
+    if feature_text:
+        parts.append(
+            f"Use these product points when relevant, but do not force all of them: {feature_text}."
+        )
+
+    parts.append(
+        "Create a finished premium marketplace infographic card image. "
+        "The visual design, colors, background, layout, lighting, and graphic accents must be chosen by AI automatically. "
+        "Keep this slide visually consistent with the rest of the series, but give it its own composition, hierarchy, and angle."
+    )
+
+    return "\n\n".join(parts)
+
+
+def build_series_prompts(
+    *,
+    product_title: str,
+    brand: str,
+    category: str,
+    category_type: str,
+    marketplace: str,
+    marketplace_profile: dict[str, Any],
+    language_mode: str,
+    slides: list[dict[str, Any]],
+    scene_tags: list[str] | None = None,
+    extra_features: list[str] | None = None,
+    visual_profile: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+
+    for index, slide in enumerate(slides, start=1):
+        prompt = build_card_prompt(
+            product_title=product_title,
+            brand=brand,
+            category=category,
+            category_type=category_type,
+            marketplace=marketplace,
+            marketplace_profile=marketplace_profile,
+            language_mode=language_mode,
+            slide=slide,
+            scene_tags=scene_tags,
+            extra_features=extra_features,
+            visual_profile=visual_profile,
+        )
+        result.append(
+            {
+                "index": index,
+                "slide_key": slide.get("key", f"slide_{index}"),
+                "prompt": prompt,
+            }
+        )
+
+    return result

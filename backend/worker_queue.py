@@ -19,6 +19,7 @@ def run_worker():
                     select(GenerationJob)
                     .where(GenerationJob.status == "queued")
                     .order_by(GenerationJob.created_at)
+                    .with_for_update(skip_locked=True)
                 ).first()
 
                 if not job:
@@ -55,6 +56,20 @@ def run_worker():
 
         except Exception as e:
             print("❌ WORKER ERROR:", e)
+
+            try:
+                with Session(engine) as session:
+                    failed_job = session.get(GenerationJob, job.id)
+                    if failed_job and failed_job.status == "processing":
+                        failed_job.status = "failed"
+                        failed_job.error_message = str(e)
+                        failed_job.finished_at = datetime.utcnow()
+                        session.add(failed_job)
+                        session.commit()
+                        print(f"💀 JOB {failed_job.id} MARKED FAILED")
+            except Exception as inner_e:
+                print("❌ FAILED TO MARK JOB:", inner_e)
+
             time.sleep(3)
 
 
