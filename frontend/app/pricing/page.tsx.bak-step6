@@ -726,65 +726,17 @@ useEffect(() => {
               </div>
 
               <button
-                onClick={async () => {
+                onClick={() => {
                   if (!selectedPayment) {
                     alert(t.choosePayment)
                     return
                   }
 
-                  try {
-                    const token = localStorage.getItem("access_token")
-                    if (!token) {
-                      alert("Вы не авторизованы")
-                      return
-                    }
-
-                    // получаем профиль
-                    const profileRes = await fetch("/api/auth/profile", {
-                      headers: {
-                        Authorization: Bearer ${token}
-                      }
-                    })
-
-                    const profile = await profileRes.json()
-
-                    if (!profile?.email) {
-                      alert("Ошибка получения профиля")
-                      return
-                    }
-
-                    // создаём заказ
-                    const orderRes = await fetch("/api/payments/create-order", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: Bearer ${token}
-                      },
-                      body: JSON.stringify({
-                        email: profile.email,
-                        tariff_name: currentPlan?.name,
-                        provider: selectedPayment
-                      })
-                    })
-
-                    const orderData = await orderRes.json()
-
-                    if (!orderData.success) {
-                      alert("Ошибка создания заказа")
-                      return
-                    }
-
-                    // редирект на оплату
-                    if (selectedPayment === "payme") {
-                      window.location.href = orderData.payme_url
-                    } else if (selectedPayment === "click") {
-                      window.location.href = orderData.click_url
-                    }
-
-                  } catch (err) {
-                    console.error(err)
-                    alert("Ошибка оплаты")
-                  }
+                  alert(
+                    selectedPayment === "click"
+                      ? "Дальше подключим официальный checkout Click"
+                      : "Дальше подключим официальный checkout Payme"
+                  )
                 }}
                 style={{
                   width: "100%",

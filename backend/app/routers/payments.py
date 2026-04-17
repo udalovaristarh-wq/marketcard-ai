@@ -7,11 +7,12 @@ from app.models.payment_order import PaymentOrder
 
 
 import base64
+import os
 
-PAYME_MERCHANT_ID = "TEST_MERCHANT_ID"
-PAYME_BASE_URL = "https://test.paycom.uz"
-CLICK_SERVICE_ID = "TEST_SERVICE_ID"
-CLICK_MERCHANT_ID = "TEST_MERCHANT_ID"
+PAYME_MERCHANT_ID = os.getenv("PAYME_MERCHANT_ID", "").strip()
+PAYME_BASE_URL = os.getenv("PAYME_BASE_URL", "https://checkout.paycom.uz").strip().rstrip("/")
+CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID", "").strip()
+CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "").strip()
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 

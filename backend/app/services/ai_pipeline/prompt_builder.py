@@ -263,111 +263,43 @@ def _visual_profile_rule(visual_profile: dict[str, Any]) -> str:
 def _premium_design_rule() -> str:
     return (
         "Push visual quality to elite marketplace level. "
+        "Make the design visually rich, premium, bold, and scroll-stopping. "
+        "Avoid sterile minimalism if it makes the card boring. "
+        "Use layered composition, depth, premium lighting, contrast, and strong product focus. "
+        "Use beautiful premium backgrounds, not flat empty backgrounds. "
+        "The design must feel intentionally art-directed and visually expensive. "
 
-        "VISUAL IMPACT RULES:
-"
-        "- Make the design visually rich, premium, bold, and scroll-stopping.
-"
-        "- Avoid sterile minimalism if it makes the card boring.
-"
-        "- Use layered composition, depth, premium lighting, contrast, and strong product focus.
-"
-        "- Use beautiful premium backgrounds, not flat empty backgrounds.
-"
-        "- The design must feel intentionally art-directed and visually expensive.
-"
+        "Use premium infographic plates, elegant badges, stylish callout blocks, accent shapes, and refined highlight zones. "
+        "Use different visual concepts for different slides and products. "
+        "Vary composition, badge style, block shapes, text placement, accent lines, and hierarchy. "
+        "Use controlled design variety, not one repetitive template. "
 
-        "GRAPHIC SYSTEM:
-"
-        "- Use premium infographic plates, elegant badges, stylish callout blocks, accent shapes, and refined highlight zones.
-"
-        "- Use different visual concepts for different slides and products.
-"
-        "- Vary composition, badge style, block shapes, text placement, accent lines, and hierarchy.
-"
-        "- Use controlled design variety, not one repetitive template.
-"
+        "Use strong premium color combinations chosen specifically for the product. "
+        "Accent colors, support colors, and text colors may vary when it improves the design. "
+        "Use different text hierarchy levels: strong headline, clean support text, premium badges, benefit accents. "
+        "Typography may vary in scale, weight, emphasis, and placement to create a more premium result. "
 
-        "COLOR AND TYPOGRAPHY:
-"
-        "- Use strong premium color combinations chosen specifically for the product.
-"
-        "- Accent colors, support colors, and text colors may vary when it improves the design.
-"
-        "- Use different text hierarchy levels: strong headline, clean support text, premium badges, benefit accents.
-"
-        "- Typography may vary in scale, weight, emphasis, and placement to create a more premium result.
-"
+        "Some products may look better in dark premium style, some in bright premium style, some in bold commercial style. "
+        "Choose the most beautiful and commercially strong style for this exact product automatically. "
+        "Every result must feel unique, premium, and designer-made. "
 
-        "STYLE VARIATION:
-"
-        "- Some products may look better in dark premium style, some in bright premium style, some in bold commercial style.
-"
-        "- Choose the most beautiful and commercially strong style for this exact product automatically.
-"
-        "- Every result must feel unique, premium, and designer-made.
-"
-
-        "IMPORTANT:
-"
-        "- The result must not look cheap, generic, flat, basic, or template-generated.
-"
-        "- The final card must make designers respect the quality."
+        "The result must not look cheap, generic, flat, basic, or template-generated. "
+        "The final card must make designers respect the quality."
     )
 
 
 def _copy_guidance(category_type: str) -> str:
     return (
         "Generate HIGH-CONVERSION marketplace copy. "
-        "Focus ONLY on benefits, emotions, and real user value. "
-
-        "STRICT RULES:
-"
-        "- Do NOT use generic phrases like 'high quality', 'optimal', 'good material'.
-"
-        "- Do NOT describe obvious things.
-"
-        "- Do NOT repeat product name.
-"
-        "- Do NOT sound like a catalog.
-"
-
-        "COPY STYLE:
-"
-        "- Speak like a top marketplace seller.
-"
-        "- Each phrase must answer: WHY SHOULD I BUY THIS?
-"
-        "- Use real-life benefits (comfort, time saving, durability, ease of use).
-"
-        "- Use short powerful phrases.
-"
-
-        "EXAMPLES OF GOOD COPY:
-"
-        "- comfortable sleep every night
-"
-        "- does not lose shape over time
-"
-        "- soft support for neck and head
-"
-        "- suitable for daily use
-"
-
-        "EXAMPLES OF BAD COPY (FORBIDDEN):
-"
-        "- high quality material
-"
-        "- optimal height
-"
-        "- modern design
-"
-        "- good product
-"
-
-        "If you are unsure — simplify and make it more human.
-"
-        "All text must feel natural, trustworthy, and commercially strong."
+        "Focus only on benefits, emotions, and real user value. "
+        "Do not use generic filler phrases like high quality, optimal, modern design, or good material. "
+        "Do not describe obvious things. "
+        "Do not sound like a dry catalog. "
+        "Each phrase must answer why the user should buy this product. "
+        "Use short, strong, human, marketplace-ready wording. "
+        "Use real-life value: comfort, convenience, durability, practical use, pleasant feeling, daily benefit. "
+        "If wording is weak, simplify it and make it more natural. "
+        "All text must feel commercially strong, trustworthy, and easy to read."
     )
 
 
