@@ -601,7 +601,7 @@ const inputStyle: CSSProperties = {
   borderRadius: "16px",
   border: "1px solid rgba(255,255,255,0.14)",
   background: "#2a313b",
-  color: "#ffffff",
+  color: "#111827",
   padding: "0 48px 0 16px",
   fontSize: "18px",
   fontWeight: 600,
@@ -2737,11 +2737,14 @@ const handleDownloadPng = async () => {
               src={fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]}
               alt="Предпросмотр изображения"
               style={{
-                maxWidth: "100%",
-                maxHeight: "280px",
+                width: "auto",
+                height: "auto",
+                maxWidth: "90%",
+                maxHeight: "520px",
                 objectFit: "contain",
                 borderRadius: "14px",
                 display: "block",
+                boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
               }}
             />
           ) : (
@@ -2795,6 +2798,30 @@ const handleDownloadPng = async () => {
           >
             {isFixingImage ? "Исправление..." : "Исправить ошибки генерации"}
           </button>
+
+          {fixedImages[selectedFixIndex] ? (
+            <a
+              href={fixedImages[selectedFixIndex]}
+              download={`fixed_image_${selectedFixIndex + 1}.png`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "16px",
+                background: "linear-gradient(135deg, #facc15 0%, #eab308 100%)",
+                color: "#ffffff",
+                fontWeight: 900,
+                fontSize: "18px",
+                textDecoration: "none",
+                border: "1px solid rgba(255,255,255,0.14)",
+                padding: "0 20px",
+              }}
+            >
+              Скачать PNG
+            </a>
+          ) : null}
         </div>
       </div>
 

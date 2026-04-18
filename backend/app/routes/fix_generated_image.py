@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from PIL import Image, ImageOps
 
 from app.services.ai_pipeline.image_generator import generate_card_image
 
@@ -56,19 +57,52 @@ Important:
     fixed_name = f"{image_path.stem}_fixed_{uuid4().hex[:8]}.png"
     output_path = source_folder / fixed_name
 
+    with Image.open(image_path) as img:
+        original_width, original_height = img.size
+
+    if original_width == original_height:
+        openai_size = "1024x1024"
+    elif original_height > original_width:
+        openai_size = "1024x1536"
+    else:
+        openai_size = "1536x1024"
+
+    with Image.open(image_path) as original_img:
+        original_width, original_height = original_img.size
+
+    if original_width == original_height:
+        openai_size = "1024x1024"
+    elif original_height > original_width:
+        openai_size = "1024x1536"
+    else:
+        openai_size = "1536x1024"
+
     try:
         result = generate_card_image(
             product_image_path=str(image_path),
             prompt=fix_prompt,
             output_path=str(output_path),
-            size="1024x1536",
-            final_size=None,
+            size=openai_size,
+            final_size=(original_width, original_height),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"fix generation failed: {e}")
 
+    with Image.open(output_path) as fixed_img:
+        fixed_width, fixed_height = fixed_img.size
+
+    # ЖЁСТКО приводим к исходному размеру
+    with Image.open(output_path) as img:
+        img = ImageOps.fit(img, (original_width, original_height))
+        img.save(output_path)
+
+    
     return {
         "success": True,
         "fixed_image_url": f"/generated_cards/{source_folder.name}/{fixed_name}",
+        "original_width": original_width,
+        "original_height": original_height,
+        "fixed_width": fixed_width,
+        "fixed_height": fixed_height,
         "meta": result,
     }
