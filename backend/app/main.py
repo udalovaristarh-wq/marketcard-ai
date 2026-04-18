@@ -11,11 +11,17 @@ from fastapi.staticfiles import StaticFiles
 from app.db import create_db_and_tables
 from app.routers.auth import router as auth_router
 from app.routers.products import router as products_router
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.ai_generate import router as ai_router
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.listing_generate import router as listing_generate_router
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.full_generate import router as full_generate_router
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.queue_generate import router as queue_generate_router
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.queue_generate import router as queue_generate_router
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.ikpu import router as ikpu_router
 from app.routers import admin
 from app.routers.admin_finance import router as admin_finance_router
@@ -59,6 +65,7 @@ app.include_router(listing_generate_router, prefix="/listing", tags=["listing"])
 app.include_router(full_generate_router, prefix="", tags=["full_generate"])
 app.include_router(queue_generate_router)
 app.include_router(queue_generate_router)
+from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.queue_generate import router as queue_generate_router
 app.include_router(ikpu_router)
 app.include_router(admin.router)
@@ -71,3 +78,5 @@ def on_startup() -> None:
 
 
 app.include_router(system_router)
+
+app.include_router(fix_generated_image_router)

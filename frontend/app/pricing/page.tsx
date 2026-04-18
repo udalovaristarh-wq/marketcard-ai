@@ -742,7 +742,7 @@ useEffect(() => {
                     // получаем профиль
                     const profileRes = await fetch("/api/auth/profile", {
                       headers: {
-                        Authorization: Bearer ${token}
+                        Authorization: `Bearer ${token}`
                       }
                     })
 
@@ -758,11 +758,11 @@ useEffect(() => {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
-                        Authorization: Bearer ${token}
+                        Authorization: `Bearer ${token}`
                       },
                       body: JSON.stringify({
                         email: profile.email,
-                        tariff_name: currentPlan?.name,
+                        tariff_name: currentPlan?.title,
                         provider: selectedPayment
                       })
                     })

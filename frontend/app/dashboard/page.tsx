@@ -947,6 +947,13 @@ export default function DashboardPage() {
   const [languageMode, setLanguageMode] = useState<LanguageMode>("ru")
   const [variantCount, setVariantCount] = useState(5)
   const [generatedVariants, setGeneratedVariants] = useState<string[]>([])
+
+  const [fixPrompt, setFixPrompt] = useState("")
+  const [isFixingImage, setIsFixingImage] = useState(false)
+  const [fixedImageUrl, setFixedImageUrl] = useState("")
+
+  const [selectedFixIndex, setSelectedFixIndex] = useState(0)
+  const [fixedImages, setFixedImages] = useState<Record<number, string>>({})
   const [isGenerating, setIsGenerating] = useState(false)
   const [listingData, setListingData] = useState<ListingResponse | null>(null)
   const [listingReady, setListingReady] = useState(false)
@@ -1427,7 +1434,67 @@ const ikpuPromise = Promise.resolve()
 }
 }
 
-  const handleDownloadPng = async () => {
+  
+  const handleFixGeneratedImage = async () => {
+    try {
+      if (!generatedVariants || generatedVariants.length === 0) {
+        alert("Сначала сгенерируйте изображение")
+        return
+      }
+
+      if (!fixPrompt.trim()) {
+        alert("Напишите, что нужно исправить")
+        return
+      }
+
+      const selectedImage =
+        fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]
+
+      if (!selectedImage) {
+        alert("Не выбрано изображение для исправления")
+        return
+      }
+
+      setIsFixingImage(true)
+
+      const imageUrl = selectedImage.replace("https://marketcard.uz", "")
+
+      const res = await fetch("https://marketcard.uz/api/fix-generated-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image_url: imageUrl,
+          fix_prompt: fixPrompt,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data?.success) {
+        alert(JSON.stringify(data))
+        return
+      }
+
+      const finalUrl = `https://marketcard.uz${data.fixed_image_url}`
+
+      setFixedImageUrl(finalUrl)
+      setFixedImages((prev) => ({
+        ...prev,
+        [selectedFixIndex]: finalUrl,
+      }))
+      setFixPrompt("")
+      alert("Исправленная версия готова")
+    } catch (e) {
+      console.error(e)
+      alert("Ошибка исправления")
+    } finally {
+      setIsFixingImage(false)
+    }
+  }
+
+const handleDownloadPng = async () => {
     try {
   if (!generatedVariants || generatedVariants.length === 0) {
     alert("Сначала сгенерируйте карточки")
@@ -2591,6 +2658,145 @@ const ikpuPromise = Promise.resolve()
         </div>
       </div>
     )}
+
+
+      <div
+        style={{
+          marginTop: "20px",
+          padding: "20px",
+          borderRadius: "24px",
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
+          backdropFilter: "blur(12px)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "26px",
+            fontWeight: 900,
+            marginBottom: "18px",
+          }}
+        >
+          Исправление изображения
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "10px",
+            marginBottom: "14px",
+          }}
+        >
+          {generatedVariants.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedFixIndex(index)}
+              style={{
+                border: "none",
+                borderRadius: "12px",
+                padding: "10px 14px",
+                background:
+                  selectedFixIndex === index
+                    ? "linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)"
+                    : "rgba(255,255,255,0.08)",
+                color: "#ffffff",
+                fontWeight: 800,
+                fontSize: "14px",
+                cursor: "pointer",
+                boxShadow:
+                  selectedFixIndex === index
+                    ? "0 10px 24px rgba(34,211,238,0.22)"
+                    : "none",
+              }}
+            >
+              Фото {index + 1}
+            </button>
+          ))}
+        </div>
+
+        <div
+          style={{
+            minHeight: "320px",
+            borderRadius: "20px",
+            border: "1px dashed rgba(255,255,255,0.18)",
+            background: "rgba(255,255,255,0.03)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "18px",
+            color: "rgba(255,255,255,0.72)",
+            fontSize: "22px",
+            fontWeight: 700,
+            textAlign: "center",
+          }}
+        >
+          {(fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]) ? (
+            <img
+              src={fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]}
+              alt="Предпросмотр изображения"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "280px",
+                objectFit: "contain",
+                borderRadius: "14px",
+                display: "block",
+              }}
+            />
+          ) : (
+            <span>Тут появится исправленная версия</span>
+          )}
+        </div>
+
+        <div
+          style={{
+            marginTop: "16px",
+            display: "grid",
+            gridTemplateColumns: "1fr 260px",
+            gap: "12px",
+            alignItems: "stretch",
+          }}
+        >
+          <textarea
+            value={fixPrompt}
+            onChange={(e) => setFixPrompt(e.target.value)}
+            placeholder="Напишите, что нужно изменить"
+            style={{
+              minHeight: "74px",
+              borderRadius: "14px",
+              border: "1px solid rgba(255,255,255,0.14)",
+              background: "rgba(255,255,255,0.05)",
+              color: "#ffffff",
+              padding: "14px 16px",
+              resize: "vertical",
+              outline: "none",
+              fontSize: "15px",
+            }}
+          />
+
+          <button
+            onClick={handleFixGeneratedImage}
+            disabled={isFixingImage}
+            style={{
+              border: "none",
+              borderRadius: "16px",
+              background: isFixingImage
+                ? "rgba(34,211,238,0.45)"
+                : "linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)",
+              color: "#ffffff",
+              fontWeight: 900,
+              fontSize: "18px",
+              cursor: isFixingImage ? "not-allowed" : "pointer",
+              boxShadow: "0 10px 24px rgba(34,211,238,0.22)",
+              opacity: isFixingImage ? 0.7 : 1,
+              padding: "0 20px",
+            }}
+          >
+            {isFixingImage ? "Исправление..." : "Исправить ошибки генерации"}
+          </button>
+        </div>
+      </div>
 
     {activePage === "listing" && (
       <div
