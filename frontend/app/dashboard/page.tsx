@@ -2660,7 +2660,8 @@ const handleDownloadPng = async () => {
     )}
 
 
-      <div
+      {activePage === "generator" && (
+<div
         style={{
           marginTop: "20px",
           padding: "20px",
@@ -2825,7 +2826,9 @@ const handleDownloadPng = async () => {
         </div>
       </div>
 
-    {activePage === "listing" && (
+    
+)}
+{activePage === "listing" && (
       <div
         style={{
           maxWidth: "1100px",
