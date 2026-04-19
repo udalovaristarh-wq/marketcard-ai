@@ -199,6 +199,37 @@ function SlideView({
 
   return (
     <main className="page">
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        >
+          <source src="/bg.mp4" type="video/mp4" />
+        </video>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.35)",
+          }}
+        />
+      </div>
+
       <div className="cursorGlow" style={cursorStyle} />
 
       <style jsx>{`
@@ -1267,7 +1298,7 @@ overflow: hidden;
             </div>
           </div>
 
-          <div className="right">
+          <div className="right" style={{ display: "none" }}>
             <div className="sliderBlock" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
               <div className="examples" style={{ width: "340px", margin: "0 auto 14px", textAlign: "center" }}>{t.examples}</div>
 
