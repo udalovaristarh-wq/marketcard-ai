@@ -90,6 +90,8 @@ export default function RegisterPage() {
         color: "white",
         fontFamily: "Arial, sans-serif",
         display: "flex",
+        position: "relative",
+        zIndex: 1,
         alignItems: "center",
         justifyContent: "center",
         padding: "24px",
@@ -243,6 +245,37 @@ export default function RegisterPage() {
             Войти
           </span>
         </div>
+      </div>
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: -2,
+          overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      >
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        >
+          <source src="/register-bg.mp4" type="video/mp4" />
+        </video>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            zIndex: -1,
+          }}
+        />
       </div>
     </main>
   )

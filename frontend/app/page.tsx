@@ -1385,6 +1385,12 @@ overflow: hidden;
     © 2026 MarketCard AI
   </p>
 </div>
+<div style={{position: "fixed", bottom: "20px", left: "0", width: "100%", textAlign: "center", zIndex: 50, color: "#ffffffaa", fontSize: "14px"}}>
+<div style={{marginBottom: "6px"}}>MarketCard © 2026</div>
+<a href="/privacy" style={{marginRight: "20px"}}>Политика конфиденциальности</a>
+<a href="/terms">Пользовательское соглашение</a>
+</div>
+
     </main>
   )
 }
