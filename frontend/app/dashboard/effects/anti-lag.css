@@ -1,0 +1,56 @@
+/* анти-лаг без заметной потери дизайна */
+
+main {
+  contain: layout paint style;
+}
+
+main button,
+main input,
+main textarea,
+main select,
+main img {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+html.dashboard-cursor-glow main::before {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* уменьшение нагрузки от постоянных теней */
+main button,
+main input,
+main textarea,
+main select {
+  will-change: auto;
+}
+
+/* hover-эффекты только на desktop */
+@media (hover: hover) and (pointer: fine) {
+  main button:hover {
+    transform: translateY(-1px) scale(1.02);
+  }
+}
+
+/* на системах с reduced motion — полностью лёгкий режим */
+@media (prefers-reduced-motion: reduce) {
+  html.dashboard-cursor-glow main::before {
+    transition: none !important;
+  }
+
+  main button,
+  main input,
+  main textarea,
+  main select {
+    transition: none !important;
+  }
+}
+
+/* glow дешевле для браузера */
+html.dashboard-cursor-glow main::before {
+  filter: blur(12px) !important;
+  opacity: calc(var(--mc-opacity, 0) * 0.82) !important;
+  transition: opacity 90ms linear !important;
+}
