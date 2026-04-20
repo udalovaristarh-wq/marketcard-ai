@@ -1,4 +1,6 @@
 "use client"
+import "./cursor-glow.css"
+import "./perf.css"
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -1608,7 +1610,39 @@ const handleDownloadPng = async () => {
     competitorPrice,
   ])
 
-  if (!authChecked) return null 
+  
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add("dashboard-cursor-glow")
+
+    const handleMove = (e: MouseEvent) => {
+      const main = document.querySelector("main")
+      if (!main) return
+
+      const rect = main.getBoundingClientRect()
+      root.style.setProperty("--mc-x", (e.clientX - rect.left) + "px")
+      root.style.setProperty("--mc-y", (e.clientY - rect.top) + "px")
+      root.style.setProperty("--mc-opacity", "1")
+    }
+
+    const handleLeave = () => {
+      root.style.setProperty("--mc-opacity", "0")
+    }
+
+    window.addEventListener("mousemove", handleMove)
+    window.addEventListener("mouseout", handleLeave)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMove)
+      window.removeEventListener("mouseout", handleLeave)
+      root.classList.remove("dashboard-cursor-glow")
+      root.style.removeProperty("--mc-x")
+      root.style.removeProperty("--mc-y")
+      root.style.removeProperty("--mc-opacity")
+    }
+  }, [])
+
+if (!authChecked) return null 
   return (
     <>
       <main

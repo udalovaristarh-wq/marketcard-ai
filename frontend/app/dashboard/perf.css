@@ -1,0 +1,47 @@
+main {
+  isolation: isolate;
+  overflow-x: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+main > div {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+main aside,
+main section {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
+}
+
+/* большие блоки рендерятся экономнее */
+main section > div {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
+/* формы и картинки в отдельных слоях */
+main button,
+main input,
+main textarea,
+main img {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* меньше repaint на интерактиве */
+main button,
+main input,
+main textarea {
+  will-change: transform;
+}
+
+@media (max-width: 768px) {
+  main section > div {
+    content-visibility: visible;
+    contain-intrinsic-size: auto;
+  }
+}
