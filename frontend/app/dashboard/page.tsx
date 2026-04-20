@@ -678,8 +678,8 @@ function SummaryLine({
 }) {
   return (
     <div
-      style={{          marginTop: "-750px",
-          overflow: "visible",
+      style={{          
+          overflow: "hidden",
 
         padding: "14px 16px",
         borderRadius: "16px",
@@ -1627,8 +1627,8 @@ const handleDownloadPng = async () => {
     gridTemplateColumns: isMobile ? "1fr" : "320px minmax(0, 1fr)", 
     position: "relative",
     minHeight: "auto",
-        overflow: "visible",
-        overflowY: "visible",
+        overflow: "hidden",
+        overflowY: "hidden",
   }}
 >
 {isMobile && (
@@ -1805,9 +1805,9 @@ const handleDownloadPng = async () => {
         <section
   style={{
     padding: "24px",
-    paddingBottom: "520px",
+    paddingBottom: "24px",
     overflowX: "hidden",
-    overflowY: "visible",
+    overflowY: "hidden",
     overflow: "visible",
     height: "auto",
     maxHeight: "none",
@@ -2650,6 +2650,7 @@ const handleDownloadPng = async () => {
 <div
         style={{
           marginTop: "-1005px",
+          marginBottom: "520px",
           marginLeft: isMobile ? "0" : "464px",
           width: isMobile ? "100%" : "calc(100% - 464px)",
           padding: "20px",
