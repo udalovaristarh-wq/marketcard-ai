@@ -1616,7 +1616,7 @@ const handleDownloadPng = async () => {
           columnGap: isMobile ? "0" : "28px",
     minHeight: "100vh",
           background:
-            "linear-gradient(135deg, #020617 0%, #020617 40%, #0a0f2c 100%)",
+            "radial-gradient(circle at top left, rgba(59,130,246,0.20), transparent 24%), radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 24%), linear-gradient(135deg,#0b1020,#111827,#172033)",
           color: "white",
           fontFamily: "Arial, sans-serif",
         }}
