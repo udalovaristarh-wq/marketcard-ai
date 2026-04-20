@@ -1,3 +1,4 @@
+from app.routes import support
 from app.routers.payments import router as payments_router
 from app.routers.click import router as click_router
 
@@ -71,6 +72,7 @@ app.include_router(ikpu_router)
 app.include_router(admin.router)
 app.include_router(admin_finance_router)
 app.include_router(admin_analytics_router)
+app.include_router(support.router)
 
 @app.on_event("startup")
 def on_startup() -> None:

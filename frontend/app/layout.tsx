@@ -1,3 +1,4 @@
+import SupportWidget from "./components/support-widget/SupportWidget";
 export default function RootLayout({
   children,
 }: {
@@ -13,6 +14,7 @@ export default function RootLayout({
         }}
       >
         {children}
+        <SupportWidget />
 
         <footer
           style={{
