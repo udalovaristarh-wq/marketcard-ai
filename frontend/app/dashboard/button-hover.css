@@ -1,0 +1,40 @@
+main button {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease,
+    background 180ms ease,
+    opacity 180ms ease;
+  transform-origin: center;
+}
+
+main button:hover {
+  transform: translateY(-1px) scale(1.035);
+  filter: brightness(1.08);
+  box-shadow:
+    0 10px 24px rgba(34, 211, 238, 0.18),
+    0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+
+main button:active {
+  transform: translateY(0) scale(0.985);
+  filter: brightness(0.98);
+}
+
+main button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(34, 211, 238, 0.32),
+    0 10px 24px rgba(34, 211, 238, 0.16);
+}
+
+@media (max-width: 768px) {
+  main button:hover {
+    transform: none;
+    filter: none;
+  }
+
+  main button:active {
+    transform: scale(0.985);
+  }
+}
