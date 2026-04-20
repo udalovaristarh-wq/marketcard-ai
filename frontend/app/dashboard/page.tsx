@@ -1,4 +1,5 @@
 "use client"
+import "./input-premium.css"
 import "./button-hover.css"
 import "./cursor-glow.css"
 import "./perf.css"
