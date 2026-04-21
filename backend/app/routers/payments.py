@@ -184,7 +184,9 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             user.tariff_generations_left = 200
 
         order.status = "paid"
-        order.paid_at = datetime.utcnow()
+        if not order.paid_at:
+            order.paid_at = datetime.utcnow()
+
 
         session.add(user)
         session.add(order)
