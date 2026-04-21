@@ -977,7 +977,10 @@ useEffect(() => {
 
     const ping = () => {
       fetch(`https://marketcard.uz/api/system/ping?email=${encodeURIComponent(userEmail)}`, {
+    const res = await fetch("/api/fix-image", {
         method: "POST",
+          headers: {
+          },
       }).catch(() => {})
     }
 
@@ -994,6 +997,13 @@ useEffect(() => {
 
   try {
     console.log("ACTIVATE 4 BEFORE FETCH")
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        alert("Сессия истекла. Войдите заново.")
+        router.push("/login")
+        return
+      }
+
     const res = await fetch(
       `https://tasnif.soliq.uz/api/cl-api/classifier/search?search=${encodeURIComponent(ikpuQuery)}`
     )
@@ -1149,49 +1159,46 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   }
 
   const loadProfile = async () => {
+    setProfileLoading(true)
     try {
-      setProfileLoading(true)
-    const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("access_token")
+      const email = localStorage.getItem("user_email")
 
-    const email = localStorage.getItem("user_email")
+      if (!token || !email) {
+        setProfile(null)
+        return
+      }
 
-if (!token || !email) {
-  setProfileLoading(false)
-  setProfile(null)
-  return
-}
+      const res = await fetch(
+        `https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
 
-const res = await fetch(
-`https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email || "")}`,
- {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-})
+      if (res.status === 401) {
+        localStorage.removeItem("access_token")
+        localStorage.removeItem("user_email")
+        setProfile(null)
+        router.push("/login")
+        return
+      }
+
+      if (res.status === 403) {
+        const data = await res.json().catch(() => null)
+        const message = data?.detail || "Аккаунт заблокирован"
+        alert(message)
+        setProfile(null)
+        return
+      }
 
       if (!res.ok) {
-  const errorData = await res.json().catch(() => null)
-
-  if (res.status === 403) {
-    const message = errorData?.detail || "Ваш аккаунт заблокирован"
-
-    document.body.innerHTML = ` 
-      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;">
-        <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
-          <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
-          <div style="font-size:18px;opacity:0.9;line-height:1.5;">
-            ${message}
-          </div>
-        </div>
-      </div>
-    `
-
-    throw new Error(message)
-  }
-
-  setProfile(null)
-  return
-}
+        setProfile(null)
+        return
+      }
 
       const data: ProfileResponse = await res.json()
       setProfile(data)
@@ -1204,7 +1211,8 @@ const res = await fetch(
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
+    
+      const token = localStorage.getItem("access_token")
     const savedEmail = localStorage.getItem("user_email")
 
     if (!token || !savedEmail) {
@@ -1237,6 +1245,7 @@ const res = await fetch(
 
   const handleLogout = () => {
     localStorage.removeItem("access_token")
+      const token = localStorage.getItem("access_token")
     localStorage.removeItem("user_email")
     router.push("/login")
   }
@@ -1250,6 +1259,14 @@ const res = await fetch(
 
   try {
     console.log("ACTIVATE 4 BEFORE FETCH")
+      
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        alert("Сессия истекла. Войдите заново.")
+        router.push("/login")
+        return
+      }
+
  // const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
  // const data = await res.json()
     setIkpuResults([])
@@ -1278,12 +1295,21 @@ const ikpuPromise = Promise.resolve()
       setActivatingTariff(true)
 
     console.log("ACTIVATE 4 BEFORE FETCH")
+      
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        alert("Сессия истекла. Войдите заново.")
+        router.push("/login")
+        return
+      }
+
       const res = await fetch(
-        `/api/payments/create-order?email=${encodeURIComponent(emailToUse)}&tariff_name=${encodeURIComponent(selectedTariff)}&provider=${encodeURIComponent(selectedPayment || "unknown")}`,
+        `https://marketcard.uz/api/payments/create-order?tariff_name=${encodeURIComponent(selectedTariff)}&provider=${encodeURIComponent(selectedPayment || "unknown")}`,
         {
+    const res = await fetch("/api/fix-image", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       )
@@ -1386,8 +1412,20 @@ const ikpuPromise = Promise.resolve()
 
     
     console.log("GEN 2 BEFORE FETCH")
+      
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        alert("Сессия истекла. Войдите заново.")
+        router.push("/login")
+        return
+      }
+
     const res = await fetch("https://marketcard.uz/api/full-generate", {
+    const res = await fetch("/api/fix-image", {
       method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
       body: formData,
     })
 
@@ -1461,12 +1499,22 @@ const ikpuPromise = Promise.resolve()
 
       const imageUrl = selectedImage.replace("https://marketcard.uz", "")
 
-      const res = await fetch("https://marketcard.uz/api/fix-generated-image", {
+      
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        alert("Сессия истекла. Войдите заново.")
+        router.push("/login")
+        return
+      }
+
+    const res = await fetch("/api/fix-image", {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+    })
           image_url: imageUrl,
           fix_prompt: fixPrompt,
         }),
