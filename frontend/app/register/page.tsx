@@ -3,11 +3,24 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+async function acceptOffer(token: string) {
+  await fetch("/api/auth/accept-offer", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "x-offer-lang": "ru",
+      "x-offer-version": "v1",
+    },
+  })
+}
+
 export default function RegisterPage() {
   const router = useRouter()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+const [offerAccepted, setOfferAccepted] = useState(false)
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -35,6 +48,11 @@ export default function RegisterPage() {
       return
     }
 
+    if (!offerAccepted) {
+      alert("Для регистрации нужно принять условия оферты")
+      return
+    }
+
     try {
       setLoading(true)
 
@@ -47,10 +65,17 @@ export default function RegisterPage() {
           full_name: name,
           email,
           password,
+          offer_accepted: offerAccepted,
+          offer_accept_lang: "ru",
+          
         }),
       })
 
       const data = await res.json().catch(() => null)
+
+      if (data?.access_token) {
+        await acceptOffer(data.access_token)
+      }
 
       if (!res.ok) {
         let message = "Ошибка регистрации"
@@ -203,6 +228,42 @@ export default function RegisterPage() {
         >
           Пароль: минимум 8 символов, заглавные и строчные буквы, цифры.
         </div>
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            marginTop: "18px",
+            padding: "14px 16px",
+            borderRadius: "16px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            cursor: "pointer",
+            lineHeight: 1.5,
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={offerAccepted}
+            onChange={(e) => setOfferAccepted(e.target.checked)}
+            style={{
+              marginTop: "3px",
+              width: "18px",
+              height: "18px",
+              cursor: "pointer",
+            }}
+          />
+          <span
+            style={{
+              color: "#e2e8f0",
+              fontSize: "14px",
+              fontWeight: 700,
+            }}
+          >
+            Я принимаю условия публичной оферты и соглашаюсь с правилами использования сервиса.
+          </span>
+        </label>
 
         <button
           onClick={handleRegister}

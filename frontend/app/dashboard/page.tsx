@@ -1469,7 +1469,7 @@ const ikpuPromise = Promise.resolve()
         body: JSON.stringify({
           image_url: imageUrl,
           fix_prompt: fixPrompt,
-          email: profile?.email  userEmail  "",
+          email: profile?.email ?? userEmail ?? "",
         }),
       })
 

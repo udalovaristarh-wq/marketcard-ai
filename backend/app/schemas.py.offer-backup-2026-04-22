@@ -6,12 +6,6 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    offer_accepted: bool = False
-    offer_accept_lang: Optional[str] = None
-    offer_accepted: bool
-    offer_accept_lang: str
-    offer_accepted: bool
-    offer_accept_lang: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -36,9 +30,6 @@ class ProfileResponse(BaseModel):
     tariff_generations_total: int
     tariff_generations_used: int
     tariff_generations_left: int
-    offer_accepted: bool = False
-    offer_accepted_at: Optional[str] = None
-    offer_accept_lang: Optional[str] = None
 
 
 class ProductCreate(BaseModel):

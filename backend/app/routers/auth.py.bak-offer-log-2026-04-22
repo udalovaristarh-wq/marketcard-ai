@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 from app.db import get_session
-from app.models import User, OfferAcceptanceLog
+from app.models import User
 from app.schemas import (
     UserRegister,
     UserLogin,
@@ -265,48 +265,3 @@ def login(data: UserLogin, session: Session = Depends(get_session)):
         "access_token": token,
         "token_type": "bearer"
     }
-
-@router.post("/accept-offer")
-def accept_offer(
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    user = session.exec(select(User).where(User.id == current_user.id)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    client_ip = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
-    accept_lang = request.headers.get("x-offer-lang", "ru")
-    offer_version = request.headers.get("x-offer-version", "v1")
-
-    user.offer_accepted = True
-
-    if hasattr(user, "offer_accepted_at"):
-        user.offer_accepted_at = datetime.utcnow()
-    if hasattr(user, "offer_accept_lang"):
-        user.offer_accept_lang = accept_lang
-    if hasattr(user, "offer_accept_ip"):
-        user.offer_accept_ip = client_ip
-    if hasattr(user, "offer_accept_user_agent"):
-        user.offer_accept_user_agent = user_agent
-
-    log = OfferAcceptanceLog(
-        user_id=user.id,
-        email=user.email,
-        accepted=True,
-        accepted_at=datetime.utcnow(),
-        accept_lang=accept_lang,
-        accept_ip=client_ip,
-        accept_user_agent=user_agent,
-        offer_version=offer_version,
-    )
-
-    session.add(user)
-    session.add(log)
-    session.commit()
-    session.refresh(user)
-
-    return {"success": True, "message": "Offer accepted"}
-
