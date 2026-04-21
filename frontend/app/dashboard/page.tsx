@@ -1469,6 +1469,7 @@ const ikpuPromise = Promise.resolve()
         body: JSON.stringify({
           image_url: imageUrl,
           fix_prompt: fixPrompt,
+          email: profile?.email  userEmail  "",
         }),
       })
 
@@ -1487,6 +1488,7 @@ const ikpuPromise = Promise.resolve()
         [selectedFixIndex]: finalUrl,
       }))
       setFixPrompt("")
+      await loadProfile()
       alert("Исправленная версия готова")
     } catch (e) {
       console.error(e)

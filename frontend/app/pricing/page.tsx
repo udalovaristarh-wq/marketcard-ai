@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 type PlanKey = "starter" | "business" | "premium"
-type PaymentMethod = "click" | "payme" | null
+type PaymentMethod = "click" | "payme" | "visa" | null
 
 type Lang = "ru" | "uz" | "en"
 
@@ -151,7 +151,7 @@ function LangButton({
         color: "white",
         cursor: "pointer",
         fontWeight: 800,
-        fontSize: "14px",
+        fontSize: "13px",
         transition: "all 0.18s ease",
         transform: active ? "scale(1.04)" : "scale(1)",
       }}
@@ -180,55 +180,53 @@ function PaymentButton({
   logo: string
   onClick: () => void
 }) {
+  const logoMap: Record<string, string> = {
+    Payme: "/payments/payme.svg",
+    Click: "/payments/click.svg",
+    VISA: "/payments/visa.svg",
+  }
+
   return (
     <button
       onClick={onClick}
       style={{
         width: "100%",
-        padding: "18px",
+        height: "92px",
+        padding: "0",
         borderRadius: "18px",
-        border: "1px solid rgba(255,255,255,0.1)",
-        background: "rgba(255,255,255,0.06)",
-        color: "white",
-        cursor: "pointer",
+        border: "1px solid rgba(255,255,255,0.16)",
+        background: "rgba(255,255,255,0.05)",
         display: "flex",
         alignItems: "center",
-        gap: "16px",
-        transition: "all 0.18s ease",
-        boxShadow: "0 14px 32px rgba(0,0,0,0.18)",
-        transform: "scale(1)",
+        justifyContent: "center",
+        cursor: "pointer",
+        overflow: "hidden",
+        boxShadow: "0 10px 24px rgba(0,0,0,0.18)",
+        transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "scale(1.03)"
+        e.currentTarget.style.transform = "translateY(-2px)"
+        e.currentTarget.style.boxShadow = "0 14px 30px rgba(0,0,0,0.24)"
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.28)"
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)"
+        e.currentTarget.style.transform = "translateY(0)"
+        e.currentTarget.style.boxShadow = "0 10px 24px rgba(0,0,0,0.18)"
+        e.currentTarget.style.borderColor = "rgba(255,255,255,0.16)"
       }}
     >
-      <div
+      <img
+        src={logoMap[title]}
+        alt={title}
         style={{
-          width: "54px",
-          height: "54px",
-          borderRadius: "16px",
-          background: color,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 900,
-          fontSize: "22px",
-          color: "white",
-          flexShrink: 0,
+          width: "88%",
+          height: "68%",
+          objectFit: "contain", display: "block", margin: "0 auto",
+                    filter: "drop-shadow(0 2px 8px rgba(255,255,255,0.08))",
+          pointerEvents: "none",
+          userSelect: "none",
         }}
-      >
-        {logo}
-      </div>
-
-      <div style={{ textAlign: "left" }}>
-        <div style={{ fontWeight: 900, fontSize: "18px" }}>{title}</div>
-        <div style={{ color: "#cbd5e1", fontSize: "14px", marginTop: "4px" }}>
-          {subtitle}
-        </div>
-      </div>
+      />
     </button>
   )
 }
@@ -258,7 +256,7 @@ function PlanCard({
     <div
       style={{
         position: "relative",
-        borderRadius: "28px",
+        borderRadius: "22px",
         background: "rgba(255,255,255,0.06)",
         border: popular
           ? "1px solid rgba(255,255,255,0.22)"
@@ -267,7 +265,7 @@ function PlanCard({
           ? "0 24px 60px rgba(0,0,0,0.34)"
           : "0 18px 44px rgba(0,0,0,0.24)",
         backdropFilter: "blur(18px)",
-        padding: "28px",
+        padding: "20px 22px",
         transform: popular ? "scale(1.03)" : "scale(1)",
         transition: "all 0.18s ease",
       }}
@@ -296,7 +294,7 @@ function PlanCard({
           height: "62px",
           borderRadius: "20px",
           background: accent,
-          marginBottom: "18px",
+          marginBottom: "12px",
           boxShadow: "0 16px 30px rgba(0,0,0,0.2)",
         }}
       />
@@ -316,13 +314,13 @@ function PlanCard({
         style={{
           height: "1px",
           background: "rgba(255,255,255,0.08)",
-          marginBottom: "18px",
+          marginBottom: "12px",
         }}
       />
 
       <div
         style={{
-          display: "grid",
+          display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
           gap: "12px",
           marginBottom: "26px",
         }}
@@ -356,7 +354,7 @@ function PlanCard({
           background: accent,
           color: "white",
           cursor: "pointer",
-          fontSize: "18px",
+          fontSize: "15px",
           fontWeight: 900,
           boxShadow: "0 14px 28px rgba(0,0,0,0.24)",
           transition: "all 0.18s ease",
@@ -546,8 +544,8 @@ useEffect(() => {
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            display: "grid", gridTemplateColumns: "1fr 1fr",
+            
             gap: "22px",
           }}
         >
@@ -618,7 +616,7 @@ useEffect(() => {
                 background: "linear-gradient(180deg,#0f172a,#111827)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 boxShadow: "0 30px 80px rgba(0,0,0,0.38)",
-                padding: "28px",
+                padding: "20px",
                 color: "white",
               }}
               onClick={(e) => e.stopPropagation()}
@@ -627,15 +625,15 @@ useEffect(() => {
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  gap: "14px",
+                  gap: "10px",
                   alignItems: "start",
-                  marginBottom: "18px",
+                  marginBottom: "12px",
                 }}
               >
                 <div>
                   <div
                     style={{
-                      fontSize: "34px",
+                      fontSize: "26px",
                       fontWeight: 900,
                       marginBottom: "8px",
                     }}
@@ -646,7 +644,7 @@ useEffect(() => {
                   <div
                     style={{
                       color: "#cbd5e1",
-                      fontSize: "17px",
+                      fontSize: "14px",
                       lineHeight: 1.6,
                       fontWeight: 700,
                     }}
@@ -681,7 +679,7 @@ useEffect(() => {
                   marginBottom: "16px",
                   color: "#e5e7eb",
                   fontWeight: 800,
-                  fontSize: "18px",
+                  fontSize: "15px",
                 }}
               >
                 {t.choosePayment}
@@ -689,11 +687,13 @@ useEffect(() => {
 
               <div
                 style={{
-                  display: "grid",
-                  gap: "14px",
-                  marginBottom: "18px",
+                  display: "grid", gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                  marginBottom: "12px",
                 }}
               >
+                
+
                 <PaymentButton
                   title="Click"
                   subtitle={t.clickText}
@@ -702,12 +702,21 @@ useEffect(() => {
                   onClick={() => setSelectedPayment("click")}
                 />
 
+                
+
                 <PaymentButton
                   title="Payme"
                   subtitle={t.paymeText}
                   color="linear-gradient(135deg,#22c55e,#16a34a)"
                   logo="P"
                   onClick={() => setSelectedPayment("payme")}
+                />
+                <PaymentButton
+                  title="VISA"
+                  subtitle="Visa"
+                  color="linear-gradient(135deg,#1d4ed8,#2563eb)"
+                  logo="V"
+                  onClick={() => setSelectedPayment("visa")}
                 />
               </div>
 
@@ -719,7 +728,7 @@ useEffect(() => {
                   color: "#cbd5e1",
                   lineHeight: 1.6,
                   fontWeight: 700,
-                  marginBottom: "18px",
+                  marginBottom: "12px",
                 }}
               >
                 {t.note}

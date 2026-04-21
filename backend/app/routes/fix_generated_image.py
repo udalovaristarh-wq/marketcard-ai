@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from sqlmodel import Session
 from PIL import Image, ImageOps
 
 from app.services.ai_pipeline.image_generator import generate_card_image
@@ -13,6 +14,7 @@ router = APIRouter(tags=["fix-image"])
 
 
 class FixImageRequest(BaseModel):
+    email: str | None = None
     image_url: str
     fix_prompt: str
 
@@ -97,6 +99,63 @@ Important:
         img.save(output_path)
 
     
+    
+    # 🔻 списание генерации (-1)
+    try:
+        email = payload.email or "udalovaristarh@gmail.com"
+        if email:
+            from app.db import engine
+            from app.models.user import User
+            from sqlmodel import select, func, Session
+
+            with Session(engine) as session:
+                user = session.exec(
+                    select(User).where(func.lower(User.email) == email.lower())
+                ).first()
+
+                if user:
+                    user.tariff_generations_used += 1
+                    user.tariff_generations_left = max(0, (user.tariff_generations_total or 0) - user.tariff_generations_used)
+                    session.add(user)
+                    session.commit()
+    except Exception as e:
+        print("FIX IMAGE USAGE ERROR:", e)
+
+    
+    # 🔻 FIX: принудительное списание генерации
+    try:
+        from app.db import engine
+        from app.models.user import User
+        from sqlmodel import Session, select
+
+        email = (payload.email or "").strip().lower() or "udalovaristarh@gmail.com"
+        print("FIX FORCE EMAIL:", email)
+
+        with Session(engine) as session:
+            user = session.exec(
+                select(User).where(User.email == email)
+            ).first()
+
+            print("FIX FORCE USER:", bool(user))
+
+            if user:
+                user.tariff_generations_used = int(user.tariff_generations_used or 0) + 1
+                user.tariff_generations_left = max(
+                    0,
+                    int(user.tariff_generations_total or 0) - user.tariff_generations_used
+                )
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+
+                print("FIX FORCE RESULT:", {
+                    "used": user.tariff_generations_used,
+                    "left": user.tariff_generations_left
+                })
+
+    except Exception as e:
+        print("FIX FORCE ERROR:", e)
+
     return {
         "success": True,
         "fixed_image_url": f"/generated_cards/{source_folder.name}/{fixed_name}",

@@ -182,7 +182,7 @@ async def full_generate_endpoint(
                         ).first()
 
                         if user:
-                            user.tariff_generations_used += 1
+                            user.tariff_generations_used += variant_count
                             session.add(user)
 
                             cost = result.get("cost", {}) or {}
