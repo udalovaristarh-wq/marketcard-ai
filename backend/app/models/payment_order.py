@@ -26,4 +26,5 @@ class PaymentOrder(SQLModel, table=True):
         default_factory=lambda: datetime.utcnow() + timedelta(minutes=30),
         index=True,
     )
+    payme_create_time: Optional[datetime] = Field(default=None, index=True)
     paid_at: Optional[datetime] = Field(default=None, index=True)

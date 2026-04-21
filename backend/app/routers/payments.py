@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 from app.db import get_session
@@ -6,7 +7,6 @@ from app.models.payment_order import PaymentOrder
 from app.security import get_current_user
 import base64
 import os
-from datetime import datetime
 
 PAYME_MERCHANT_ID = os.getenv("PAYME_MERCHANT_ID", "").strip()
 PAYME_SECRET_KEY = os.getenv("PAYME_SECRET_KEY", "").strip()
@@ -144,18 +144,19 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
         if order.external_transaction_id:
             if order.external_transaction_id == tx_id:
                 return ok({
-                    "create_time": ms(order.created_at),
+                    "create_time": ms(order.payme_create_time),
                     "transaction": tx_id,
                     "state": 1,
                 })
             return err(-31050, "Transaction exists")
 
         order.external_transaction_id = tx_id
+        order.payme_create_time = datetime.utcnow()
         session.add(order)
         session.commit()
 
         return ok({
-            "create_time": ms(order.created_at),
+            "create_time": ms(order.payme_create_time),
             "transaction": tx_id,
             "state": 1,
         })
@@ -193,4 +194,30 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             "transaction": tx_id,
             "perform_time": ms(order.paid_at),
             "state": 2,
+        })
+
+    if method == "CheckTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        if not order:
+            return err(-31003, "Not found")
+
+        create_dt = order.payme_create_time or order.created_at
+
+        if order.status == "paid" and order.paid_at:
+            return ok({
+                "create_time": ms(create_dt),
+                "perform_time": ms(order.paid_at),
+                "cancel_time": 0,
+                "transaction": tx_id,
+                "state": 2,
+                "reason": None,
+            })
+
+        return ok({
+            "create_time": ms(create_dt),
+            "perform_time": 0,
+            "cancel_time": 0,
+            "transaction": tx_id,
+            "state": 1,
+            "reason": None,
         })
