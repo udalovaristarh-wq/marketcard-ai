@@ -9,6 +9,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class ChatRequest(BaseModel):
     message: str
+    lang: str = "ru"
 
 SYSTEM_PROMPT = """
 Ты — виртуальный помощник платформы MarketCard AI.
@@ -87,6 +88,7 @@ def chat(req: ChatRequest):
             model="gpt-4.1-mini",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": f"Отвечай строго на языке: {req.lang}"},
                 {"role": "user", "content": req.message},
             ],
             temperature=0.5,
