@@ -4,14 +4,12 @@ from sqlmodel import SQLModel, Field
 from datetime import datetime
 from typing import Optional
 
-
-    accepted_terms_at: Optional[datetime] = None
-    accepted_terms_version: Optional[str] = None
-
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
     email: str = Field(index=True, unique=True)
+    accepted_terms_at: Optional[datetime] = None
+    accepted_terms_version: Optional[str] = None
     password: str
     full_name: str = Field(default="")
 

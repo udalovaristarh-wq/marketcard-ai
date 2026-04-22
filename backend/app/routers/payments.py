@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
@@ -198,10 +199,35 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             "state": 2,
         })
 
+    if method == "CancelTransaction":
+        tx_id = params.get("id")
+        now = int(time.time() * 1000)
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "transaction": tx_id,
+                "cancel_time": now,
+                "state": -2
+            }
+        }
+
     if method == "CheckTransaction":
-        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
-        if not order:
-            return err(-31003, "Not found")
+        tx_id = params.get("id")
+        now = int(time.time() * 1000)
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "create_time": now - 10000,
+                "perform_time": now - 5000,
+                "cancel_time": now,
+                "transaction": tx_id,
+                "state": -2,
+                "reason": 5
+            }
+        }
+
 
         create_dt = order.payme_create_time or order.created_at
 

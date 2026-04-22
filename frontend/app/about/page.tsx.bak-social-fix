@@ -1,0 +1,440 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+
+const cardStyle = {
+  borderRadius: "28px",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05))",
+  border: "1px solid rgba(255,255,255,0.14)",
+  boxShadow: "0 20px 50px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.06)",
+  backdropFilter: "blur(20px)",
+  padding: "30px",
+  transition: "transform .18s ease, box-shadow .18s ease, border-color .18s ease",
+}
+
+const sectionTitleStyle = {
+  fontSize: "32px",
+  fontWeight: 900,
+  margin: "0 0 18px 0",
+  letterSpacing: "-0.03em" as const,
+}
+
+const mutedTextStyle = {
+  fontSize: "17px",
+  lineHeight: 1.8,
+  color: "rgba(255,255,255,0.82)",
+}
+
+export default function AboutPage() {
+  const router = useRouter()
+
+  if (typeof window !== "undefined" && window.location.pathname === "/about") {
+    const style = document.createElement("style");
+  }
+
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(circle at top left, rgba(59,130,246,0.26), transparent 26%), radial-gradient(circle at bottom right, rgba(34,197,94,0.18), transparent 22%), linear-gradient(135deg,#071226,#0b1730,#101827)",
+        color: "white",
+        padding: "32px 20px 64px",
+      }}
+    >
+      <div style={{ maxWidth: "1180px", margin: "0 auto" }}>
+        <button
+          onClick={() => router.back()}
+          style={{
+            padding: "12px 18px",
+            borderRadius: "14px",
+            border: "1px solid rgba(255,255,255,0.14)",
+            background: "rgba(255,255,255,0.06)",
+            color: "white",
+            fontWeight: 800,
+            fontSize: "16px",
+            cursor: "pointer",
+            transform: "translateY(0) scale(1)",
+    transition: "transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease",
+    boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
+              
+            
+            marginBottom: "22px",
+          }}
+        >
+          ← Back
+        </button>
+        <div
+          style={{
+            ...cardStyle,
+            padding: "38px",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(circle at 15% 20%, rgba(34,197,94,0.16), transparent 22%), radial-gradient(circle at 85% 15%, rgba(59,130,246,0.18), transparent 24%), radial-gradient(circle at 70% 80%, rgba(168,85,247,0.14), transparent 20%)",
+              pointerEvents: "none",
+            }}
+          />
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 14px",
+                borderRadius: "999px",
+                background: "rgba(255,255,255,0.08)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                fontSize: "13px",
+                fontWeight: 900,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                marginBottom: "18px",
+              }}
+            >
+              MarketCard AI • Production Platform
+            </div>
+
+            <h1
+              style={{
+                fontSize: "56px",
+                lineHeight: 1.05,
+                fontWeight: 900,
+                margin: "0 0 18px 0",
+                letterSpacing: "-0.04em",
+                maxWidth: "900px",
+              }}
+            >
+              MarketCard AI is a production-grade AI platform for marketplace
+              sellers, built to generate conversion-focused product content in a
+              single workflow.
+            </h1><div style={{height:"10px"}}></div>
+            <p
+              style={{
+                fontSize: "21px",
+                lineHeight: 1.8,
+                color: "rgba(255,255,255,0.86)",
+                maxWidth: "980px",
+                margin: 0,
+              }}
+            >
+              MarketCard AI is not positioned as a basic demo page or a simple
+              MVP. It is engineered as a full-scale SaaS environment where one
+              user action can launch a complete content pipeline: AI-generated
+              marketplace visuals, structured product positioning, SEO-ready
+              descriptions, multilingual output, seller-side utility blocks,
+              unit economics workflows, and adaptation for different marketplace
+              image standards.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+                gap: "14px",
+                marginTop: "26px",
+              }}
+            >
+              <div style={cardStyle}>
+                <div style={{ fontSize: "13px", opacity: 0.72, fontWeight: 800 }}>
+                  Founder
+                </div>
+                <div style={{ fontSize: "22px", color: "#cbd5f5", fontWeight: 600, marginTop: "8px" }}>
+                  Aristarkh Aleksandrovich Udalov
+                </div>
+              </div>
+
+              <div style={cardStyle}>
+                <div style={{ fontSize: "13px", opacity: 0.72, fontWeight: 800 }}>
+                  Company
+                </div>
+                <div style={{ fontSize: "22px", color: "#cbd5f5", fontWeight: 600, marginTop: "8px" }}>
+                  MarketcardAI
+                </div>
+              </div>
+
+              <div style={cardStyle}>
+                <div style={{ fontSize: "13px", opacity: 0.72, fontWeight: 800 }}>
+                  Location
+                </div>
+                <div style={{ fontSize: "22px", color: "#cbd5f5", fontWeight: 600, marginTop: "8px" }}>
+                  Tashkent, Uzbekistan
+                </div>
+              </div>
+
+              <div style={cardStyle}>
+                <div style={{ fontSize: "13px", opacity: 0.72, fontWeight: 800 }}>
+                  Contact
+                </div>
+                <div style={{ fontSize: "22px", color: "#cbd5f5", fontWeight: 600, marginTop: "8px" }}>
+                  marketcardai@gmail.com
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "34px" }}>
+          <h2 style={sectionTitleStyle}>
+            Why MarketCard AI is different
+          </h2>
+
+          <div style={{ display: "grid", gap: "14px" }}>
+            <div style={cardStyle}>
+              <b>Not an MVP.</b>
+              <div style={mutedTextStyle}>
+                MarketCard AI is built as a production-ready SaaS platform, not a
+                prototype or experimental tool. The system is designed for real
+                business usage, real traffic, and scalable workloads.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>One-click content pipeline.</b>
+              <div style={mutedTextStyle}>
+                A single user action launches a full pipeline: product visuals,
+                structured SEO content, marketplace adaptation, and ready-to-use
+                commercial material without manual editing.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>No direct analogs.</b>
+              <div style={mutedTextStyle}>
+                The platform combines AI generation, marketplace formatting,
+                analytics, and unit economics into one unified environment. This
+                level of integration is not typical for standard tools.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>Built for sellers, not demos.</b>
+              <div style={mutedTextStyle}>
+                Every component of the system is designed with marketplace
+                conversion, speed, and business efficiency in mind.
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div style={{ marginTop: "34px" }}>
+          <h2 style={sectionTitleStyle}>
+            Why MarketCard AI is different
+          </h2>
+
+          <div style={{ display: "grid", gap: "14px" }}>
+            <div style={cardStyle}>
+              <b>Not an MVP.</b>
+              <div style={mutedTextStyle}>
+                MarketCard AI is built as a production-ready SaaS platform, not a
+                prototype or experimental tool. The system is designed for real
+                business usage, real traffic, and scalable workloads.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>One-click content pipeline.</b>
+              <div style={mutedTextStyle}>
+                A single user action launches a full pipeline: product visuals,
+                structured SEO content, marketplace adaptation, and ready-to-use
+                commercial material without manual editing.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>No direct analogs.</b>
+              <div style={mutedTextStyle}>
+                The platform combines AI generation, marketplace formatting,
+                analytics, and unit economics into one unified environment. This
+                level of integration is not typical for standard tools.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>Built for sellers, not demos.</b>
+              <div style={mutedTextStyle}>
+                Every component of the system is designed with marketplace
+                conversion, speed, and business efficiency in mind.
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div style={{ marginTop: "34px" }}>
+          <h2 style={sectionTitleStyle}>
+            Why MarketCard AI is different
+          </h2>
+
+          <div style={{ display: "grid", gap: "14px" }}>
+            <div style={cardStyle}>
+              <b>Not an MVP.</b>
+              <div style={mutedTextStyle}>
+                MarketCard AI is built as a production-ready SaaS platform, not a
+                prototype or experimental tool. The system is designed for real
+                business usage, real traffic, and scalable workloads.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>One-click content pipeline.</b>
+              <div style={mutedTextStyle}>
+                A single user action launches a full pipeline: product visuals,
+                structured SEO content, marketplace adaptation, and ready-to-use
+                commercial material without manual editing.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>No direct analogs.</b>
+              <div style={mutedTextStyle}>
+                The platform combines AI generation, marketplace formatting,
+                analytics, and unit economics into one unified environment. This
+                level of integration is not typical for standard tools.
+              </div>
+            </div>
+
+            <div style={cardStyle}>
+              <b>Built for sellers, not demos.</b>
+              <div style={mutedTextStyle}>
+                Every component of the system is designed with marketplace
+                conversion, speed, and business efficiency in mind.
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div style={{ marginTop: "34px" }}>
+          <h2 style={sectionTitleStyle}>
+            Official support & social presence
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"20px",marginTop:"20px"}}>
+  <a
+  href="https://t.me/marketcardai_support_bot"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{ textDecoration: "none", color: "inherit" }}
+>
+  <div style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    padding: "20px",
+    borderRadius: "16px",
+    cursor: "pointer"
+  }}>
+    <img
+      src="/social/telegram.svg"
+      style={{ width: "34px", height: "34px" }}
+    />
+    <span style={{ fontSize: "18px", fontWeight: 600 }}>
+      Telegram Support 🚀
+    </span>
+  </div>
+</a>
+
+  <a href="https://instagram.com/marketcard.ai" target="_blank" style={{textDecoration:"none"}}>
+    <a
+  href="https://www.instagram.com/marketcard.ai"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{ textDecoration: "none", color: "inherit" }}
+>
+<a
+  href="https://www.instagram.com/marketcard.ai"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{ textDecoration: "none", color: "inherit" }}
+>
+<div style={{display:"flex",alignItems:"center",gap:"14px",padding:"20px",borderRadius:"20px",background:"linear-gradient(135deg,#f43f5e,#9333ea)",color:"white",fontWeight:600,fontSize:"18px",boxShadow:"0 10px 30px rgba(0,0,0,0.4)",transition:"0.3s"}}>
+      <img src="/social/instagram.svg" style={{width:"34px",height:"34px"}} />
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}><img src="/social/instagram.svg" style="width:20px;height:20px;" /><span style={{ display: "inline-flex", alignItems: "center", gap: "12px" }}><img src="/social/instagram.svg" alt="Instagram" style={{ width: "28px", height: "28px", objectFit: "contain" }} />Instagram</span></span>
+    </div>
+</a>
+</a>
+  </a>
+</div>
+          </h2>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "14px",
+            }}
+          >
+            <a
+              href="https://t.me/marketcardai_support_bot"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                ...cardStyle,
+                textDecoration: "none",
+                color: "white",
+                display: "block",
+              }}
+            >
+              <div style={{ fontSize: "22px", fontWeight: 900, marginBottom: "10px" }}>
+              </div>
+              <div style={mutedTextStyle}>
+                Official <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}><img src="/social/instagram.svg" style="width:20px;height:20px;" />Instagram</span> page:
+                <br />
+                <a href="https://www.instagram.com/marketcard.ai?igsh=MWtwM3pwdmowd3VmYg==&utm_source=ig_contact_invite" target="_blank" rel="noopener noreferrer" style="color:#f9a8d4;font-weight:900;text-decoration:none;">@marketcard.ai</a>
+              </div>
+            </a>
+          </div>
+        </div>
+
+
+        <footer
+          style={{
+            marginTop: "48px",
+            padding: "28px",
+            borderRadius: "20px",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            textAlign: "center",
+            fontSize: "14px",
+            color: "rgba(255,255,255,0.7)",
+            lineHeight: 1.8,
+          }}
+        >
+          <div style={{ fontWeight: 900, fontSize: "16px", marginBottom: "8px" }}>
+            MarketCard AI
+          </div>
+
+          <div>
+            © 2026 MarketcardAI. All rights reserved.
+          </div>
+
+          <div style={{ marginTop: "6px" }}>
+            Founder: Aristarkh Aleksandrovich Udalov
+          </div>
+
+          <div>
+            Tashkent, Uzbekistan
+          </div>
+
+          <div style={{ marginTop: "6px" }}>
+            marketcardai@gmail.com
+          </div>
+
+          <div style={{ marginTop: "10px", opacity: 0.6 }}>
+            This platform is developed as a full-scale SaaS product,
+            combining artificial intelligence, marketplace automation,
+            and commercial content generation technologies.
+          </div>
+        </footer>
+
+      </div>
+    </main>
+  )
+}
