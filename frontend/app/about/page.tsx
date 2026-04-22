@@ -1,36 +1,39 @@
-"use client"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-
-type Lang = "ru" | "en"
-
-const content = {
-  ru: { back: "← Назад", title: "MarketCard AI", subtitle: "AI-платформа для создания контента для маркетплейсов.", cta: "Перейти на платформу", founderLabel: "Основатель:", supportTitle: "Связь с нами" },
-  en: { back: "← Back", title: "MarketCard AI", subtitle: "AI platform for marketplace product content.", cta: "Go to platform", founderLabel: "Founder:", supportTitle: "Contact Us" },
-} as const
+'use client'
+import { useState, useEffect } from 'react'
+import { initParticlesEngine, Particles } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import { HeaderSection } from './components/HeaderSection'
+import { ContactSection } from './components/ContactSection'
+import { GallerySection } from './components/GallerySection'
+import { HeroSection } from './components/HeroSection'
+import { ArticleSection } from './components/ArticleSection'
 
 export default function AboutPage() {
-  const router = useRouter()
-  const [lang, setLang] = useState<Lang>("ru")
-  const t = content[lang]
+  const [lang, setLang] = useState<"ru" | "en">("ru")
+  const [init, setInit] = useState(false);
+
+  useEffect(() => {
+    initParticlesEngine(async (engine) => { await loadSlim(engine); }).then(() => setInit(true));
+  }, []);
 
   return (
-    <main style={{ minHeight: "100vh", padding: "40px 20px", color: "white", background: "linear-gradient(to bottom, #020617, #1e3a8a)" }}>
-      <div style={{ maxWidth: "800px", margin: "0 auto", background: "rgba(0,0,0,0.3)", padding: "40px", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.1)" }}>
-        <button onClick={() => router.back()} style={{ background: "none", border: "none", color: "#60a5fa", cursor: "pointer", marginBottom: "20px" }}>{t.back}</button>
-        <h1 style={{ fontSize: "48px", fontWeight: "900", marginBottom: "15px" }}>{t.title}</h1>
-        <p style={{ fontSize: "18px", opacity: 0.9, marginBottom: "30px" }}>{t.subtitle}</p>
-        <button onClick={() => router.push("/")} style={{ padding: "15px 30px", borderRadius: "12px", background: "#3b82f6", color: "white", border: "none", fontSize: "16px", fontWeight: "bold", cursor: "pointer", marginBottom: "40px" }}>{t.cta}</button>
-        
-        <h2 style={{ marginTop: "40px" }}>{t.supportTitle}</h2>
-        <div style={{ display: "flex", gap: "20px", marginTop: "15px" }}>
-          <a href="https://t.me/marketcardai_support_bot" target="_blank" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "65px", height: "65px", background: "rgba(255,255,255,0.05)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <img src="/social/telegram.svg" style={{ width: "40px", height: "40px" }} />
-          </a>
-          <a href="https://www.instagram.com/marketcard.ai" target="_blank" style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "65px", height: "65px", background: "rgba(255,255,255,0.05)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <img src="/social/instagram.svg" style={{ width: "40px", height: "40px" }} />
-          </a>
+    <main style={{ minHeight: "100vh", backgroundColor: "#05070a", color: "#ffffff", padding: "40px 20px", position: "relative", fontFamily: "'Inter', sans-serif" }}>
+      {init && <Particles style={{ position: "absolute", top: 0, left: 0, zIndex: 0 }} options={{ particles: { color: { value: "#007bff" }, links: { color: "#007bff", distance: 200, enable: true, opacity: 0.8, width: 1 }, move: { enable: true, speed: 0.5 }, number: { value: 60 }, opacity: { value: 0.9 }, size: { value: 3 } } }} />}
+      
+      <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
+          <a href="https://marketcard.uz/" style={{ backgroundColor: "#1a1f2e", color: "#ffffff", padding: "10px 20px", borderRadius: "8px", textDecoration: "none", border: "1px solid #3b82f6", fontWeight: "bold" }}>Перейти на платформу</a>
+          <div>
+            <button onClick={() => setLang("ru")} style={{ marginRight: "10px", background: lang === "ru" ? "#3b82f6" : "#1a1f2e", border: "none", color: "white", padding: "8px 20px", borderRadius: "8px", cursor: "pointer" }}>RU</button>
+            <button onClick={() => setLang("en")} style={{ background: lang === "en" ? "#3b82f6" : "#1a1f2e", border: "none", color: "white", padding: "8px 20px", borderRadius: "8px", cursor: "pointer" }}>EN</button>
+          </div>
         </div>
+        
+        <HeaderSection title="MarketCard AI" subtitle="AI-платформа для создания контента" />
+        <ContactSection title="Поддержка" />
+        <section style={{ backgroundColor: "#0b101d", padding: "40px", borderRadius: "20px", border: "1px solid #2d3748", marginBottom: "40px" }}><GallerySection /></section>
+        <section style={{ backgroundColor: "#0b101d", padding: "40px", borderRadius: "20px", border: "1px solid #2d3748", marginBottom: "40px" }}><HeroSection /></section>
+        <ArticleSection />
       </div>
     </main>
   )
