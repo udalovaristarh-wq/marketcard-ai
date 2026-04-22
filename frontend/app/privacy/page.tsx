@@ -11,7 +11,27 @@ export default function PrivacyPage() {
         margin: "0 auto"
       }}
     >
-      <h1>Privacy Policy</h1>
+      
+<p style={{ marginTop: "12px", opacity: 0.8 }}>
+Data controller:
+<br/>
+Individual Entrepreneur Elena Aleksandrovna Udalova
+<br/>
+Location:
+<br/>
+Tashkent, Republic of Uzbekistan
+<br/><br/>
+Contact email:
+<br/>
+marketcardai@gmail.com
+
+<br/><br/>
+Project developer:
+<br/>
+Aristarkh Aleksandrovich Udalov
+</p>
+
+<h1>Privacy Policy</h1>
       <p><strong>Last updated:</strong> 2026</p>
 
       <p>
@@ -111,6 +131,74 @@ export default function PrivacyPage() {
       <p>
         Используя сервис, вы соглашаетесь с данной политикой.
       </p>
-    </div>
+    
+      <h2 style={{ marginTop: "32px" }}>6. Какие данные мы обрабатываем / What Data We Process</h2>
+      <p>
+        Мы можем обрабатывать имя, email, технические данные использования сервиса, данные авторизации,
+        историю операций внутри сервиса и контент, загруженный пользователем для генерации.
+        <br />
+        We may process the user's name, email, technical usage data, authentication data,
+        in-service activity history, and content uploaded by the user for generation.
+      </p>
+      <p>
+        Мы обрабатываем только тот объём данных, который разумно необходим для работы сервиса,
+        улучшения функционала, поддержки пользователей и обеспечения безопасности.
+        <br />
+        We process only the amount of data reasonably necessary to operate the service,
+        improve functionality, support users, and ensure security.
+      </p>
+
+
+      <h2 style={{ marginTop: "32px" }}>7. Платежи / Payments</h2>
+      <p>
+        Платежи могут обрабатываться сторонними платёжными провайдерами.
+        Мы не храним полные реквизиты банковских карт пользователей на своих серверах.
+        <br />
+        Payments may be processed by third-party payment providers.
+        We do not store full bank card details on our servers.
+      </p>
+      <p>
+        Обработка платежей регулируется политиками и условиями соответствующих платёжных систем.
+        <br />
+        Payment processing is governed by the policies and terms of the relevant payment systems.
+      </p>
+
+
+      <h2 style={{ marginTop: "32px" }}>8. AI-обработка / AI Processing</h2>
+      <p>
+        Для работы отдельных функций сервиса пользовательский контент может обрабатываться
+        с использованием сторонних AI-моделей, облачной инфраструктуры и технологических поставщиков.
+        <br />
+        To provide certain service functions, user content may be processed
+        using third-party AI models, cloud infrastructure, and technology providers.
+      </p>
+      <p>
+        Загружая данные в сервис, пользователь соглашается на такую обработку в объёме,
+        необходимом для генерации результата, улучшения работы сервиса и технической поддержки.
+        <br />
+        By uploading data to the service, the user agrees to such processing to the extent
+        necessary for result generation, service improvement, and technical support.
+      </p>
+
+
+      <h2 style={{ marginTop: "32px" }}>9. Хранение, удаление и безопасность / Retention, Deletion and Security</h2>
+      <p>
+        Мы принимаем разумные организационные и технические меры для защиты данных,
+        однако не можем гарантировать абсолютную безопасность передачи и хранения информации в сети Интернет.
+        <br />
+        We take reasonable organizational and technical measures to protect data,
+        however we cannot guarantee absolute security of information transmitted or stored via the Internet.
+      </p>
+      <p>
+        Пользователь может обратиться с запросом на удаление аккаунта или данных,
+        если иное не требуется для исполнения закона, защиты прав компании, разрешения споров
+        или ведения бухгалтерского и технического учёта.
+        <br />
+        The user may request deletion of an account or data,
+        unless retention is required by law, for the protection of company rights, dispute resolution,
+        or accounting and technical record-keeping.
+      </p>
+
+</div>
   );
 }

@@ -4,6 +4,10 @@ from sqlmodel import SQLModel, Field
 from datetime import datetime
 from typing import Optional
 
+
+    accepted_terms_at: Optional[datetime] = None
+    accepted_terms_version: Optional[str] = None
+
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
