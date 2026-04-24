@@ -2997,7 +2997,10 @@ if (!authChecked) return null
 
       let d: any = listingData
 if (listingLang === "uz" && translatedListing) {
-  d = translatedListing
+  d = {
+    ...listingData,
+    ...translatedListing
+  }
 }
 
       let title = "—"
@@ -3037,7 +3040,7 @@ if (listingLang === "uz" && translatedListing) {
             </div>
             {[0,1,2,3,4].map((i) => (
               <div key={i} style={{ marginBottom: "8px", padding: "10px", borderRadius: "12px", background: "rgba(15,23,42,0.55)" }}>
-                {i + 1}. {features[i] ? textValue(features[i]) : "—"}
+                {i + 1}. {features[i] ? `${features[i]?.key || "—"}: ${features[i]?.value || "—"}` : "-"}
               </div>
             ))}
           </div>
