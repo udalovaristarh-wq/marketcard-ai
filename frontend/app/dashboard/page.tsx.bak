@@ -1,4 +1,5 @@
 "use client"
+import "./effects/index.css";
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -477,6 +478,31 @@ const tariffs: Record<
   },
 }
 
+
+function getTariffFeatureLines(tariff: TariffName, lang: Lang): string[] {
+  if (lang === "ru") {
+    if (tariff === "Start") return ["1 фото за 1 генерацию", "Пауза 3 минуты"]
+    if (tariff === "Business") return ["1 или 3 фото за генерацию", "Пауза 3 минуты"]
+    return ["1, 3 или 5 фото за генерацию", "Пауза 3 минуты"]
+  }
+
+  if (lang === "uz") {
+    if (tariff === "Start") return ["1 generatsiya = 1 rasm", "3 daqiqa kutish"]
+    if (tariff === "Business") return ["1 yoki 3 rasm", "3 daqiqa kutish"]
+    return ["1, 3 yoki 5 rasm", "3 daqiqa kutish"]
+  }
+
+  if (tariff === "Start") return ["1 image per generation", "3 min delay"]
+  if (tariff === "Business") return ["1 or 3 images", "3 min delay"]
+  return ["1, 3 or 5 images", "3 min delay"]
+}
+
+function getTariffNote(lang: Lang): string {
+  if (lang === "ru") return "Чем больше вариантов — тем быстрее расходуется лимит"
+  if (lang === "uz") return "Ko‘p variant — tezroq limit tugaydi"
+  return "More variants = faster limit usage"
+}
+
 function MarketplaceButton({
   label,
   selected,
@@ -572,12 +598,13 @@ const labelStyle: React.CSSProperties = {
 
 const inputStyle: CSSProperties = {
   width: "100%",
+  maxWidth: "100%",
   height: "56px",
   borderRadius: "16px",
   border: "1px solid rgba(255,255,255,0.14)",
   background: "#2a313b",
-  color: "#ffffff",
-  padding: "0 48px 0 16px",
+  color: "#f8fafc",
+  padding: "0 18px",
   fontSize: "18px",
   fontWeight: 600,
   outline: "none",
@@ -585,6 +612,7 @@ const inputStyle: CSSProperties = {
   WebkitAppearance: "none",
   MozAppearance: "none",
   cursor: "pointer",
+  boxSizing: "border-box",
 };
 
 const smallPillButton = (active: boolean): React.CSSProperties => ({
@@ -651,7 +679,9 @@ function SummaryLine({
 }) {
   return (
     <div
-      style={{
+      style={{          
+          overflow: "hidden",
+
         padding: "14px 16px",
         borderRadius: "16px",
         background: "rgba(255,255,255,0.04)",
@@ -722,19 +752,13 @@ function ProgressBar({
   const width = Math.max(4, Math.min(100, value))
   return (
     <div
-      style={{
-        height: "10px",
-        width: "100%",
+      style={{        width: "100%",
         borderRadius: "999px",
-        background: "rgba(255,255,255,0.08)",
-        overflow: "hidden",
-      }}
+        background: "rgba(255,255,255,0.08)",      }}
     >
       <div
         style={{
-          width: `${width}%`,
-          height: "100%",
-          borderRadius: "999px",
+          width: `${width}%`,          borderRadius: "999px",
           background: gradient,
         }}
       />
@@ -877,6 +901,8 @@ export default function DashboardPage() {
 
   const [authChecked, setAuthChecked] = useState(false)
   const [userEmail, setUserEmail] = useState("")
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [profile, setProfile] = useState<ProfileResponse | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
 
@@ -920,25 +946,80 @@ export default function DashboardPage() {
   const [languageMode, setLanguageMode] = useState<LanguageMode>("ru")
   const [variantCount, setVariantCount] = useState(5)
   const [generatedVariants, setGeneratedVariants] = useState<string[]>([])
+
+  const [fixPrompt, setFixPrompt] = useState("")
+  const [isFixingImage, setIsFixingImage] = useState(false)
+  const [fixedImageUrl, setFixedImageUrl] = useState("")
+
+  const [selectedFixIndex, setSelectedFixIndex] = useState(0)
+  const [fixedImages, setFixedImages] = useState<Record<number, string>>({})
   const [isGenerating, setIsGenerating] = useState(false)
-  const [listingData, setListingData] = useState<ListingResponse | null>(null)
+  const [listingData, setlistingData] = useState<ListingResponse | null>(null)
   const [listingReady, setListingReady] = useState(false)
   const listingView =
   (listingData as any)?.ru ||
   (listingData as any)?.uz ||
   (listingData as any)?.en ||
   null
+useEffect(() => {
+  const checkMobile = () => {
+    const mobile = window.innerWidth <= 900
+    setIsMobile(mobile)
+  }
+
+  checkMobile()
+  window.addEventListener("resize", checkMobile)
+  return () => window.removeEventListener("resize", checkMobile)
+}, [])
+
+  useEffect(() => {
+    if (!userEmail) return
+
+    const ping = () => {
+      fetch(`https://marketcard.uz/api/system/ping?email=${encodeURIComponent(userEmail)}`, {
+        method: "POST",
+      }).catch(() => {})
+    }
+
+    ping()
+    const interval = setInterval(ping, 30000)
+
+    return () => clearInterval(interval)
+  }, [userEmail])
+
   const searchIkpu = async () => {
   if (!ikpuQuery) return
 
   setIkpuLoading(true)
 
   try {
+    console.log("ACTIVATE 4 BEFORE FETCH")
     const res = await fetch(
       `https://tasnif.soliq.uz/api/cl-api/classifier/search?search=${encodeURIComponent(ikpuQuery)}`
     )
 
+    console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
+      if (selectedPayment === "payme" && data?.payme_url) {
+        window.location.href = data.payme_url
+        return
+      }
+
+      if (selectedPayment === "click" && data?.click_url) {
+        window.location.href = data.click_url
+        return
+      }
+
+      if (selectedPayment === "click") {
+        alert("Click ссылка не получена")
+        return
+      }
+
+      if (selectedPayment === "visa") {
+        alert("Visa пока недоступна. Выберите Payme или Click.")
+        return
+      }
+
 
     let items: any[] = []
 
@@ -971,17 +1052,146 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const t = dict[lang]
   const currentFormat = marketplaceFormats[selectedMarketplace]
 
-  const loadProfile = async (email: string) => {
-    try {
-      setProfileLoading(true)
-      const res = await fetch(
-         `https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email)}`
-)
+  const allowedVariantOptions = (() => {
+    const tariff = profile?.tariff_name || ""
 
-      if (!res.ok) {
-        setProfile(null)
+    if (tariff === "Start") return [1]
+    if (tariff === "Business") return [1, 3]
+    if (tariff === "Premium") return [1, 3, 5]
+
+    return [1]
+  })()
+
+  const formatCooldown = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+  }
+
+  const showCooldownPopup = (seconds: number) => {
+    let remaining = Math.max(0, Number(seconds || 0))
+
+    const old = document.getElementById("mc-cooldown-overlay")
+    if (old) old.remove()
+
+    const overlay = document.createElement("div")
+    overlay.id = "mc-cooldown-overlay"
+    overlay.style.cssText = [
+      "position:fixed",
+      "inset:0",
+      "background:rgba(0,0,0,0.55)",
+      "display:flex",
+      "align-items:center",
+      "justify-content:center",
+      "z-index:999999"
+    ].join(";")
+
+    const box = document.createElement("div")
+    box.style.cssText = [
+      "width:min(92vw,420px)",
+      "background:#111827",
+      "border:1px solid rgba(255,255,255,0.12)",
+      "border-radius:20px",
+      "padding:24px",
+      "box-shadow:0 20px 60px rgba(0,0,0,0.35)",
+      "color:white",
+      "font-family:Arial,sans-serif",
+      "text-align:center"
+    ].join(";")
+
+    const title = document.createElement("div")
+    title.textContent = "Ограничение генерации"
+    title.style.cssText = "font-size:24px;font-weight:900;margin-bottom:14px;"
+
+    const textNode = document.createElement("div")
+    textNode.style.cssText = "font-size:18px;line-height:1.5;margin-bottom:18px;opacity:0.95;"
+
+    const closeBtn = document.createElement("button")
+    closeBtn.textContent = "Понятно"
+    closeBtn.style.cssText = [
+      "padding:12px 18px",
+      "border:none",
+      "border-radius:12px",
+      "background:linear-gradient(135deg,#06b6d4,#2563eb)",
+      "color:white",
+      "font-size:16px",
+      "font-weight:800",
+      "cursor:pointer"
+    ].join(";")
+
+    const render = () => {
+      textNode.textContent = `Следующая генерация будет доступна через ${formatCooldown(remaining)}`
+    }
+
+    render()
+
+    let timer: number | null = window.setInterval(() => {
+      remaining -= 1
+      if (remaining <= 0) {
+        if (timer) window.clearInterval(timer)
+        overlay.remove()
+        localStorage.removeItem("generate_cooldown_until")
         return
       }
+      render()
+    }, 1000)
+
+    closeBtn.onclick = () => {
+      if (timer) window.clearInterval(timer)
+      overlay.remove()
+    }
+
+    box.appendChild(title)
+    box.appendChild(textNode)
+    box.appendChild(closeBtn)
+    overlay.appendChild(box)
+    document.body.appendChild(overlay)
+  }
+
+  const loadProfile = async () => {
+    try {
+      setProfileLoading(true)
+    const token = localStorage.getItem("access_token")
+
+    const email = localStorage.getItem("user_email")
+
+if (!token || !email) {
+  setProfileLoading(false)
+  setProfile(null)
+  return
+}
+
+const res = await fetch(
+`https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email || "")}`,
+ {
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
+
+      if (!res.ok) {
+  const errorData = await res.json().catch(() => null)
+
+  if (res.status === 403) {
+    const message = errorData?.detail || "Ваш аккаунт заблокирован"
+
+    document.body.innerHTML = ` 
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;">
+        <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
+          <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
+          <div style="font-size:18px;opacity:0.9;line-height:1.5;">
+            ${message}
+          </div>
+        </div>
+      </div>
+    `
+
+    throw new Error(message)
+  }
+
+  setProfile(null)
+  return
+}
 
       const data: ProfileResponse = await res.json()
       setProfile(data)
@@ -1004,8 +1214,14 @@ const listingKeywords = Array.isArray(listingView?.keywords)
 
     setUserEmail(savedEmail)
     setAuthChecked(true)
-    loadProfile(savedEmail)
+    loadProfile()
   }, [router])
+
+  useEffect(() => {
+    if (!allowedVariantOptions.includes(variantCount)) {
+      setVariantCount(allowedVariantOptions[0])
+    }
+  }, [profile?.tariff_name, variantCount])
 
   useEffect(() => {
     if (!selectedFile) {
@@ -1033,9 +1249,10 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   setIkpuLoading(true)
 
   try {
-    const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
-    const data = await res.json()
-    setIkpuResults(Array.isArray(data?.items) ? data.items : [])
+    console.log("ACTIVATE 4 BEFORE FETCH")
+ // const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
+ // const data = await res.json()
+    setIkpuResults([])
   } catch (e) {
     console.log("IKPU AUTO ERROR:", e)
     setIkpuResults([])
@@ -1044,43 +1261,72 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   }
 }
   const handleActivateTariff = async () => {
+  console.log("ACTIVATE 1 START", { userEmail, selectedTariff })
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = searchIkpuAuto(ikpuSearchText)
-    if (!userEmail) return
+const ikpuPromise = Promise.resolve()
+  const emailToUse = userEmail || profile?.email
+  if (!emailToUse) {
+    console.log("ACTIVATE STOP: no email at all")
+    return
+  }
+
 
     try {
+    console.log("ACTIVATE 3 BEFORE SET LOADING")
       setActivatingTariff(true)
 
+    console.log("ACTIVATE 4 BEFORE FETCH")
       const res = await fetch(
-        `https://marketcard.uz/api/auth/activate-tariff?email=${encodeURIComponent(userEmail)}`,
+        `/api/payments/create-order?email=${encodeURIComponent(emailToUse)}&tariff_name=${encodeURIComponent(selectedTariff)}&provider=${encodeURIComponent(selectedPayment || "unknown")}`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`,
           },
-          body: JSON.stringify({
-            
-            tariff_name: selectedTariff,
-          }),
         }
       )
 
+    console.log("ACTIVATE 5 AFTER FETCH", res.status)
+    console.log("GEN 3 STATUS", res.status)
       const data = await res.json().catch(() => null)
+
+      if (selectedPayment === "payme" && data?.payme_url) {
+        window.location.href = data.payme_url
+        return
+      }
+
+      if (selectedPayment === "click" && data?.click_url) {
+        window.location.href = data.click_url
+        return
+      }
+      if (selectedPayment === "click") {
+        alert("Click ссылка не получена")
+        return
+      }
+
+      if (selectedPayment === "visa") {
+        alert("Visa пока недоступна. Выберите Payme или Click.")
+        return
+      }
+
+    console.log("ACTIVATE 6 RESPONSE DATA", data)
 
       if (!res.ok) {
         alert(data?.detail || t.serverError)
         return
       }
 
-      await loadProfile(userEmail)
       setShowTariffModal(false)
       alert(t.tariffActivated)
+
+      await loadProfile()
     } catch (error) {
       console.error("Tariff activation error:", error)
       alert(t.serverError)
     } finally {
+    console.log("ACTIVATE 8 FINALLY")
       setActivatingTariff(false)
     }
   }
@@ -1097,23 +1343,35 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
   }
 
     const handleGenerate = async () => {
+  const cooldownUntil = Number(localStorage.getItem("generate_cooldown_until") || "0")
+  const now = Date.now()
+
+  if (cooldownUntil > now) {
+    const remaining = Math.ceil((cooldownUntil - now) / 1000)
+    showCooldownPopup(remaining)
+    return
+  }
+
+  console.log("GEN 0 PROFILE", profile)
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = searchIkpuAuto(ikpuSearchText)
+const ikpuPromise = Promise.resolve()
     setIsGenerating(true)
   try {
     setCreating(true)
     setPngReady(false)
     setGeneratedVariants([])
-    setListingData(null)
+    setlistingData(null)
     setListingReady(false)
 
     const formData = new FormData()
     if (!profile?.email) {
-  alert("Email пользователя не найден")
-  return
-}
+      console.log("GEN STOP: NO EMAIL", profile)
+      alert("Email пользователя не найден")
+      return
+    }
+
     formData.append("email", profile?.email || "")
     formData.append("product_title", productTitle)
     formData.append("brand", brand)
@@ -1126,11 +1384,14 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
       formData.append("image", selectedFile)
     }
 
+    
+    console.log("GEN 2 BEFORE FETCH")
     const res = await fetch("https://marketcard.uz/api/full-generate", {
       method: "POST",
       body: formData,
     })
 
+    console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
     console.log("FULL GENERATE STATUS:", res.status)
     console.log("FULL GENERATE DATA:", data)
@@ -1149,16 +1410,25 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     setGeneratedVariants(images)
     setPngReady(images.length > 0)
 
+    if (data?.cooldown_seconds) {
+      localStorage.setItem(
+        "generate_cooldown_until",
+        String(Date.now() + Number(data.cooldown_seconds) * 1000)
+      )
+    }
+
     // ✅ SEO / ОПИСАНИЕ
-    if (data.listing) {
-      setListingData(data.listing)
+    const listingPayload = data.listing || data
+    if (listingPayload) {
+      setlistingData(listingPayload)
       setListingReady(true)
     }
     if (profile?.email) {
-  await loadProfile(profile.email)
+  await loadProfile()
 }
   await ikpuPromise
   } catch (err) {
+    console.log("GEN ERROR", err)
     console.error(err)
     alert("Ошибка")
   } finally {
@@ -1167,7 +1437,69 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 }
 }
 
-  const handleDownloadPng = async () => {
+  
+  const handleFixGeneratedImage = async () => {
+    try {
+      if (!generatedVariants || generatedVariants.length === 0) {
+        alert("Сначала сгенерируйте изображение")
+        return
+      }
+
+      if (!fixPrompt.trim()) {
+        alert("Напишите, что нужно исправить")
+        return
+      }
+
+      const selectedImage =
+        fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]
+
+      if (!selectedImage) {
+        alert("Не выбрано изображение для исправления")
+        return
+      }
+
+      setIsFixingImage(true)
+
+      const imageUrl = selectedImage.replace("https://marketcard.uz", "")
+
+      const res = await fetch("https://marketcard.uz/api/fix-generated-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          image_url: imageUrl,
+          fix_prompt: fixPrompt,
+          email: profile?.email ?? userEmail ?? "",
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data?.success) {
+        alert(JSON.stringify(data))
+        return
+      }
+
+      const finalUrl = `https://marketcard.uz${data.fixed_image_url}`
+
+      setFixedImageUrl(finalUrl)
+      setFixedImages((prev) => ({
+        ...prev,
+        [selectedFixIndex]: finalUrl,
+      }))
+      setFixPrompt("")
+      await loadProfile()
+      alert("Исправленная версия готова")
+    } catch (e) {
+      console.error(e)
+      alert("Ошибка исправления")
+    } finally {
+      setIsFixingImage(false)
+    }
+  }
+
+const handleDownloadPng = async () => {
     try {
   if (!generatedVariants || generatedVariants.length === 0) {
     alert("Сначала сгенерируйте карточки")
@@ -1176,8 +1508,12 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 
   for (let i = 0; i < generatedVariants.length; i++) {
     const imageUrl = generatedVariants[i]
+    const fixedImageUrl =
+    typeof imageUrl === "string" && imageUrl.startsWith("/generated_cards")
+    ? `/api${imageUrl}`
+    : imageUrl
 
-    const response = await fetch(imageUrl)
+    const response = await fetch(fixedImageUrl)
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
 
@@ -1279,40 +1615,109 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     competitorPrice,
   ])
 
-  if (!authChecked) return null 
+  
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add("dashboard-cursor-glow")
+
+    const handleMove = (e: MouseEvent) => {
+      const main = document.querySelector("main")
+      if (!main) return
+
+      const rect = main.getBoundingClientRect()
+      root.style.setProperty("--mc-x", (e.clientX - rect.left) + "px")
+      root.style.setProperty("--mc-y", (e.clientY - rect.top) + "px")
+      root.style.setProperty("--mc-opacity", "1")
+    }
+
+    const handleLeave = () => {
+      root.style.setProperty("--mc-opacity", "0")
+    }
+
+    window.addEventListener("mousemove", handleMove)
+    window.addEventListener("mouseout", handleLeave)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMove)
+      window.removeEventListener("mouseout", handleLeave)
+      root.classList.remove("dashboard-cursor-glow")
+      root.style.removeProperty("--mc-x")
+      root.style.removeProperty("--mc-y")
+      root.style.removeProperty("--mc-opacity")
+    }
+  }, [])
+
+if (!authChecked) return null 
   return (
     <>
       <main
         style={{
-          minHeight: "100vh",
+          columnGap: isMobile ? "0" : "28px",
+    minHeight: "100vh",
           background:
-            "radial-gradient(circle at top left, rgba(59,130,246,0.20), transparent 24%), radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 24%), linear-gradient(135deg,#0b1020,#111827,#172033)",
+            "linear-gradient(135deg, #020617 0%, #020617 40%, #0a0f2c 100%)",
           color: "white",
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "260px 1fr",
-            minHeight: "100vh",
-          }}
-        >
-          <aside
-            style={{
-              width: "320px",
-              minWidth: "320px",
-              padding: "24px",
-              borderRight: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "320px minmax(0, 1fr)", 
+    position: "relative",
+    minHeight: "auto",
+        overflow: "hidden",
+        overflowY: "hidden",
+  }}
+>
+{isMobile && (
+  <div
+    style={{
+      position: "fixed",
+      top: "12px",
+      left: "12px",
+      zIndex: 9999,
+    }}
+  >
+    <button
+      onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+      style={{
+        background: "#0ea5e9",
+        color: "#fff",
+        border: "none",
+        borderRadius: "10px",
+        padding: "10px 14px",
+        fontSize: "18px",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      ☰
+    </button>
+  </div>
+)}
+
+ <aside
+  style={{
+    display: isMobile ? (isMobileMenuOpen ? "block" : "none") : "block",
+    position: isMobile ? "fixed" : "relative",
+    top: isMobile ? "0" : undefined,
+    left: isMobile ? "0" : undefined,
+    zIndex: isMobile ? 9998 : undefined,
+    width: isMobile ? "280px" : "320px",
+    minWidth: isMobile ? "280px" : "320px",    borderRight: "1px solid rgba(255,255,255,0.08)",
+    background: isMobile ? "rgba(8,15,35,0.96)" : "transparent",
+    backdropFilter: isMobile ? "blur(14px)" : undefined,
+    boxShadow: isMobile ? "0 0 30px rgba(0,0,0,0.35)" : undefined,
+  }}
+>
             <div
               style={{
                 color: "white",
-                fontSize: "56px",
+                fontSize: "44px",
                 fontWeight: 900,
-                lineHeight: 1.05,
-                marginBottom: "36px",
+                lineHeight: 1,
+                marginBottom: "28px",
                 textShadow: "0 4px 18px rgba(255,255,255,0.18)",
               }}
             >
@@ -1321,7 +1726,10 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 
             <div style={{ display: "grid", gap: "12px" }}>
               <button
-                onClick={() => setActivePage("generator")}
+                onClick={() => {
+                  setActivePage("generator")
+                  if (isMobile) setIsMobileMenuOpen(false)
+                }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1340,7 +1748,10 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
               </button>
 
               <button
-                onClick={() => setActivePage("economy")}
+                onClick={() => {
+                  setActivePage("economy")
+                  if (isMobile) setIsMobileMenuOpen(false)
+                }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1359,7 +1770,10 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
               </button>
 
               <button
-                onClick={() => setActivePage("listing")}
+                onClick={() => {
+                  setActivePage("listing")
+                  if (isMobile) setIsMobileMenuOpen(false)
+                }}
                 style={{
                   padding: "16px",
                   borderRadius: "16px",
@@ -1382,9 +1796,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
                       position: "absolute",
                       top: "10px",
                       right: "10px",
-                      minWidth: "22px",
-                      height: "22px",
-                      padding: "0 6px",
+                      minWidth: "22px",                      padding: "0 6px",
                       borderRadius: "999px",
                       background: "#ef4444",
                       display: "inline-flex",
@@ -1417,19 +1829,34 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
   ИКПУ
 </button>
             </div>
-          </aside>
-          
+</aside>
+ {isMobile && isMobileMenuOpen && (
+  <div
+    onClick={() => setIsMobileMenuOpen(false)}
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.45)",
+      zIndex: 9997,
+    }}
+  />
+)}
         <section
   style={{
     padding: "24px",
+    paddingBottom: "24px",
     overflowX: "hidden",
+    overflowY: "hidden",
+    overflow: "visible",
+    height: "auto",
+    maxHeight: "none",
   }}
 >
   {false && (
   <div
     style={{
       maxWidth: "1100px",
-      padding: "28px",
+      padding: "0",
       borderRadius: "24px",
       background: "rgba(255,255,255,0.06)",
       border: "1px solid rgba(255,255,255,0.10)",
@@ -1524,7 +1951,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 )}
   <div
     style={{
-      maxWidth: "1480px",
+      maxWidth: "1360px",
       margin: "0 auto",
       padding: "28px",
     }}
@@ -1560,9 +1987,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
           >
             <div
               style={{
-                width: "48px",
-                height: "48px",
-                borderRadius: "16px",
+                width: "48px",                borderRadius: "16px",
                 background: "linear-gradient(135deg,#22c55e,#06b6d4)",
                 display: "flex",
                 alignItems: "center",
@@ -1629,9 +2054,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
                   borderRadius: "14px",
                   background: "#111827",
                   border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 20px 40px rgba(0,0,0,0.35)",
-                  overflow: "hidden",
-                  zIndex: 1000,
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.35)",                  zIndex: 1000,
                 }}
               >
                 {(["ru", "uz", "en"] as Lang[]).map((item: Lang) => (
@@ -1676,6 +2099,14 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
         </div>
       </div>
 
+      <div
+        style={{          fontSize: "14px",
+          color: "#fbbf24",
+          fontWeight: 800,
+        }}
+      >
+        ⚠️ {getTariffNote(lang)}
+      </div>
       <div
         style={{
           marginTop: "22px",
@@ -1778,7 +2209,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "440px 1fr",
+          gridTemplateColumns: isMobile ? "1fr" : "440px 1fr",
           gap: "24px",
           alignItems: "start",
         }}
@@ -1888,13 +2319,9 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
             <div>
               <div
                 style={{
-                  width: "100%",
-                  height: "210px",
-                  borderRadius: "18px",
+                  width: "100%",                  borderRadius: "18px",
                   border: "1px dashed rgba(255,255,255,0.16)",
-                  background: "rgba(255,255,255,0.04)",
-                  overflow: "hidden",
-                  display: "flex",
+                  background: "rgba(255,255,255,0.04)",                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
@@ -1904,9 +2331,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
                     src={previewUrl}
                     alt="Preview"
                     style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
+                      width: "100%",                      objectFit: "contain",
                     }}
                   />
                 ) : (
@@ -2158,31 +2583,37 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     style={{
       minHeight: "320px",
       borderRadius: "20px",
-      border: "1px dashed rgba(255,255,255,0.18)",
-      background: "rgba(255,255,255,0.03)",
+      border: "1px dashed rgba(34,211,238,0.35)",
+      background: "radial-gradient(circle at center, rgba(34,211,238,0.16), rgba(255,255,255,0.03) 55%)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       color: "#ffffff",
-      fontSize: "18px",
-      fontWeight: 700,
       textAlign: "center",
-      padding: "20px",
+      padding: "26px",
       flexDirection: "column",
       gap: "14px",
     }}
   >
+    
     <div
+      className="mc-spin-loader"
       style={{
-        width: "22px",
-        height: "22px",
-        border: "3px solid rgba(34,211,238,0.35)",
-        borderTop: "3px solid #22d3ee",
+        width: "46px",
+        height: "46px",
+        border: "4px solid rgba(34,211,238,0.25)",
+        borderTop: "4px solid #22d3ee",
         borderRadius: "50%",
-        animation: "spin 1s linear infinite",
+        
+        boxShadow: "0 0 28px rgba(34,211,238,0.35)",
       }}
     />
-    <div>Идёт генерация карточек, пожалуйста подождите...</div>
+    <div style={{ fontSize: "22px", fontWeight: 900 }}>
+      Идёт генерация карточек
+    </div>
+    <div style={{ fontSize: "16px", fontWeight: 700, color: "rgba(255,255,255,0.78)", maxWidth: "520px" }}>
+      Пожалуйста, подождите. Среднее время ожидания: 3–5 минут, зависит от количества изображений.
+    </div>
   </div>
 ) : generatedVariants.length === 0 ? (
               <div
@@ -2230,7 +2661,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
                     >
                       {"Вариант " + (index + 1)}
                     </div><img
-                      src={url}
+                      src={url.startsWith("/generated_cards") ? `/api${url}` : url}
                       alt={`variant-${index + 1}`}
                       style={{
                         width: "100%",
@@ -2241,7 +2672,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
                     />
 
                     <a
-                      href={url}
+                      href={url.startsWith("/generated_cards") ? `/api${url}` : url}
                       target="_blank"
                       rel="noreferrer"
                       style={{
@@ -2261,322 +2692,270 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
       </div>
     )}
 
-    {activePage === "listing" && (
-      <div
+
+      {activePage === "generator" && (
+<div
         style={{
-          maxWidth: "1100px",
-          padding: "28px",
+          marginTop: "-1005px",
+          marginBottom: "520px",
+          marginLeft: isMobile ? "0" : "464px",
+          width: isMobile ? "100%" : "calc(100% - 464px)",
+          padding: "20px",
           borderRadius: "24px",
           background: "rgba(255,255,255,0.06)",
           border: "1px solid rgba(255,255,255,0.10)",
           boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
-          backdropFilter: "blur(14px)",
-        }}
+          backdropFilter: "blur(12px)",
+          boxSizing: "border-box",        }}
       >
         <div
           style={{
-            fontSize: "34px",
+                      fontSize: "26px",
             fontWeight: 900,
             marginBottom: "18px",
           }}
         >
-          {t.listingTitle}
+          Исправление изображения
         </div>
-  )
-        {listingData && (
-  <div style={{ marginTop: "20px" }}>
-    
-    {/* TITLE */}
-    <div style={{ marginBottom: "20px" }}>
-      <div style={{ fontSize: "14px", opacity: 0.6 }}>
-        Название ({listingData.lengths?.title} / {listingData.limits?.title_max})
-      </div>
 
-      <div
-        style={{
-          marginTop: "6px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        {listingData.title}
-      </div>
-    </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "10px",
+            marginBottom: "14px",
+          }}
+        >
+          {generatedVariants.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setSelectedFixIndex(index)}
+              style={{
+                border: "none",
+                borderRadius: "12px",
+                padding: "10px 14px",
+                background:
+                  selectedFixIndex === index
+                    ? "linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)"
+                    : "rgba(255,255,255,0.08)",
+                color: "#ffffff",
+                fontWeight: 800,
+                fontSize: "14px",
+                cursor: "pointer",
+                boxShadow:
+                  selectedFixIndex === index
+                    ? "0 10px 24px rgba(34,211,238,0.22)"
+                    : "none",
+              }}
+            >
+              Фото {index + 1}
+            </button>
+          ))}
+        </div>
 
-    {/* SHORT */}
-    <div style={{ marginBottom: "20px" }}>
-      <div style={{ fontSize: "14px", opacity: 0.6 }}>
-        Краткое описание ({listingData.lengths?.short_description} / {listingData.limits?.short_max})
-      </div>
+        <div
+          style={{
+            minHeight: "320px",
+            borderRadius: "20px",
+            border: "1px dashed rgba(255,255,255,0.18)",
+            background: "rgba(255,255,255,0.03)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "18px",
+            color: "rgba(255,255,255,0.72)",
+            fontSize: "22px",
+            fontWeight: 700,
+            textAlign: "center",
+          }}
+        >
+          {isFixingImage ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+                gap: "14px",
+                color: "#ffffff",
+                textAlign: "center",
+                padding: "24px",
+              }}
+            >
+              <div
+                className="mc-spin-loader"
+                style={{
+                  width: "46px",
+                  height: "46px",
+                  border: "4px solid rgba(34,211,238,0.25)",
+                  borderTop: "4px solid #22d3ee",
+                  borderRadius: "50%",
+                  boxShadow: "0 0 28px rgba(34,211,238,0.35)",
+                }}
+              />
+              <div style={{ fontSize: "22px", fontWeight: 900 }}>
+                Идёт исправление изображения
+              </div>
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "rgba(255,255,255,0.78)", maxWidth: "520px" }}>
+                Пожалуйста, подождите. Среднее время ожидания исправления: около 2 минут.
+              </div>
+            </div>
+          ) : (fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]) ? (
+            <img
+              src={fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]}
+              alt="Предпросмотр изображения"
+              style={{
+                width: "auto",
+                height: "auto",
+                maxWidth: "90%",
+                maxHeight: "520px",
+                objectFit: "contain",
+                borderRadius: "14px",
+                display: "block",
+                boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
+              }}
+            />
+          ) : (
+            <span>Тут появится исправленная версия</span>
+          )}
+        </div>
 
-      <div
-        style={{
-          marginTop: "6px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        {listingData.short_description}
-      </div>
-    </div>
-
-    {/* FULL */}
-    <div style={{ marginBottom: "20px" }}>
-      <div style={{ fontSize: "14px", opacity: 0.6 }}>
-        Полное описание ({listingData.lengths?.full_description} / {listingData.limits?.full_max})
-      </div>
-
-      <div
-        style={{
-          marginTop: "6px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          lineHeight: "1.5",
-        }}
-      >
-        {listingData.full_description}
-      </div>
-    </div>
-
-    {/* CHARACTERISTICS */}
-    <div style={{ marginBottom: "20px" }}>
-      <div style={{ fontSize: "14px", opacity: 0.6 }}>
-        Характеристики
-      </div>
-
-      <div
-        style={{
-          marginTop: "6px",
-          padding: "12px",
-          borderRadius: "12px",
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-      >
-        {Array.isArray(listingData.characteristics) ? (
-  listingData.characteristics.map((item: any, i: number) => (
-    <div key={i} style={{ marginBottom: "6px" }}>
-      {typeof item === "string" ? (
-        item
-      ) : (
-        <>
-          <b>{item.key}:</b> {item.value}
-        </>
-      )}
-    </div>
-  ))
-) : listingData.characteristics && typeof listingData.characteristics === "object" ? (
-  Object.entries(listingData.characteristics).map(([key, value], i) => (
-    <div key={i} style={{ marginBottom: "6px" }}>
-      <b>{key}:</b> {String(value)}
-    </div>
-  ))
-) : null}
-      </div>
-    </div>
-
-  </div>
-)}
-        {!listingData ? (
-          <div
+        <div
+          style={{
+            marginTop: "16px",
+            display: "grid",
+            gridTemplateColumns: "1fr 260px",
+            gap: "12px",
+            alignItems: "stretch",
+          }}
+        >
+          <textarea className="fix-prompt-textarea"
+            value={fixPrompt}
+            onChange={(e) => setFixPrompt(e.target.value)}
+            placeholder="Напишите, что нужно изменить"
             style={{
-              fontSize: "20px",
-              color: "#cbd5e1",
-              lineHeight: 1.6,
+                  resize: "none",
+                  overflow: "hidden",
+                  overflowY: "hidden",
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  boxSizing: "border-box",
+                                                  minHeight: "74px",
+              borderRadius: "14px",
+              border: "1px solid rgba(255,255,255,0.14)",
+              background: "rgba(255,255,255,0.05)",
+              color: "#ffffff",
+              padding: "14px 16px",
+                            outline: "none",
+              fontSize: "15px",
+            }}
+          />
+
+          <button
+            onClick={handleFixGeneratedImage}
+            disabled={isFixingImage}
+            style={{
+              border: "none",
+              borderRadius: "16px",
+              background: isFixingImage
+                ? "rgba(34,211,238,0.45)"
+                : "linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%)",
+              color: "#ffffff",
+              fontWeight: 900,
+              fontSize: "18px",
+              cursor: isFixingImage ? "not-allowed" : "pointer",
+              boxShadow: "0 10px 24px rgba(34,211,238,0.22)",
+              opacity: isFixingImage ? 0.7 : 1,
+              padding: "0 20px",
             }}
           >
-            {t.listingEmpty}
-            <br />
-            {t.listingHint}
-          </div>
-        ) : (
-        <div style={{ display: "grid", gap: "18px" }}>
-            <SummaryLine label="Название" value={listingView?.title ?? "—"} />
-            <SummaryLine
-              label="SEO title"
-              value={listingView?.seo_title ?? "—"}
-            />
+            {isFixingImage ? "Исправление..." : "Исправить ошибки генерации"}
+          </button>
 
-            <CardTextBlock
-              title="Короткое описание"
-              text={listingView?.short_description ?? "—"}
-            />
-
-            <CardTextBlock
-              title="Полное описание"
-              text={listingView?.full_description ?? "—"}
-            />
-
-            <div
+          {fixedImages[selectedFixIndex] ? (
+            <a
+              href={fixedImages[selectedFixIndex]}
+              download={`fixed_image_${selectedFixIndex + 1}.png`}
+              target="_blank"
+              rel="noreferrer"
               style={{
-                padding: "18px",
-                borderRadius: "18px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "16px",
+                background: "linear-gradient(135deg, #facc15 0%, #eab308 100%)",
+                color: "#ffffff",
+                fontWeight: 900,
+                fontSize: "18px",
+                textDecoration: "none",
+                border: "1px solid rgba(255,255,255,0.14)",
+                padding: "0 20px",
               }}
             >
-              <div
-                style={{ fontSize: "18px", opacity: 0.7, marginBottom: "8px" }}
-              >
-                Характеристики
+              Скачать PNG
+            </a>
+          ) : null}
+        </div>
+      </div>
+
+    
+)}
+
+
+
+{activePage === "listing" && (
+  <div style={{ maxWidth: "1180px", padding: "28px", borderRadius: "24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 18px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(14px)" }}>
+    <div style={{ fontSize: "34px", fontWeight: 900, marginBottom: "18px" }}>
+      SEO / Описание товара
+    </div>
+
+    {!listingData ? (
+      <div style={{ fontSize: "20px", color: "#cbd5e1" }}>
+        {t.listingEmpty}<br />{t.listingHint}
+      </div>
+    ) : (
+      <div style={{ display: "grid", gap: "18px" }}>
+        {[
+          { label: "Название RU", limit: 90, value: (listingData as any).title_ru ? (listingData as any).title_ru : ((listingData as any).title ? (listingData as any).title : "—") },
+          { label: "Название UZ", limit: 90, value: (listingData as any).title_uz ? (listingData as any).title_uz : "—" },
+          { label: "Краткое RU", limit: 390, value: (listingData as any).short_description_ru ? (listingData as any).short_description_ru : ((listingData as any).short_description ? (listingData as any).short_description : "—") },
+          { label: "Краткое UZ", limit: 390, value: (listingData as any).short_description_uz ? (listingData as any).short_description_uz : "—" },
+          { label: "Полное RU", limit: 5000, value: (listingData as any).full_description_ru ? (listingData as any).full_description_ru : ((listingData as any).full_description ? (listingData as any).full_description : "—") },
+          { label: "Полное UZ", limit: 5000, value: (listingData as any).full_description_uz ? (listingData as any).full_description_uz : "—" },
+        ].map((field: any) => (
+          <div key={field.label} style={{ padding: "16px", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
+            <div style={{ fontSize: "14px", color: "#67e8f9", fontWeight: 900, marginBottom: "8px" }}>
+              {field.label} ({String(field.value).length}/{field.limit})
+            </div>
+            <div style={{ padding: "12px", borderRadius: "14px", background: "rgba(15,23,42,0.55)", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
+              {field.value}
+            </div>
+          </div>
+        ))}
+<div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "18px" }}>
+          <div style={{ padding: "16px", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
+            <div style={{ fontSize: "16px", color: "#67e8f9", fontWeight: 900, marginBottom: "10px" }}>Свойства RU — 5 полей</div>
+            {[0,1,2,3,4].map((i) => (
+              <div key={i} style={{ marginBottom: "8px", padding: "10px", borderRadius: "12px", background: "rgba(15,23,42,0.55)" }}>
+                {i + 1}. {Array.isArray((listingData as any).features_ru) && (listingData as any).features_ru[i] ? (listingData as any).features_ru[i] : "—"}
               </div>
-
-              {listingCharacteristics.length > 0 ? (
-                <div style={{ display: "grid", gap: "10px" }}>
-                  {listingCharacteristics.map(
-                    (item: string, index: number) => (
-                      <div
-                        key={index}
-                        style={{
-                          padding: "10px 14px",
-                          borderRadius: "12px",
-                          background: "rgba(255,255,255,0.04)",
-                          fontSize: "18px",
-                        }}
-                      >
-                        • {item}
-                      </div>
-                    )
-                  )}
-                </div>
-              ) : (
-                <div style={{ fontSize: "18px" }}>—</div>
-              )}
-            </div>
-
-            <div
-              style={{
-                padding: "18px",
-                borderRadius: "18px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              <div
-                style={{ fontSize: "18px", opacity: 0.7, marginBottom: "8px" }}
-              >
-                Ключевые слова
-              </div>{listingKeywords.length > 0 ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
-                  {listingKeywords.map((item: string, index: number) => (
-                    <span
-                      key={index}
-                      style={{
-                        padding: "10px 14px",
-                        borderRadius: "999px",
-                        background: "rgba(34,211,238,0.18)",
-                        border: "1px solid rgba(34,211,238,0.35)",
-                        fontSize: "18px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ fontSize: "18px" }}>—</div>
-              )}
-            </div>
-
-            <div
-              style={{
-                padding: "18px",
-                borderRadius: "18px",
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              <div
-                style={{ fontSize: "18px", opacity: 0.7, marginBottom: "12px" }}
-              >
-                Слайды для инфографики
-              </div>{Array.isArray(listingData.data?.slides) &&
-              listingData.data.slides.length > 0 ? (
-                <div style={{ display: "grid", gap: "14px" }}>
-                  {listingData.data.slides.map((slide: any, index: number) => (
-                    <div
-                      key={index}
-                      style={{
-                        padding: "16px",
-                        borderRadius: "16px",
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          color: "#67e8f9",
-                          fontWeight: 900,
-                          textTransform: "uppercase",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        {slide.type}
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: "24px",
-                          fontWeight: 900,
-                          marginBottom: "8px",
-                        }}
-                      >
-                        {slide.headline}
-                      </div>
-
-                      {slide.subheadline ? (
-                        <div
-                          style={{
-                            fontSize: "16px",
-                            color: "#cbd5e1",
-                            marginBottom: "10px",
-                          }}
-                        >
-                          {slide.subheadline}
-                        </div>
-                      ) : null}
-
-                      {Array.isArray(slide.bullets) &&
-                      slide.bullets.length > 0 ? (
-                        <div style={{ display: "grid", gap: "8px" }}>
-                          {slide.bullets.map(
-                            (bullet: string, bulletIndex: number) => (
-                              <div
-                                key={bulletIndex}
-                                style={{
-                                  fontSize: "16px",
-                                  color: "white",
-                                  padding: "8px 12px",
-                                  borderRadius: "12px",
-                                  background: "rgba(255,255,255,0.03)",
-                                }}
-                              >• {bullet}
-                              </div>
-                            )
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ fontSize: "18px" }}>—</div>
-              )}
-            </div>
+            ))}
           </div>
-        )}
+
+          <div style={{ padding: "16px", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
+            <div style={{ fontSize: "16px", color: "#67e8f9", fontWeight: 900, marginBottom: "10px" }}>Свойства UZ — 5 полей</div>
+            {[0,1,2,3,4].map((i) => (
+              <div key={i} style={{ marginBottom: "8px", padding: "10px", borderRadius: "12px", background: "rgba(15,23,42,0.55)" }}>
+                {i + 1}. {Array.isArray((listingData as any).features_uz) && (listingData as any).features_uz[i] ? (listingData as any).features_uz[i] : "—"}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )}
-
-    {activePage === "economy" && (
+  </div>
+)}
+{activePage === "economy" && (
       <div
         style={{
           maxWidth: "980px",
@@ -2920,6 +3299,13 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 
               <div style={{ fontSize: "17px", marginBottom: "8px" }}>
                 {item.generations} генераций
+              <div style={{ marginTop: "10px", display: "grid", gap: "6px" }}>
+                {getTariffFeatureLines(tariff, lang).map((line) => (
+                  <div key={line} style={{ fontSize: "14px", fontWeight: 700 }}>
+                    • {line}
+                  </div>
+                ))}
+              </div>
               </div>
 
               <div style={{ fontSize: "15px", opacity: 0.95 }}>
@@ -3122,15 +3508,6 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     </div>
   </div>
 )}
-<style jsx>{`
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`}</style>
+
   </>
 )}

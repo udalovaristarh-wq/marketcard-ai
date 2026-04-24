@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Form
-from app.services.listing_generator import generate_listing_content
+from app.services.ai_pipeline.seo_generator import generate_listing
 from sqlmodel import Session
 from app.models import User
 from app.db import engine
@@ -25,7 +25,7 @@ async def generate_listing(
         if user.tariff_generations_total - user.tariff_generations_used <= 0:
             return {"success": False, "error": "Лимит генераций исчерпан"}
 
-        result = generate_listing_content(
+        result = generate_listing(
             title=title,
             brand=brand,
             category=category,
@@ -38,5 +38,5 @@ async def generate_listing(
 
         return {
             "success": True,
-            "listing": result,
+            **result,
         }
