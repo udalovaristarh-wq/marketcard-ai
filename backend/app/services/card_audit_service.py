@@ -17,6 +17,10 @@ def analyze_product_card(image_bytes: bytes, filename: str = "card.jpg") -> dict
 
 {
   "score": 0-100,
+  "conversion_score": 0-10,
+  "design_score": 0-10,
+  "readability_score": 0-10,
+  "trust_score": 0-10,
   "summary": "краткий вывод",
   "pros": ["плюс 1", "плюс 2", "плюс 3"],
   "cons": ["минус 1", "минус 2", "минус 3"],
