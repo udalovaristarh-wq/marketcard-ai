@@ -34,3 +34,16 @@
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+
+.mc-spin-loader {
+  animation: mcSpinLoader 0.9s linear infinite;
+}
+
+@keyframes mcSpinLoader {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
