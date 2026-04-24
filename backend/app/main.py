@@ -1,4 +1,6 @@
+from app.routes import card_audit
 from app.routes import translate_listing
+from app.routes import card_audit
 from app.routes import support
 from app.routers.payments import router as payments_router
 from app.routers.click import router as click_router
@@ -35,6 +37,7 @@ app = FastAPI(
     debug=True,
     root_path="/api",
 )
+app.include_router(card_audit.router)
 app.include_router(translate_listing.router)
 app.include_router(admin.router)
 

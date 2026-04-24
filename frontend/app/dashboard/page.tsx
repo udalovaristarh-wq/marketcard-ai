@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import CardAuditPanel from "@/app/components/CardAuditPanel"
 import "./effects/index.css";
 
 import React, { useEffect, useMemo, useState } from "react"
@@ -7,7 +8,7 @@ import type { CSSProperties } from "react";
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
-type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu"
+type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu" | "audit"
 type LanguageMode = "ru" | "uz" | "both"
 
 type ProfileResponse = {
@@ -1869,6 +1870,22 @@ if (!authChecked) return null
   ИКПУ
 </button>
             </div>
+<div
+          onClick={() => setActivePage("audit")}
+          style={{
+            padding: "18px 22px",
+            borderRadius: "20px",
+            background: activePage === "audit" ? "linear-gradient(135deg,#22c55e,#06b6d4)" : "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            color: "#fff",
+            fontWeight: 900,
+            cursor: "pointer",
+            marginTop: "14px",
+            boxShadow: activePage === "audit" ? "0 0 24px rgba(34,197,94,0.35)" : "none",
+          }}
+        >
+          Оценка карточки
+        </div>
 </aside>
  {isMobile && isMobileMenuOpen && (
   <div
@@ -1911,7 +1928,7 @@ if (!authChecked) return null
         marginBottom: "18px",
       }}
     >
-      Поиск ИКПУ
+      Поиск ИКПУ        <div onClick={() => setActivePage("audit")} style={{cursor:"pointer",marginTop:"10px"}}>Оценка карточки</div>
     </div>
 
     <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
@@ -3051,6 +3068,11 @@ if (listingLang === "uz" && translatedListing) {
 
 </div>
 )}
+
+{activePage === "audit" && (
+  <CardAuditPanel />
+)}
+
 {activePage === "economy" && (
       <div
         style={{
@@ -3602,8 +3624,13 @@ if (listingLang === "uz" && translatedListing) {
         </button>
       </div>
     </div>
-  </div>
+  
+
+
+</div>
 )}
 
   </>
 )}
+
+
