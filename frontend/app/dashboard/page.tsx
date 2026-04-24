@@ -1,4 +1,37 @@
-"use client";
+"use client"
+
+
+const buyAudit = async (pkg: string) => {
+  try {
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      alert("Вы не авторизованы")
+      return
+    }
+
+    const res = await fetch(`/api/payments/create-audit-order?package=${encodeURIComponent(pkg)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await res.json()
+
+    if (!data?.payme_url) {
+      alert("Ошибка создания заказа")
+      return
+    }
+
+    window.location.href = data.payme_url
+
+  } catch (e) {
+    console.error(e)
+    alert("Ошибка оплаты")
+  }
+}
+;
 import CardAuditPanel from "@/app/components/CardAuditPanel"
 import "./effects/index.css";
 
@@ -19,6 +52,7 @@ type ProfileResponse = {
   tariff_generations_total: number
   tariff_generations_used: number
   tariff_generations_left: number
+  audit_credits: number
 }
 
 type ProductResponse = {
@@ -96,6 +130,7 @@ const dict = {
     generationsUsed: "Использовано",
     logout: "Выйти",
     chooseTariff: "Выберите тариф",
+
     uploadPhoto: "Загрузить фото товара",
     dragPhoto: "Перетащите фото сюда или нажмите для выбора",
     selectedFile: "Выбран файл",
@@ -2242,6 +2277,17 @@ if (!authChecked) return null
           }}
         >
           {t.generationsUsed}: <b>{profile?.tariff_generations_used ?? 0}</b>
+                  <div style={{ marginTop: "6px", color: "#22c55e", fontWeight: 800 }}>
+                    Оценок карточек: {profile?.audit_credits ?? 0}
+                  </div>
+                  <div style={{ marginTop: "12px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <button onClick={() => buyAudit("audit10")} style={{ padding: "10px 16px", borderRadius: "12px", background: "#22c55e", color: "#fff", border: "none", fontWeight: 900, cursor: "pointer" }}>
+                      Купить 10 аудитов
+                    </button>
+                    <button onClick={() => buyAudit("audit30")} style={{ padding: "10px 16px", borderRadius: "12px", background: "#06b6d4", color: "#fff", border: "none", fontWeight: 900, cursor: "pointer" }}>
+                      Купить 30 аудитов
+                    </button>
+                  </div>
         </div>
 
         <button

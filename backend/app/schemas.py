@@ -36,6 +36,7 @@ class ProfileResponse(BaseModel):
     tariff_generations_total: int
     tariff_generations_used: int
     tariff_generations_left: int
+    audit_credits: int = 0
     offer_accepted: bool = False
     offer_accepted_at: Optional[str] = None
     offer_accept_lang: Optional[str] = None

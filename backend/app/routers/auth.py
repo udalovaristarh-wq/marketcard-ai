@@ -34,6 +34,13 @@ TARIFFS = {
     "Premium": 200,
 }
 
+AUDIT_CREDITS_BY_TARIFF = {
+    "Start": 10,
+    "Business": 30,
+    "Premium": 100,
+}
+
+
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "marketcardai@gmail.com"
@@ -90,6 +97,7 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
         tariff_generations_total=0,
         tariff_generations_used=0,
         tariff_generations_left=0,
+        audit_credits=user.audit_credits or 0,
     )
     session.add(user)
     session.commit()
@@ -114,6 +122,7 @@ def get_profile(
         "tariff_active": user.tariff_active,
         "tariff_generations_total": user.tariff_generations_total,
         "tariff_generations_used": user.tariff_generations_used,
+        "audit_credits": user.audit_credits or 0,
         "tariff_generations_left": max(
             user.tariff_generations_total - user.tariff_generations_used, 0
         ),
@@ -161,6 +170,7 @@ def activate_tariff(
         "tariff_name": user.tariff_name,
         "tariff_generations_total": user.tariff_generations_total,
         "tariff_generations_used": user.tariff_generations_used,
+        "audit_credits": user.audit_credits or 0,
         "tariff_generations_left": max(
             user.tariff_generations_total - user.tariff_generations_used, 0
         ),

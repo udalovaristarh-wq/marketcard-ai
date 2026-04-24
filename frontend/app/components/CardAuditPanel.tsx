@@ -46,8 +46,16 @@ export default function CardAuditPanel() {
       setError("")
       setResult(null)
 
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        throw new Error("Вы не авторизованы")
+      }
+
       const res = await fetch("/api/card-audit/analyze", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       })
 

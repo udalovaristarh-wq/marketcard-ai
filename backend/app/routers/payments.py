@@ -185,6 +185,13 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             user.tariff_generations_left = 200
 
         order.status = "paid"
+
+    # начисление аудитов
+    if order.tariff_name == "audit10":
+        user.audit_credits = (user.audit_credits or 0) + 10
+    elif order.tariff_name == "audit30":
+        user.audit_credits = (user.audit_credits or 0) + 30
+
         if not order.paid_at:
             order.paid_at = datetime.utcnow()
 
@@ -249,3 +256,45 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             "state": 1,
             "reason": None,
         })
+
+
+@router.post("/create-audit-order")
+def create_audit_order(
+    package: str,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    PACKAGES = {
+        "audit10": {"credits": 10, "amount": 49000},
+        "audit30": {"credits": 30, "amount": 99000},
+    }
+
+    if package not in PACKAGES:
+        raise HTTPException(400, "Invalid package")
+
+    pkg = PACKAGES[package]
+
+    order = PaymentOrder(
+        user_id=current_user.id,
+        email=current_user.email,
+        tariff_name=package,
+        amount_uzs=pkg["amount"],
+        provider="payme",
+        status="pending",
+    )
+
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    amount_tiyin = int(order.amount_uzs) * 100
+    payme_data = f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin}"
+    payme_encoded = base64.b64encode(payme_data.encode()).decode()
+
+    return {
+        "success": True,
+        "order_id": order.id,
+        "amount": pkg["amount"],
+        "credits": pkg["credits"],
+        "payme_url": f"{PAYME_BASE_URL}/{payme_encoded}",
+    }

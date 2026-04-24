@@ -19,6 +19,7 @@ class User(SQLModel, table=True):
     tariff_generations_total: int = Field(default=0)
     tariff_generations_used: int = Field(default=0)
     tariff_generations_left: int = Field(default=0)
+    audit_credits: int = Field(default=0)
 
     is_admin: bool = Field(default=False)
     is_banned: bool = Field(default=False)
