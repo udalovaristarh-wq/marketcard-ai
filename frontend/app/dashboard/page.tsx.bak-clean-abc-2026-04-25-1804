@@ -32,9 +32,9 @@ const buyAudit = async (pkg: string) => {
   }
 }
 ;
-import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
 import CardAuditPanel from "@/app/components/CardAuditPanel"
 import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
+import ABCAnalysisModal from "../components/ABCAnalysisModal"
 import "./effects/index.css";
 
 import React, { useEffect, useMemo, useState } from "react"
@@ -978,6 +978,13 @@ export default function DashboardPage() {
   const [otherCosts, setOtherCosts] = useState("2000")
   const [desiredProfit, setDesiredProfit] = useState("10000")
   const [competitorPrice, setCompetitorPrice] = useState("0")
+
+
+  const [abcModalOpen, setAbcModalOpen] = useState(false)
+  const [abcUrl, setAbcUrl] = useState("")
+  const [abcLoading, setAbcLoading] = useState(false)
+  const [abcError, setAbcError] = useState("")
+  const [abcResult, setAbcResult] = useState<any>(null)
 
   const [activePage, setActivePage] =
     useState<DashboardPageKey>("generator")
@@ -1944,9 +1951,28 @@ if (!authChecked) return null
     : "rgba(255,255,255,0.06)",
 }}>
   📊 Аналитика товара
+
+
 </div>
+
               <div
-                onClick={() => window.dispatchEvent(new Event("marketcard:open-abc"))}
+                onClick={() => {
+                  setAbcModalOpen(true)
+                  setAbcError("")
+                  setAbcResult(null)
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px) scale(1.02)"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0) scale(1)"
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.transform = "translateY(1px) scale(0.98)"
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px) scale(1.02)"
+                }}
                 style={{
                   padding: "16px 18px",
                   borderRadius: "18px",
@@ -1956,12 +1982,12 @@ if (!authChecked) return null
                   cursor: "pointer",
                   marginTop: "12px",
                   textAlign: "center",
-                  boxShadow: "0 18px 45px rgba(99,102,241,0.28)"
+                  boxShadow: "0 18px 45px rgba(99,102,241,0.28)",
+                  transition: "all 0.18s ease"
                 }}
               >
-                🚀 ABC анализ по ссылке
+                📊 ABC анализ
               </div>
-
 </aside>
  {isMobile && isMobileMenuOpen && (
   <div
@@ -3412,9 +3438,81 @@ if (listingLang === "uz" && translatedListing) {
       </div>
     )}
   </div>
+                placeholder="Вставьте ссылку на товар"
+                style={{
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  background: "rgba(15,23,42,0.7)",
+                  color: "white",
+                  fontWeight: 800,
+                }}
+              />
+
+              <button
+                disabled={abcLoading}
+                onClick={() => setAbcModalOpen(true)}
+                style={{
+                  padding: "16px",
+                  borderRadius: "16px",
+                  background: "linear-gradient(135deg,#6366f1,#a855f7)",
+                  color: "white",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+              >
+                {abcLoading ? "Анализируем..." : "Запустить ABC анализ"}
+              </button>
+            </div>
+
+   
+                <h2 style={{ margin: 0, fontSize: "32px", fontWeight: 950 }}>
+                  📊 ABC анализ по ссылке
+                </h2>
+                <p style={{ marginTop: "10px", opacity: 0.82, fontWeight: 700, lineHeight: 1.55 }}>
+                  Вставьте ссылку на товар. Система выдаёт решение и стратегию.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setAbcModalOpen(false)}
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "14px",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(255,255,255,0.08)",
+                  color: "white",
+                  cursor: "pointer",
+                  fontSize: "22px",
+                  fontWeight: 900,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+
+            {abcResult && (
+              <div style={{ marginTop: "20px", padding: "16px", borderRadius: "16px", background: "rgba(255,255,255,0.05)" }}>
+                <div style={{ fontSize: "20px", fontWeight: 900 }}>
+                  Класс: {abcResult.abc_class}
+                </div>
+                <div style={{ marginTop: "8px" }}>
+                  {abcResult.decision}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+
+      <ABCAnalysisModal open={abcModalOpen} onClose={() => setAbcModalOpen(false)} />
 </section>
 </div>
-  <ABCFloatingAnalysis />
 </main>
 
 {showTariffModal && (

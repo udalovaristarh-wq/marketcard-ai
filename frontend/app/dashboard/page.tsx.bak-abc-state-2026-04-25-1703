@@ -32,7 +32,6 @@ const buyAudit = async (pkg: string) => {
   }
 }
 ;
-import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
 import CardAuditPanel from "@/app/components/CardAuditPanel"
 import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
 import "./effects/index.css";
@@ -1944,9 +1943,49 @@ if (!authChecked) return null
     : "rgba(255,255,255,0.06)",
 }}>
   📊 Аналитика товара
+
+
 </div>
+
               <div
-                onClick={() => window.dispatchEvent(new Event("marketcard:open-abc"))}
+                onClick={async () => {
+  const url = prompt("Вставьте ссылку на товар")
+  if (!url) return
+
+  const token = localStorage.getItem("access_token")
+  if (!token) {
+    alert("Войдите в аккаунт")
+    return
+  }
+
+  try {
+    const res = await fetch("/api/abc-analysis", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ url }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert(data?.detail || "Ошибка ABC анализа")
+      return
+    }
+
+    alert(
+      "Класс: " + data.abc_class + "\n" +
+      "Решение: " + data.decision + "\n\n" +
+      "Почему:\n- " + data.why.join("\n- ") + "\n\n" +
+      "Риски:\n- " + data.risks.join("\n- ")
+    )
+
+  } catch (e) {
+    alert("Ошибка запроса")
+  }
+}}
                 style={{
                   padding: "16px 18px",
                   borderRadius: "18px",
@@ -1959,9 +1998,8 @@ if (!authChecked) return null
                   boxShadow: "0 18px 45px rgba(99,102,241,0.28)"
                 }}
               >
-                🚀 ABC анализ по ссылке
+                📊 ABC анализ
               </div>
-
 </aside>
  {isMobile && isMobileMenuOpen && (
   <div
@@ -3414,7 +3452,6 @@ if (listingLang === "uz" && translatedListing) {
   </div>
 </section>
 </div>
-  <ABCFloatingAnalysis />
 </main>
 
 {showTariffModal && (

@@ -32,7 +32,6 @@ const buyAudit = async (pkg: string) => {
   }
 }
 ;
-import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
 import CardAuditPanel from "@/app/components/CardAuditPanel"
 import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
 import "./effects/index.css";
@@ -1945,23 +1944,6 @@ if (!authChecked) return null
 }}>
   📊 Аналитика товара
 </div>
-              <div
-                onClick={() => window.dispatchEvent(new Event("marketcard:open-abc"))}
-                style={{
-                  padding: "16px 18px",
-                  borderRadius: "18px",
-                  background: "linear-gradient(135deg,#6366f1,#a855f7)",
-                  color: "white",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                  marginTop: "12px",
-                  textAlign: "center",
-                  boxShadow: "0 18px 45px rgba(99,102,241,0.28)"
-                }}
-              >
-                🚀 ABC анализ по ссылке
-              </div>
-
 </aside>
  {isMobile && isMobileMenuOpen && (
   <div
@@ -3414,7 +3396,6 @@ if (listingLang === "uz" && translatedListing) {
   </div>
 </section>
 </div>
-  <ABCFloatingAnalysis />
 </main>
 
 {showTariffModal && (

@@ -1,0 +1,886 @@
+"use client"
+
+
+const buyAudit = async (pkg: string) => {
+  try {
+    const token = localStorage.getItem("access_token")
+    if (!token) {
+      alert("Вы не авторизованы")
+      return
+    }
+
+    const res = await fetch(`/api/payments/create-audit-order?package=${encodeURIComponent(pkg)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    const data = await res.json()
+
+    if (!data?.payme_url) {
+      alert("Ошибка создания заказа")
+      return
+    }
+
+    window.location.href = data.payme_url
+
+  } catch (e) {
+    console.error(e)
+    alert("Ошибка оплаты")
+  }
+}
+;
+import CardAuditPanel from "@/app/components/CardAuditPanel"
+import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
+import "./effects/index.css";
+
+import React, { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import type { CSSProperties } from "react";
+type Lang = "ru" | "uz" | "en"
+type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
+type TariffName = "Start" | "Business" | "Premium"
+type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu" | "audit" | "intelligence" | "intelligence"
+type LanguageMode = "ru" | "uz" | "both"
+
+type ProfileResponse = {
+  email: string
+  full_name: string
+  tariff_name: string | null
+  tariff_active: boolean
+  tariff_generations_total: number
+  tariff_generations_used: number
+  tariff_generations_left: number
+  audit_credits: number
+}
+
+type ProductResponse = {
+  id: number
+  user_id: number
+  title: string
+  brand?: string | null
+  category: string
+  marketplace: string
+  description?: string | null
+  seo_title?: string | null
+  seo_description?: string | null
+  image_url?: string | null
+  status: string
+}
+
+type AiGenerateResponse = {
+  success: boolean
+  variants: string[]
+}
+
+type ListingSlide = {
+  type: string
+  headline: string
+  subheadline?: string
+  bullets?: string[]
+}
+
+type ListingAIData = {
+  product_title?: string
+  seo_title?: string
+  short_description?: string
+  full_description?: string
+  characteristics?: string[]
+  keywords?: string[]
+  slides?: ListingSlide[]
+}
+
+type ListingResponse = {
+  marketplace?: string
+  category_type?: string
+  ai?: boolean
+  data?: ListingAIData
+
+  title?: string
+  seo_title?: string
+  short_description?: string
+  full_description?: string
+  characteristics?: string[] | Record<string, string>
+  keywords?: string[]
+  lengths?: {
+  title?: number
+  short_description?: number
+  full_description?: number
+}
+
+limits?: {
+  title_max?: number
+  short_max?: number
+  full_max?: number
+}
+}
+
+const dict = {
+  ru: {
+    pageTitle: "Личный кабинет",
+    pageSubtitle: "Создать карточку товара",
+    account: "Личный кабинет",
+    email: "Электронная почта",
+    tariff: "Тариф",
+    tariffStatus: "Статус подписки",
+    active: "Активна",
+    inactive: "Не активна",
+    generationsLeft: "Осталось генераций",
+    generationsUsed: "Использовано",
+    logout: "Выйти",
+    chooseTariff: "Выберите тариф",
+
+    uploadPhoto: "Загрузить фото товара",
+    dragPhoto: "Перетащите фото сюда или нажмите для выбора",
+    selectedFile: "Выбран файл",
+    noFile: "Файл не выбран",
+    titleLabel: "Название товара",
+    brandLabel: "Бренд",
+    categoryLabel: "Категория",
+    titlePlaceholder: "Например: Насос ГУР Cobalt",
+    brandPlaceholder: "Например: BRAVE",
+    categoryPlaceholder: "Например: Автозапчасти",
+    chooseMarketplace: "Выберите маркетплейс",
+    format: "Формат",
+    ratio: "Соотношение",
+    aiGenerate: "AI генерация",
+    generating: "Генерация...",
+    downloadPng: "Скачать PNG",
+    preview: "Предпросмотр",
+    previewEmpty: "Загрузите фото и заполните данные товара.",
+    fillRequired: "Заполните название товара, бренд, категорию и выберите фото",
+    noTariff: "Тариф не выбран",
+    tariffActivated: "Тариф успешно активирован",
+    close: "Закрыть",
+    activateTariff: "Продолжить",
+    startDesc: "Для старта",
+    businessDesc: "Для активной работы",
+    premiumDesc: "Для команды и больших объёмов",
+    success: "Карточки успешно созданы",
+    createFirst: "Сначала создайте карточку",
+    imageReady: "PNG готов",
+    paymentTitle: "Способ оплаты",
+    payButton: "Оплатить",
+    choosePayment: "Выберите способ оплаты",
+    activateFirst: "Сначала активируйте тариф",
+    serverError: "Ошибка соединения с сервером",
+    createError: "Ошибка создания товара",
+    renderError: "Ошибка AI генерации",
+    generationError: "Ошибка генерации карточек",
+    listingTitle: "SEO / Описание товара",
+
+    listingEmpty: "Пока нет сгенерированного SEO текста.",
+    listingHint: "Сначала создай карточку товара в разделе генератора.",
+    listingButton: "SEO / Описание",
+    unitTitle: "Юнит-экономика",
+    unitSubtitle: "Калькулятор прибыльной цены для маркетплейсов",
+    purchaseUsd: "Закупка товара ($)",
+    usdRate: "Курс доллара",
+    commissionPercent: "Комиссия маркетплейса (%)",
+    fulfillmentLogistics: "Логистика маркетплейса",
+    localLogistics: "Внутренняя логистика",
+    marketing: "Маркетинг / реклама",
+    packaging: "Упаковка",
+    otherCosts: "Прочие расходы",
+    desiredProfit: "Желаемая чистая прибыль",
+    competitorPrice: "Средняя цена конкурентов",
+    totalCost: "Полная себестоимость",
+    breakEvenPrice: "Цена без убытка",aggressivePrice: "Быстрые продажи",
+    optimalPrice: "Оптимум",
+    premiumPrice: "Премиум",
+    aggressiveHint: "Максимум конверсии, ниже маржа",
+    optimalHint: "Лучший баланс прибыли и продаж",
+    premiumHint: "Выше маржа, ниже поток",
+    expectedNetProfit: "Чистая прибыль",
+    recommendation: "Рекомендация",
+    recommendationText:
+      "Если заходишь в новую нишу — используй «Быстрые продажи». Если уже есть отзывы и нормальная карточка — ставь «Оптимум». «Премиум» тестируй только когда бренд и визуал реально сильнее конкурентов.",
+    sum: "сум",
+    belowMarket: "Ниже рынка",
+    inMarket: "В рынке",
+    aboveMarket: "Выше рынка",
+    marketPosition: "Позиция относительно рынка",
+    margin: "Маржа",
+    netMarginPercent: "Чистая маржа",
+    roi: "ROI",
+    scenarioProfitability: "Рентабельность сценария",
+    targetPriceMap: "Карта цен",
+    marketBenchmark: "Рыночный ориентир",
+    competitorHint: "Используется для оценки конкурентности цены",
+    noBenchmark: "Без ориентира",
+    demandHigh: "Высокий поток",
+    demandMedium: "Средний поток",
+    demandLow: "Низкий поток",
+    dashboardHint:
+      "Ниже ты видишь не просто цену, а рабочую стратегию по выходу в рынок.",
+    sidebarGenerator: "Генератор карточек",
+    sidebarEconomy: "Юнит-экономика",
+    languageMode: "Язык инфографики",
+    onlyRu: "Только RU",
+    onlyUz: "Только UZ",
+    ruUz: "RU + UZ",
+    variantCount: "Количество вариантов",
+    variantsTitle: "Сгенерированные варианты",
+    openPng: "Открыть PNG",
+    noVariantsYet: "Тут появятся варианты карточек",
+    aiPremiumTitle: "AI-генератор карточек",
+    aiPremiumHint:
+      "Загрузите фото товара, выберите язык и маркетплейс — система автоматически создаст несколько вариантов продающей инфографики.",
+  },
+  uz: {
+    pageTitle: "Shaxsiy kabinet",
+    pageSubtitle: "Mahsulot kartasini yaratish",
+    account: "Shaxsiy kabinet",
+    email: "Elektron pochta",
+    tariff: "Tarif",
+    tariffStatus: "Obuna holati",
+    active: "Faol",
+    inactive: "Faol emas",
+    generationsLeft: "Qolgan generatsiyalar",
+    generationsUsed: "Ishlatilgan",
+    logout: "Chiqish",
+    chooseTariff: "Tarifni tanlang",
+    uploadPhoto: "Mahsulot rasmini yuklash",
+    dragPhoto: "Rasmni shu yerga tashlang yoki tanlash uchun bosing",
+    selectedFile: "Tanlangan fayl",
+    noFile: "Fayl tanlanmagan",
+    titleLabel: "Mahsulot nomi",
+    brandLabel: "Brend",
+    categoryLabel: "Kategoriya",
+    titlePlaceholder: "Masalan: Cobalt rul nasosi",
+    brandPlaceholder: "Masalan: BRAVE",
+    categoryPlaceholder: "Masalan: Avto ehtiyot qismlar",
+    chooseMarketplace: "Marketpleysni tanlang",
+    format: "Format",
+    ratio: "Nisbat",
+    aiGenerate: "AI generatsiya",
+    generating: "Generatsiya...",
+    downloadPng: "PNG yuklab olish",
+    preview: "Ko‘rib chiqish",
+    previewEmpty: "Rasm yuklang va mahsulot ma’lumotlarini kiriting.",
+    fillRequired: "Mahsulot nomi, brend, kategoriya kiriting va rasm tanlang",
+    noTariff: "Tarif tanlanmagan",
+    tariffActivated: "Tarif muvaffaqiyatli faollashtirildi",
+    close: "Yopish",
+    activateTariff: "Davom etish",
+    startDesc: "Boshlash uchun",
+    businessDesc: "Faol ish uchun",
+    premiumDesc: "Jamoa va katta hajm uchun",
+    success: "Kartochkalar muvaffaqiyatli yaratildi",
+    createFirst: "Avval karta yarating",
+    imageReady: "PNG tayyor",
+    paymentTitle: "To‘lov usuli",
+    payButton: "To‘lash",
+    choosePayment: "To‘lov usulini tanlang",
+    activateFirst: "Avval tarifni faollashtiring",
+    serverError: "Server bilan ulanishda xatolik",
+    createError: "Mahsulot yaratishda xatolik",
+    renderError: "AI generatsiya xatosi",
+    generationError: "Kartalar generatsiyasida xatolik",
+    listingTitle: "SEO / Tavsif",
+    listingEmpty: "Hali SEO matn yaratilmagan.",listingHint: "Avval generator bo‘limida kartani yarating.",
+    listingButton: "SEO / Tavsif",
+    unitTitle: "Yunit iqtisodiyoti",
+    unitSubtitle: "Marketpleys uchun foydali narx kalkulyatori",
+    purchaseUsd: "Mahsulot xaridi ($)",
+    usdRate: "Dollar kursi",
+    commissionPercent: "Marketpleys komissiyasi (%)",
+    fulfillmentLogistics: "Marketpleys logistikasi",
+    localLogistics: "Ichki logistika",
+    marketing: "Marketing / reklama",
+    packaging: "Qadoqlash",
+    otherCosts: "Boshqa xarajatlar",
+    desiredProfit: "Kerakli sof foyda",
+    competitorPrice: "Raqobatchilar o‘rtacha narxi",
+    totalCost: "To‘liq tannarx",
+    breakEvenPrice: "Zararsiz narx",
+    aggressivePrice: "Tez savdo",
+    optimalPrice: "Optimal",
+    premiumPrice: "Premium",
+    aggressiveHint: "Ko‘proq mijoz, pastroq marja",
+    optimalHint: "Foyda va talab balansi",
+    premiumHint: "Yuqori marja, pastroq oqim",
+    expectedNetProfit: "Sof foyda",
+    recommendation: "Tavsiya",
+    recommendationText:
+      "Yangi bozorga kirishda «Tez savdo»ni ishlating. Barqaror sotuv uchun «Optimal»ni tanlang. Brend kuchli va vizual yaxshi bo‘lsa — «Premium»ni sinab ko‘ring.",
+    sum: "so‘m",
+    belowMarket: "Bozordan past",
+    inMarket: "Bozor ichida",
+    aboveMarket: "Bozordan yuqori",
+    marketPosition: "Bozorga nisbatan holat",
+    margin: "Marja",
+    netMarginPercent: "Sof marja",
+    roi: "ROI",
+    scenarioProfitability: "Ssenariy rentabelligi",
+    targetPriceMap: "Narx xaritasi",
+    marketBenchmark: "Bozor orientiri",
+    competitorHint: "Narx raqobatbardoshligini baholash uchun",
+    noBenchmark: "Orientirsiz",
+    demandHigh: "Yuqori oqim",
+    demandMedium: "O‘rta oqim",
+    demandLow: "Past oqim",
+    dashboardHint:
+      "Bu yerda faqat narx emas, balki bozorga chiqish strategiyasi ham ko‘rsatiladi.",
+    sidebarGenerator: "Kartalar generatori",
+    sidebarEconomy: "Yunit iqtisodiyoti",
+    languageMode: "Infografika tili",
+    onlyRu: "Faqat RU",
+    onlyUz: "Faqat UZ",
+    ruUz: "RU + UZ",
+    variantCount: "Variantlar soni",
+    variantsTitle: "Yaratilgan variantlar",
+    openPng: "PNG ochish",
+    noVariantsYet: "Bu yerda variantlar paydo bo‘ladi",
+    aiPremiumTitle: "AI kartochka generatori",
+    aiPremiumHint:
+      "Generator backendga marketpleys, til va variantlar sonini yuboradi. Yakuniy dizayn sifati render_engine.py ga bog‘liq.",
+  },
+  en: {
+    pageTitle: "Personal account",
+    pageSubtitle: "Create product card",
+    account: "Personal account",
+    email: "Email",
+    tariff: "Tariff",
+    tariffStatus: "Subscription status",
+    active: "Active",
+    inactive: "Inactive",
+    generationsLeft: "Generations left",
+    generationsUsed: "Used",
+    logout: "Logout",
+    chooseTariff: "Choose tariff",
+    uploadPhoto: "Upload product photo",
+    dragPhoto: "Drag and drop a photo here or click to select",
+    selectedFile: "Selected file",
+    noFile: "No file selected",
+    titleLabel: "Product title",
+    brandLabel: "Brand",
+    categoryLabel: "Category",
+    titlePlaceholder: "Example: Cobalt power steering pump",
+    brandPlaceholder: "Example: BRAVE",
+    categoryPlaceholder: "Example: Auto parts",
+    chooseMarketplace: "Choose marketplace",
+    format: "Format",
+    ratio: "Ratio",
+    aiGenerate: "AI generation",
+    generating: "Generating...",
+    downloadPng: "Download PNG",
+    preview: "Preview",
+    previewEmpty: "Upload a photo and fill in product data.",
+    fillRequired: "Fill in title, brand, category and choose a photo",
+    noTariff: "No tariff selected",
+    tariffActivated: "Tariff activated successfully",
+    close: "Close",
+    activateTariff: "Continue",
+    startDesc: "For getting started",
+    businessDesc: "For active work",
+    premiumDesc: "For teams and high volume",
+    success: "Cards created successfully",
+    createFirst: "Create a card first",
+    imageReady: "PNG ready",
+    paymentTitle: "Payment method",
+    payButton: "Pay",
+    choosePayment: "Choose payment method",
+    activateFirst: "Activate a tariff first",
+    serverError: "Server connection error",
+    createError: "Error creating product",
+    renderError: "AI render error",
+    generationError: "Card generation error",
+    listingButton: "SEO / Description",
+listingTitle: "SEO / Product description",
+listingEmpty: "SEO text has not been generated yet.",
+listingHint: "First create a product card in the generator section.",
+    unitTitle: "Unit economics",
+    unitSubtitle: "Marketplace profitable price calculator",
+    purchaseUsd: "Purchase cost ($)",
+    usdRate: "USD exchange rate",
+    commissionPercent: "Marketplace commission (%)",
+    fulfillmentLogistics: "Marketplace logistics",
+    localLogistics: "Internal logistics",
+    marketing: "Marketing / ads",
+    packaging: "Packaging",
+    otherCosts: "Other costs",
+    desiredProfit: "Desired net profit",
+    competitorPrice: "Average competitor price",
+    totalCost: "Total cost",
+    breakEvenPrice: "Break-even price",
+    aggressivePrice: "Fast sales",
+    optimalPrice: "Optimal",
+    premiumPrice: "Premium",
+    aggressiveHint: "Maximum conversion, lower margin",
+    optimalHint: "Best balance of margin and sales",
+    premiumHint: "Higher margin, lower traffic",
+    expectedNetProfit: "Net profit",
+    recommendation: "Recommendation",
+    recommendationText:
+      "Use 'Fast sales' to enter a new niche aggressively. Use 'Optimal' for steady mode. Test 'Premium' only when branding and visual quality are stronger than competitors.",
+    sum: "UZS",
+    belowMarket: "Below market",
+    inMarket: "In market",
+    aboveMarket: "Above market",
+    marketPosition: "Market position",
+    margin: "Margin",
+    netMarginPercent: "Net margin",
+    roi: "ROI",
+    scenarioProfitability: "Scenario profitability",
+    targetPriceMap: "Price map",
+    marketBenchmark: "Market benchmark",
+    competitorHint: "Used to assess competitiveness of the price",
+    noBenchmark: "No benchmark",
+    demandHigh: "High demand",
+    demandMedium: "Medium demand",
+    demandLow: "Low demand",
+    dashboardHint: "This block shows not just a price, but a market-entry strategy.",
+    sidebarGenerator: "Card generator",
+    sidebarEconomy: "Unit economics",
+    languageMode: "Infographic language",
+    onlyRu: "RU only",
+    onlyUz: "UZ only",
+    ruUz: "RU + UZ",
+    variantCount: "Variant count",
+    variantsTitle: "Generated variants",openPng: "Open PNG",
+    noVariantsYet: "Generated variants will appear here",
+    aiPremiumTitle: "AI card generator",
+    aiPremiumHint:
+      "The generator sends marketplace, language mode and variant count to the backend. Final design quality depends on render_engine.py.",
+  }
+} as const
+
+const marketplaceFormats: Record<
+  MarketplaceKey,
+  {
+    label: string
+    width: number
+    height: number
+    ratio: string
+    gradient: string
+  }
+> = {
+  uzum: {
+    label: "Uzum",
+    width: 1080,
+    height: 1440,
+    ratio: "3:4",
+    gradient: "linear-gradient(135deg, #8b5cf6, #c084fc)",
+  },
+  wildberries: {
+    label: "Wildberries",
+    width: 900,
+    height: 1200,
+    ratio: "3:4",
+    gradient: "linear-gradient(135deg, #9333ea, #ec4899)",
+  },
+  ozon: {
+    label: "Ozon",
+    width: 1200,
+    height: 1600,
+    ratio: "3:4",
+    gradient: "linear-gradient(135deg, #0ea5e9, #2563eb)",
+  },
+  yandex: {
+    label: "Yandex Market",
+    width: 1000,
+    height: 1000,
+    ratio: "1:1",
+    gradient: "linear-gradient(135deg, #f59e0b, #f97316)",
+  },
+}
+
+const tariffs: Record<
+  TariffName,
+  {
+    price: string
+    generations: number
+    gradient: string
+    descKey: "startDesc" | "businessDesc" | "premiumDesc"
+  }> = {
+  Start: {
+    price: "249 000 сум",
+    generations: 20,
+    gradient: "linear-gradient(135deg,#22c55e,#16a34a)",
+    descKey: "startDesc",
+  },
+  Business: {
+    price: "799 000 сум",
+    generations: 60,
+    gradient: "linear-gradient(135deg,#06b6d4,#2563eb)",
+    descKey: "businessDesc",
+  },
+  Premium: {
+    price: "1 900 000 сум",
+    generations: 200,
+    gradient: "linear-gradient(135deg,#f59e0b,#f97316)",
+    descKey: "premiumDesc",
+  },
+}
+
+
+function getTariffFeatureLines(tariff: TariffName, lang: Lang): string[] {
+  if (lang === "ru") {
+    if (tariff === "Start") return ["1 фото за 1 генерацию", "Пауза 3 минуты"]
+    if (tariff === "Business") return ["1 или 3 фото за генерацию", "Пауза 3 минуты"]
+    return ["1, 3 или 5 фото за генерацию", "Пауза 3 минуты"]
+  }
+
+  if (lang === "uz") {
+    if (tariff === "Start") return ["1 generatsiya = 1 rasm", "3 daqiqa kutish"]
+    if (tariff === "Business") return ["1 yoki 3 rasm", "3 daqiqa kutish"]
+    return ["1, 3 yoki 5 rasm", "3 daqiqa kutish"]
+  }
+
+  if (tariff === "Start") return ["1 image per generation", "3 min delay"]
+  if (tariff === "Business") return ["1 or 3 images", "3 min delay"]
+  return ["1, 3 or 5 images", "3 min delay"]
+}
+
+function getTariffNote(lang: Lang): string {
+  if (lang === "ru") return "Чем больше вариантов — тем быстрее расходуется лимит"
+  if (lang === "uz") return "Ko‘p variant — tezroq limit tugaydi"
+  return "More variants = faster limit usage"
+}
+
+function MarketplaceButton({
+  label,
+  selected,
+  gradient,
+  onClick,
+}: {
+  label: string
+  selected: boolean
+  gradient: string
+  onClick: () => void
+}) {
+  return (
+    <button
+  onClick={() => setAbcModalOpen(true)}
+  style={{
+    padding: "16px",
+    borderRadius: "16px",
+    background: "linear-gradient(135deg,#6366f1,#a855f7)",
+    color: "white",
+    fontWeight: 900,
+    cursor: "pointer",
+    border: "none",
+  }}
+>
+  Запустить ABC анализ
+</button>
+
+   
+                
+</section>
+</div>
+
+</main>
+
+{showTariffModal && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.65)",display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+      zIndex: 9999,
+    }}
+  >
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "1040px",
+        borderRadius: "28px",
+        background: "#0f172a",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
+        padding: "28px",
+        color: "white",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "12px",
+          alignItems: "center",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ fontSize: "34px", fontWeight: 900 }}>
+          {t.chooseTariff}
+        </div>
+
+        <button
+          onClick={() => setShowTariffModal(false)}
+          style={modalSmallButton}
+        >
+          {t.close}
+        </button>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: "18px",
+        }}
+      >
+        {(Object.keys(tariffs) as TariffName[]).map((tariff) => {
+          const item = tariffs[tariff]
+          const isSelected = selectedTariff === tariff
+
+          return (
+            <button
+              key={tariff}
+              onClick={() => setSelectedTariff(tariff)}
+              style={{
+                textAlign: "left",
+                padding: "24px",
+                borderRadius: "22px",
+                border: isSelected
+                  ? "2px solid rgba(255,255,255,0.95)"
+                  : "1px solid rgba(255,255,255,0.12)",
+                background: item.gradient,
+                color: "white",
+                cursor: "pointer",
+                boxShadow: "0 18px 40px rgba(0,0,0,0.25)",
+                transform: isSelected ? "translateY(-2px)" : "none",
+                transition: "0.2s ease",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "34px",
+                  fontWeight: 900,
+                  marginBottom: "10px",
+                }}
+              >
+                {tariff}
+              </div>
+
+              <div
+                style={{
+                  fontSize: "18px",
+                  fontWeight: 800,
+                  marginBottom: "10px",
+                }}
+              >
+                {item.price}
+              </div>
+
+              <div style={{ fontSize: "17px", marginBottom: "8px" }}>
+                {item.generations} генераций
+              <div style={{ marginTop: "10px", display: "grid", gap: "6px" }}>
+                {getTariffFeatureLines(tariff, lang).map((line) => (
+                  <div key={line} style={{ fontSize: "14px", fontWeight: 700 }}>
+                    • {line}
+                  </div>
+                ))}
+              </div>
+              </div>
+
+              <div style={{ fontSize: "15px", opacity: 0.95 }}>
+                {t[item.descKey]}
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      <div
+        style={{
+          marginTop: "22px",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
+        <button
+          onClick={() => {
+            setShowTariffModal(false)
+            setShowPaymentModal(true)
+          }}
+          disabled={activatingTariff}
+          style={{
+            padding: "16px 22px",
+            borderRadius: "16px",
+            border: "none",
+            background: "linear-gradient(135deg,#22c55e,#16a34a)",
+            color: "white",
+            cursor: activatingTariff ? "default" : "pointer",
+            fontSize: "18px",
+            fontWeight: 900,
+            opacity: activatingTariff ? 0.7 : 1,
+          }}
+        >
+          {activatingTariff ? "..." : t.activateTariff}
+        </button>
+    </div>
+  </div>
+)}
+
+{showPaymentModal && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.65)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",zIndex: 10000,
+    }}
+  >
+    <div
+      style={{
+        width: "100%",
+        maxWidth: "760px",
+        borderRadius: "28px",
+        background: "#0f172a",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
+        padding: "28px",
+        color: "white",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "22px",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ fontSize: "32px", fontWeight: 900 }}>
+          {t.paymentTitle}
+        </div>
+
+        <button
+          onClick={() => {
+            setShowPaymentModal(false)
+            setSelectedPayment(null)
+          }}
+          style={modalSmallButton}
+        >
+          {t.close}
+        </button>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "18px",
+          marginBottom: "24px",
+        }}
+      >
+        <button
+          onClick={() => setSelectedPayment("payme")}
+          style={{
+            padding: "22px",
+            borderRadius: "22px",
+            border:
+              selectedPayment === "payme"
+                ? "2px solid rgba(255,255,255,0.95)"
+                : "1px solid rgba(255,255,255,0.12)",
+            background:
+              selectedPayment === "payme"
+                ? "rgba(255,255,255,0.12)"
+                : "rgba(255,255,255,0.05)",
+            cursor: "pointer",
+          }}
+        >
+          <img
+            src="/payme.png"
+            alt="Payme"
+            style={{
+              maxWidth: "250px",
+              maxHeight: "100px",
+              objectFit: "contain",
+            }}
+        </button>
+        
+        <button
+  onClick={() => setSelectedPayment("visa")}
+  style={{
+    padding: "22px",
+    borderRadius: "22px",
+    border:
+      selectedPayment === "visa"
+        ? "2px solid rgba(255,255,255,0.95)"
+        : "1px solid rgba(255,255,255,0.12)",
+    background:
+      selectedPayment === "visa"
+        ? "rgba(255,255,255,0.12)"
+        : "rgba(255,255,255,0.05)",
+    cursor: "pointer",
+  }}
+>
+  <div
+    style={{
+      fontSize: "38px",
+      fontWeight: 900,
+      color: "white",
+      textAlign: "center",
+    }}
+  >
+    VISA
+  </div>
+</button>
+
+        <button
+          onClick={() => setSelectedPayment("click")}
+          style={{
+            padding: "22px",
+            borderRadius: "22px",
+            border:
+              selectedPayment === "click"
+                ? "2px solid rgba(255,255,255,0.95)"
+                : "1px solid rgba(255,255,255,0.12)",
+            background:
+              selectedPayment === "click"
+                ? "rgba(255,255,255,0.12)"
+                : "rgba(255,255,255,0.05)",
+            cursor: "pointer",
+          }}
+        >
+          <img
+            src="/click.png"
+            alt="Click"
+            style={{
+              maxWidth: "250px",
+              maxHeight: "100px",
+              objectFit: "contain",
+            }}
+        </button>
+
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <button
+          onClick={handleConfirmPayment}
+          style={{
+            padding: "16px 24px",
+            borderRadius: "16px",
+            border: "none",
+            background: "linear-gradient(135deg,#22c55e,#16a34a)",
+            color: "white",
+            cursor: "pointer",
+            fontSize: "18px",
+            fontWeight: 900,
+          }}
+        >
+          {t.payButton}
+        </button>
+    </div>
+  
+
+
+</div>
+)}
+
+  </>
+)}
+
+
+
