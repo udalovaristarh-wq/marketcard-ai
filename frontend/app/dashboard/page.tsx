@@ -554,6 +554,8 @@ function MarketplaceButton({
   onClick: () => void
 }) {
   return (
+    <>
+      
     <button
       onClick={onClick}
       style={{
@@ -576,6 +578,7 @@ function MarketplaceButton({
     >
       {label}
     </button>
+    </>
   )
 }
 
@@ -3730,6 +3733,5 @@ if (listingLang === "uz" && translatedListing) {
 
   </>
 )}
-
 
 

@@ -1,22 +1,121 @@
 export const HeroSection = () => (
-  <div style={{ padding: "40px", background: "linear-gradient(135deg, #0b101d 0%, #1a202c 100%)", borderRadius: "24px", border: "1px solid #3b82f6", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
-    <h2 style={{ fontSize: "36px", marginBottom: "20px", color: "#ffffff" }}>MarketCard AI — будущее e-commerce</h2>
-    <p style={{ fontSize: "18px", lineHeight: "1.6", color: "#cbd5e0", marginBottom: "30px" }}>
-      Добро пожаловать в новую эру автоматизации ритейла. MarketCard AI — это уникальная интеллектуальная экосистема, разработанная для тех, кто не согласен на меньшее, чем лидерство на маркетплейсах. Мы превращаем ваш товар в высококонверсионный актив.
-    </p>
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "30px" }}>
-      <div style={{ padding: "20px", background: "#1a1f2e", borderRadius: "12px" }}>
-        <h4 style={{ color: "#3b82f6" }}>🚀 Генерация за 1 клик</h4>
-        <p style={{ fontSize: "14px", color: "#a0aec0" }}>Создание серий карточек и описаний с помощью ИИ.</p>
+  <section
+    style={{
+      marginTop: "50px",
+      padding: "56px",
+      borderRadius: "36px",
+      background:
+        "radial-gradient(circle at 15% 0%, rgba(34,211,238,0.22), transparent 34%), radial-gradient(circle at 85% 15%, rgba(168,85,247,0.18), transparent 32%), linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.96))",
+      border: "1px solid rgba(34,211,238,0.42)",
+      boxShadow:
+        "0 0 0 1px rgba(255,255,255,0.06), 0 28px 90px rgba(0,0,0,0.55), inset 0 0 80px rgba(34,211,238,0.08)",
+      position: "relative",
+      overflow: "hidden",
+    }}
+  >
+    <div
+      style={{
+        position: "absolute",
+        inset: "18px",
+        borderRadius: "28px",
+        border: "1px solid rgba(255,255,255,0.08)",
+        pointerEvents: "none",
+      }}
+    />
+
+    <div style={{ position: "relative", zIndex: 2 }}>
+      <div
+        style={{
+          display: "inline-flex",
+          padding: "10px 16px",
+          borderRadius: "999px",
+          background: "rgba(34,211,238,0.12)",
+          border: "1px solid rgba(34,211,238,0.35)",
+          color: "#67e8f9",
+          fontWeight: 900,
+          marginBottom: "24px",
+        }}
+      >
+        AI · Marketplace · Automation · SaaS
       </div>
-      <div style={{ padding: "20px", background: "#1a1f2e", borderRadius: "12px" }}>
-        <h4 style={{ color: "#3b82f6" }}>📊 Unit-экономика</h4>
-        <p style={{ fontSize: "14px", color: "#a0aec0" }}>Автоматизация расчетов и аналитика эффективности.</p>
+
+      <h2
+        style={{
+          fontSize: "46px",
+          lineHeight: 1.12,
+          margin: "0 0 22px",
+          color: "#ffffff",
+          fontWeight: 950,
+          letterSpacing: "-1px",
+        }}
+      >
+        MarketCard AI — интеллектуальная система для роста продавцов
+      </h2>
+
+      <p
+        style={{
+          fontSize: "20px",
+          lineHeight: 1.7,
+          color: "#dbeafe",
+          maxWidth: "940px",
+          marginBottom: "30px",
+          fontWeight: 650,
+        }}
+      >
+        MarketCard AI помогает предпринимателям и продавцам маркетплейсов превращать обычное фото товара
+        в готовый коммерческий инструмент: продающую карточку, SEO-описание, аналитику, стратегию входа
+        в нишу и расчёт прибыльности.
+      </p>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+          gap: "16px",
+          marginTop: "28px",
+        }}
+      >
+        <HeroCard title="🚀 Генерация карточек" text="AI создаёт визуальный контент и инфографику для маркетплейсов." />
+        <HeroCard title="📊 Аналитика товара" text="Система анализирует конкурентов, цену, спрос и насыщенность ниши." />
+        <HeroCard title="🧠 ABC-анализ" text="Помогает понять, стоит ли заходить в товар и какую стратегию выбрать." />
+        <HeroCard title="💰 Unit-экономика" text="Считает себестоимость, расходы, комиссии и потенциальную прибыль." />
+      </div>
+
+      <div
+        style={{
+          marginTop: "34px",
+          paddingTop: "24px",
+          borderTop: "1px solid rgba(255,255,255,0.12)",
+          color: "#cbd5e1",
+          fontSize: "17px",
+          lineHeight: 1.7,
+        }}
+      >
+        <b style={{ color: "#ffffff" }}>Основатель и генеральный директор:</b> Удалов Аристарх Александрович
+        <br />
+        <b style={{ color: "#ffffff" }}>Компания:</b> MarketCard AI · Ташкент, Узбекистан
       </div>
     </div>
-    <div style={{ borderTop: "1px solid #2d3748", paddingTop: "20px" }}>
-      <p style={{ fontWeight: "bold", color: "#ffffff" }}>Основатель: Удалов Аристарх Александрович</p>
-      <p style={{ fontSize: "14px", color: "#718096" }}>© MarketCard AI, Узбекистан, г. Ташкент</p>
-    </div>
-  </div>
+  </section>
 )
+
+function HeroCard({ title, text }: { title: string; text: string }) {
+  return (
+    <div
+      style={{
+        padding: "22px",
+        borderRadius: "22px",
+        background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.10)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+      }}
+    >
+      <h3 style={{ margin: "0 0 10px", color: "#ffffff", fontSize: "19px", fontWeight: 950 }}>
+        {title}
+      </h3>
+      <p style={{ margin: 0, color: "#cbd5e1", fontSize: "16px", lineHeight: 1.6 }}>
+        {text}
+      </p>
+    </div>
+  )
+}
