@@ -31,34 +31,17 @@ export default function ProductIntelligencePanel() {
 
     const q = query.trim()
     const c = category.trim() || "товары"
-    const token = localStorage.getItem("access_token")
 
     if (!q) {
       setError("Введите товар")
       return
     }
 
-    if (!token) {
-      setError("Войдите в аккаунт")
-      return
-    }
-
     setLoading(true)
 
     try {
-      const res = await fetch("/api/product-intelligence", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          query: q,
-          category: c,
-          marketplace,
-        }),
-      })
-
+      const url = `/api/analysis/uzum?query=${encodeURIComponent(q)}&category=${encodeURIComponent(c)}`
+      const res = await fetch(url)
       const data = await res.json()
 
       if (!res.ok) {
@@ -66,7 +49,6 @@ export default function ProductIntelligencePanel() {
       }
 
       setResult(data)
-      window.dispatchEvent(new Event("marketcard:profile-refresh"))
     } catch (e: any) {
       setError(getErrorText(e?.message || e || "Ошибка анализа"))
     } finally {

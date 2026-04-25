@@ -1244,6 +1244,16 @@ const res = await fetch(
     }
   }
 
+
+  useEffect(() => {
+    const refreshProfile = () => {
+      loadProfile()
+    }
+
+    window.addEventListener("marketcard:profile-refresh", refreshProfile)
+    return () => window.removeEventListener("marketcard:profile-refresh", refreshProfile)
+  }, [])
+
   useEffect(() => {
     const token = localStorage.getItem("access_token")
     const savedEmail = localStorage.getItem("user_email")
