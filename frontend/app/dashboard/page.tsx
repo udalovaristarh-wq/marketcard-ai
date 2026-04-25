@@ -40,6 +40,7 @@ import "./effects/index.css";
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { CSSProperties } from "react";
+import DashboardOnboarding from "../components/DashboardOnboarding"
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
@@ -1751,6 +1752,7 @@ if (!authChecked) return null
           fontFamily: "Arial, sans-serif",
         }}
       >
+      <DashboardOnboarding />
 <div
   style={{
     display: "grid",
@@ -3745,5 +3747,4 @@ if (listingLang === "uz" && translatedListing) {
 
   </>
 )}
-
 
