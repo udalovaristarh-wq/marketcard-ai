@@ -1,52 +1,64 @@
-from __future__ import annotations
-
-import re
 from typing import Any
-from urllib.parse import quote_plus
-
-import requests
-
-
-def _clean_text(value: str) -> str:
-    value = re.sub(r"\\u[0-9a-fA-F]{4}", " ", value)
-    value = re.sub(r"\s+", " ", value)
-    return value.strip()
-
+from playwright.sync_api import sync_playwright
+import json
 
 def parse_ozon(query: str, category: str | None = None, limit: int = 30) -> list[dict[str, Any]]:
-    search_url = f"https://www.ozon.ru/search/?text={quote_plus(query)}"
+    items = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "ru-RU,ru;q=0.9,en;q=0.8",
-        "Referer": "https://www.ozon.ru/",
-    }
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-dev-shm-usage"]
+        )
+        page = browser.new_page()
 
-    response = requests.get(search_url, headers=headers, timeout=20)
-    response.raise_for_status()
+        url = f"https://www.ozon.ru/search/?text={query}"
+        page.goto(url, timeout=60000)
+        page.wait_for_timeout(7000)
+        page.wait_for_timeout(5000)
 
-    html = response.text
+        content = page.content()
 
-    titles = re.findall(r'"name"\s*:\s*"([^"]{3,160})"', html)
-    prices = re.findall(r'"price"\s*:\s*"?(\\d[\\d\\s]*)', html)
+        # ищем встроенный JSON
+        start = content.find("window.INITIAL_STATE")
+        if start == -1:
+            browser.close()
+            return []
 
-    items: list[dict[str, Any]] = []
+        json_start = content.find("{", start)
+        json_end = content.find("</script>", json_start)
 
-    for index, title in enumerate(titles[:limit]):
-        raw_price = prices[index] if index < len(prices) else ""
-        price_digits = "".join(ch for ch in raw_price if ch.isdigit())
-        price = int(price_digits) if price_digits else 0
+        raw = content[json_start:json_end]
 
-        items.append({
-            "title": _clean_text(title),
-            "price": price,
-            "seller": "Ozon seller",
-            "rating": None,
-            "reviews": None,
-            "url": search_url,
-            "marketplace": "ozon",
-            "category": category,
-        })
+        try:
+            data = json.loads(raw)
+        except:
+            browser.close()
+            return []
 
-    return items[:limit]
+        try:
+            products = data["search"]["items"]
+        except:
+            browser.close()
+            return []
+
+        for p in products[:limit]:
+            try:
+                price = int(p["price"]["price"])
+            except:
+                price = 0
+
+            items.append({
+                "title": p.get("title", ""),
+                "price": price,
+                "seller": "Ozon seller",
+                "rating": None,
+                "reviews": None,
+                "url": f"https://www.ozon.ru{p.get('action', {}).get('link', '')}",
+                "marketplace": "ozon",
+                "category": category,
+            })
+
+        browser.close()
+
+    return items

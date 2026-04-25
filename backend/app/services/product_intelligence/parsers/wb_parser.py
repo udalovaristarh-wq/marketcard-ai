@@ -5,6 +5,8 @@ from urllib.parse import quote_plus
 
 import requests
 
+RUB_TO_UZS = 150
+
 
 def parse_wildberries(query: str, category: str | None = None, limit: int = 30) -> list[dict[str, Any]]:
     url = (
@@ -21,17 +23,23 @@ def parse_wildberries(query: str, category: str | None = None, limit: int = 30) 
         "Referer": "https://www.wildberries.ru/",
     }
 
-    response = requests.get(url, headers=headers, timeout=15)
-    response.raise_for_status()
-
-    data = response.json()
+    try:
+        response = requests.get(url, headers=headers, timeout=15)
+        if response.status_code == 429:
+            return []
+        if response.status_code != 200:
+            return []
+        data = response.json()
+    except Exception:
+        return []
     products = data.get("data", {}).get("products", [])
 
     items: list[dict[str, Any]] = []
 
     for product in products[:limit]:
         price_u = product.get("salePriceU") or product.get("priceU") or 0
-        price = int(price_u / 100) if price_u else 0
+        price_rub = int(price_u / 100) if price_u else 0
+        price = price_rub * RUB_TO_UZS
 
         items.append({
             "title": product.get("name") or "",

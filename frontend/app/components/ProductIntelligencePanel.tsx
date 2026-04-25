@@ -37,11 +37,6 @@ export default function ProductIntelligencePanel() {
       return
     }
 
-    if (marketplace !== "uzum") {
-      setError("Сейчас подключён анализ Uzum. Остальные маркетплейсы добавим следующим шагом.")
-      return
-    }
-
     setLoading(true)
 
     try {
@@ -74,9 +69,9 @@ export default function ProductIntelligencePanel() {
       <div style={{ display: "grid", gap: "12px" }}>
         <select value={marketplace} onChange={(e) => setMarketplace(e.target.value)} style={inputStyle}>
           <option value="uzum">Uzum</option>
-          <option value="wb">Wildberries скоро</option>
-          <option value="ozon">Ozon скоро</option>
-          <option value="yandex">Yandex Market скоро</option>
+          <option value="wb">Wildberries</option>
+          <option value="ozon">Ozon</option>
+          <option value="yandex">Yandex Market</option>
         </select>
 
         <input
@@ -161,6 +156,9 @@ const panelStyle: React.CSSProperties = {
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
+  maxWidth: "100%",
+  boxSizing: "border-box",
+  display: "block",
   padding: "10px 14px",
   borderRadius: "12px",
   border: "1px solid rgba(255,255,255,0.14)",

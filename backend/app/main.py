@@ -9,6 +9,7 @@ from app.routers.click import router as click_router
 from pathlib import Path
 
 from fastapi import FastAPI
+from app.routers.analysis import router as analysis_router
 from app.routers import analysis
 from app.routes.product_intelligence import router as product_intelligence_router
 from app.routers.system import router as system_router
