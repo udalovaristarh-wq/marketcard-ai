@@ -1,4 +1,5 @@
 from app.routes import card_audit
+from app.routes import product_intelligence
 from app.routes import translate_listing
 from app.routes import card_audit
 from app.routes import support
@@ -8,6 +9,8 @@ from app.routers.click import router as click_router
 from pathlib import Path
 
 from fastapi import FastAPI
+from app.routers import analysis
+from app.routes.product_intelligence import router as product_intelligence_router
 from app.routers.system import router as system_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -38,6 +41,7 @@ app = FastAPI(
     root_path="/api",
 )
 app.include_router(card_audit.router)
+app.include_router(product_intelligence.router)
 app.include_router(translate_listing.router)
 app.include_router(admin.router)
 
@@ -87,3 +91,7 @@ def on_startup() -> None:
 app.include_router(system_router)
 
 app.include_router(fix_generated_image_router)
+
+app.include_router(product_intelligence_router, prefix="/api")
+
+app.include_router(analysis.router)

@@ -33,6 +33,7 @@ const buyAudit = async (pkg: string) => {
 }
 ;
 import CardAuditPanel from "@/app/components/CardAuditPanel"
+import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
 import "./effects/index.css";
 
 import React, { useEffect, useMemo, useState } from "react"
@@ -41,7 +42,7 @@ import type { CSSProperties } from "react";
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
-type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu" | "audit"
+type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu" | "audit" | "intelligence" | "intelligence"
 type LanguageMode = "ru" | "uz" | "both"
 
 type ProfileResponse = {
@@ -1202,7 +1203,7 @@ if (!token || !email) {
 }
 
 const res = await fetch(
-`https://marketcard.uz/api/auth/me?email=${encodeURIComponent(email)}`,
+`/api/auth/me?email=${encodeURIComponent(email)}`,
  {
   headers: {
     Authorization: `Bearer ${token}`,
@@ -1921,6 +1922,18 @@ if (!authChecked) return null
         >
           Оценка карточки
         </div>
+
+<div onClick={() => setActivePage("intelligence")} style={{
+  cursor: "pointer",
+  marginTop: "10px",
+  padding: "14px",
+  borderRadius: "14px",
+  background: activePage === "intelligence"
+    ? "linear-gradient(135deg,#22c55e,#06b6d4)"
+    : "rgba(255,255,255,0.06)",
+}}>
+  📊 Аналитика товара
+</div>
 </aside>
  {isMobile && isMobileMenuOpen && (
   <div
@@ -1964,6 +1977,7 @@ if (!authChecked) return null
       }}
     >
       Поиск ИКПУ        <div onClick={() => setActivePage("audit")} style={{cursor:"pointer",marginTop:"10px"}}>Оценка карточки</div>
+
     </div>
 
     <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
@@ -3116,7 +3130,16 @@ if (listingLang === "uz" && translatedListing) {
 )}
 
 {activePage === "audit" && (
+  <>
   <CardAuditPanel />
+  
+</>
+
+)}
+
+
+{activePage === "intelligence" && (
+  <ProductIntelligencePanel />
 )}
 
 {activePage === "economy" && (
@@ -3678,5 +3701,6 @@ if (listingLang === "uz" && translatedListing) {
 
   </>
 )}
+
 
 
