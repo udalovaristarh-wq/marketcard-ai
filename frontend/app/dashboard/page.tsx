@@ -1922,6 +1922,8 @@ if (!authChecked) return null
             </div>
 <div
           onClick={() => setActivePage("audit")}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)" }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)" }}
           style={{
             padding: "18px 22px",
             borderRadius: "20px",
@@ -1932,12 +1934,18 @@ if (!authChecked) return null
             cursor: "pointer",
             marginTop: "14px",
             boxShadow: activePage === "audit" ? "0 0 24px rgba(34,197,94,0.35)" : "none",
+            transition: "all 0.18s ease",
+            transform: "scale(1)",
           }}
         >
           Оценка карточки
         </div>
 
-<div onClick={() => setActivePage("intelligence")} style={{
+<div
+  onClick={() => setActivePage("intelligence")}
+  onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)" }}
+  onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)" }}
+  style={{
   cursor: "pointer",
   marginTop: "10px",
   padding: "14px",
@@ -1950,6 +1958,8 @@ if (!authChecked) return null
 </div>
               <div
                 onClick={() => window.dispatchEvent(new Event("marketcard:open-abc"))}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)" }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)" }}
                 style={{
                   padding: "16px 18px",
                   borderRadius: "18px",
@@ -1959,7 +1969,9 @@ if (!authChecked) return null
                   cursor: "pointer",
                   marginTop: "12px",
                   textAlign: "center",
-                  boxShadow: "0 18px 45px rgba(99,102,241,0.28)"
+                  boxShadow: "0 18px 45px rgba(99,102,241,0.28)",
+                  transition: "all 0.18s ease",
+                  transform: "scale(1)"
                 }}
               >
                 🚀 ABC анализ по ссылке
