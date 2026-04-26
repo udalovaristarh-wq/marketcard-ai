@@ -25,9 +25,9 @@ REPORTS_DIR = Path("/var/www/marketcard/generated_reports")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 COST_BY_LIMIT = {
-    100: 10,
-    300: 25,
-    500: 35,
+    100: 20,
+    300: 20,
+    500: 20,
 }
 
 

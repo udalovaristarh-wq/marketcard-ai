@@ -2022,13 +2022,9 @@ if (!authChecked) return null
               <div style="width:min(540px,92vw);border-radius:28px;padding:28px;background:linear-gradient(135deg,#0f172a,#111827);border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 90px rgba(0,0,0,.6);color:white;font-family:system-ui">
                 <div style="font-size:36px;margin-bottom:10px">📦</div>
                 <div style="font-size:26px;font-weight:900;margin-bottom:8px">Дефицит товаров Uzum</div>
-                <div style="font-size:15px;color:rgba(255,255,255,.72);line-height:1.5;margin-bottom:20px">Введите нишу и выберите глубину анализа. После завершения получите Excel-файл.</div>
+                <div style="font-size:15px;color:rgba(255,255,255,.72);line-height:1.5;margin-bottom:20px">Введите нишу. Анализ автоматически спишет 20 аудитов и соберёт максимум доступных товаров.</div>
                 <input id="deficitNicheInput" placeholder="Например: наушники, коврики, зарядки" style="width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);outline:none;border-radius:16px;padding:15px 16px;background:rgba(255,255,255,.08);color:white;font-size:16px;margin-bottom:16px" />
-                <select id="deficitLimitSelect" style="width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);outline:none;border-radius:16px;padding:15px 16px;background:#111827;color:white;font-size:16px;margin-bottom:22px">
-                  <option value="100">100 товаров — 10 аудитов</option>
-                  <option value="300">300 товаров — 25 аудитов</option>
-                  <option value="500">500 товаров — 35 аудитов</option>
-                </select>
+                
                 <div style="display:flex;gap:12px;flex-wrap:wrap">
                   <button id="startDeficitAnalysis" style="flex:1;min-width:220px;border:0;border-radius:18px;padding:16px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-weight:900;cursor:pointer;font-size:16px">🚀 Начать анализ</button>
                   <button id="closeDeficitForm" style="border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:16px 18px;background:rgba(255,255,255,.08);color:white;font-weight:800;cursor:pointer;font-size:16px">Отмена</button>
@@ -2045,16 +2041,31 @@ if (!authChecked) return null
 
             modal.querySelector("#startDeficitAnalysis")?.addEventListener("click", () => {
               const input = modal.querySelector("#deficitNicheInput") as HTMLInputElement | null;
-              const select = modal.querySelector("#deficitLimitSelect") as HTMLSelectElement | null;
               const niche = (input?.value || "").trim();
-              const limit = Number(select?.value || 100);
+              const limit = 100;
 
               if (!niche) {
                 alert("Введите нишу или категорию");
                 return;
               }
 
-              modal.remove();
+              const box = modal.firstElementChild as HTMLElement | null;
+              if (box) {
+                box.innerHTML = `
+                  <div style="width:64px;height:64px;border-radius:999px;border:6px solid rgba(255,255,255,.18);border-top-color:#f59e0b;margin:0 auto 16px;animation:marketcardSpin 0.85s linear infinite"></div>
+                  <style>
+                    @keyframes marketcardSpin {
+                      from { transform: rotate(0deg); }
+                      to { transform: rotate(360deg); }
+                    }
+                  </style>
+                  <div style="font-size:26px;font-weight:900;margin-bottom:10px">Подождите</div>
+                  <div style="font-size:16px;color:rgba(255,255,255,.76);line-height:1.6">
+                    Собираем данные с Uzum и формируем Excel-отчёт.<br/>
+                    Это может занять немного времени.
+                  </div>`;
+                
+              }
               resolve({ niche, limit });
             });
           });
@@ -2090,6 +2101,10 @@ if (!authChecked) return null
               const fileUrl = data.download_url?.startsWith("/")
                 ? data.download_url
                 : `/api ${data.download_url}`;
+
+              document.querySelectorAll("div").forEach((el) => {
+                if (el.textContent?.includes("Собираем данные с Uzum")) el.remove();
+              });
 
               const doneModal = document.createElement("div");
               doneModal.style.position = "fixed";
