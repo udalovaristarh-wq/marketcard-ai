@@ -41,7 +41,7 @@ def limit_list(items: Any, max_items: int, max_len: int) -> List[str]:
             break
 
     while len(result) < max_items:
-        result.append("—")
+        result.append("Характеристика уточняется")
 
     return result
 def _extract_output_text(payload: dict[str, Any]) -> str:
@@ -122,7 +122,7 @@ def _call_openai(product_title: str, brand: str, category: str, marketplace: str
     return _parse_json_text(text)
 
 
-def generate_listing(product_title: str, brand: str, category: str, marketplace: str = "uzum") -> Dict[str, Any]:
+def generate_listing(product_title: str, brand: str, category: str, marketplace: str = "uzum", language: str = "ru") -> Dict[str, Any]:
     data = _call_openai(product_title, brand, category, marketplace)
 
     return {

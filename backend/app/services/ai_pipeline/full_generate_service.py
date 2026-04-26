@@ -145,7 +145,6 @@ def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
         brand=brand,
         category=category,
         marketplace=marketplace,
-        language=language_mode,
     )
 
     print("SEO OPENAI META:", listing.get("_openai_meta"))

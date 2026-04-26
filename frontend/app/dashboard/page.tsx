@@ -1979,6 +1979,34 @@ if (!authChecked) return null
                 🚀 ABC анализ по ссылке
               </div>
 
+
+      <div
+        onClick={() => window.open("https://didox.uz", "_blank")}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.03)"
+          e.currentTarget.style.boxShadow = "0 18px 45px rgba(15,23,42,0.45)"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1)"
+          e.currentTarget.style.boxShadow = "0 12px 35px rgba(15,23,42,0.35)"
+        }}
+        style={{
+          padding: "16px 18px",
+          borderRadius: "18px",
+          background: "linear-gradient(135deg,#0f172a,#1e293b)",
+          color: "white",
+          fontWeight: 900,
+          cursor: "pointer",
+          marginTop: "12px",
+          textAlign: "center",
+          boxShadow: "0 12px 35px rgba(15,23,42,0.35)",
+          transition: "all 0.18s ease",
+          transform: "scale(1)"
+        }}
+      >
+        📄 DIDOX / ЭДО
+      </div>
+
 </aside>
  {isMobile && isMobileMenuOpen && (
   <div
@@ -3162,7 +3190,7 @@ if (listingLang === "uz" && translatedListing) {
             </div>
             {[0,1,2,3,4].map((i) => (
               <div key={i} style={{ marginBottom: "8px", padding: "10px", borderRadius: "12px", background: "rgba(15,23,42,0.55)" }}>
-                {i + 1}. {features[i] ? `${features[i]?.key || "—"}: ${features[i]?.value || "—"}` : "-"}
+                {i + 1}. {features[i] ? (typeof features[i] === "string" ? features[i] : `${features[i]?.key || "—"}: ${features[i]?.value || "—"}`) : "—"}
               </div>
             ))}
           </div>
