@@ -97,7 +97,7 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
         tariff_generations_total=0,
         tariff_generations_used=0,
         tariff_generations_left=0,
-        audit_credits=0,
+        audit_credits=user.audit_credits or 0,
     )
     session.add(user)
     session.commit()

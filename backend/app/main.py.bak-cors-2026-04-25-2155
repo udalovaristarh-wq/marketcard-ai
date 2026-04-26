@@ -50,7 +50,7 @@ app.include_router(admin.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://marketcard.uz", "https://www.marketcard.uz"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
