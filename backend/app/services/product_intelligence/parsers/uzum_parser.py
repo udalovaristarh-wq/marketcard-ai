@@ -67,14 +67,28 @@ def parse_uzum(query: str, category: str | None = None, limit: int = 30) -> list
                     })
 
                 if items:
-                    result_items = items[:limit]
+                    seen = {x.get("url") for x in result_items}
+                    for item in items:
+                        if item.get("url") not in seen:
+                            result_items.append(item)
+                            seen.add(item.get("url"))
+                        if len(result_items) >= limit:
+                            break
 
             except Exception:
                 return
 
         page.on("response", on_response)
         page.goto(search_url, timeout=60000, wait_until="domcontentloaded")
-        page.wait_for_timeout(12000)
+        page.wait_for_timeout(3000)
+
+        for _ in range(12):
+            if len(result_items) >= limit:
+                break
+            page.mouse.wheel(0, 2500)
+            page.wait_for_timeout(1200)
+
+        page.wait_for_timeout(2500)
         browser.close()
 
     return result_items[:limit]
