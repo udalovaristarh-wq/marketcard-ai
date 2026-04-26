@@ -1937,7 +1937,8 @@ if (!authChecked) return null
             marginTop: "14px",
             boxShadow: activePage === "audit" ? "0 0 24px rgba(34,197,94,0.35)" : "none",
             transition: "all 0.18s ease",
-            transform: "scale(1)",
+          transform: "scale(1)",
+            
           }}
         >
           Оценка карточки
@@ -1960,9 +1961,17 @@ if (!authChecked) return null
 </div>
               <div
                 onClick={() => window.dispatchEvent(new Event("marketcard:open-abc"))}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.04)" }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)" }}
-                style={{
+                onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.045)"
+          e.currentTarget.style.boxShadow = "0 20px 48px rgba(56,189,248,0.34)"
+          e.currentTarget.style.filter = "brightness(1.08)"
+        }}
+
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.boxShadow = "0 12px 35px rgba(6,182,212,0.35)";
+        }}
+        style={{
                   padding: "16px 18px",
                   borderRadius: "18px",
                   background: "linear-gradient(135deg,#6366f1,#a855f7)",
@@ -1973,26 +1982,70 @@ if (!authChecked) return null
                   textAlign: "center",
                   boxShadow: "0 18px 45px rgba(99,102,241,0.28)",
                   transition: "all 0.18s ease",
-                  transform: "scale(1)"
-                }}
+          transform: "scale(1)",
+              }}
               >
                 🚀 ABC анализ по ссылке
               </div>
       <div
         onClick={() => {
           const sites = [
-            ["1688", "https://www.1688.com"],
-            ["Alibaba", "https://www.alibaba.com"],
-            ["Taobao", "https://world.taobao.com"],
-            ["Made-in-China", "https://www.made-in-china.com"],
-            ["Global Sources", "https://www.globalsources.com"],
-            ["DHgate", "https://www.dhgate.com"],
-            ["Курс юаня", "https://www.google.com/search?q=курс+юаня+к+суму"]
+            ["1688", "https://www.1688.com", "Китайский оптовый маркетплейс"],
+            ["Alibaba", "https://www.alibaba.com", "Международные поставщики"],
+            ["Taobao", "https://world.taobao.com", "Товары и тренды Китая"],
+            ["Made-in-China", "https://www.made-in-china.com", "Фабрики и производство"],
+            ["Global Sources", "https://www.globalsources.com", "B2B поставщики"],
+            ["DHgate", "https://www.dhgate.com", "Мелкий опт"],
+            ["Курс юаня", "https://www.google.com/search?q=курс+юаня+к+суму", "CNY → UZS"]
           ];
-          const text = sites.map((s, i) => `${i + 1}. ${s[0]}`).join("\n");
-          const pick = window.prompt("Поиск и закуп товара\n\n" + text + "\n\nВведите номер:");
-          const n = Number(pick);
-          if (n >= 1 && n <= sites.length) window.open(sites[n - 1][1], "_blank");
+
+          const modal = document.createElement("div");
+          modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999999;display:flex;align-items:center;justify-content:center;";
+
+          const box = document.createElement("div");
+          box.style.cssText = "width:min(900px,94vw);max-height:88vh;overflow:auto;border-radius:30px;padding:28px;background:linear-gradient(135deg,#0f172a,#111827);border:1px solid rgba(255,255,255,.16);box-shadow:0 30px 90px rgba(0,0,0,.65);color:white;font-family:system-ui;";
+
+          const title = document.createElement("div");
+          title.textContent = "🌏 Поиск и закуп товара";
+          title.style.cssText = "font-size:30px;font-weight:900;margin-bottom:8px;";
+
+          const subtitle = document.createElement("div");
+          subtitle.textContent = "Бесплатный раздел: площадки Китая, поставщики и быстрый переход.";
+          subtitle.style.cssText = "font-size:16px;color:rgba(255,255,255,.72);margin-bottom:22px;";
+
+          const grid = document.createElement("div");
+          grid.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;";
+
+          sites.forEach((item) => {
+            const card = document.createElement("button");
+            card.type = "button";
+            card.onclick = () => window.open(item[1], "_blank");
+            card.style.cssText = "border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:18px;background:linear-gradient(135deg,rgba(56,189,248,.22),rgba(37,99,235,.22));color:white;text-align:left;cursor:pointer;box-shadow:0 12px 30px rgba(0,0,0,.25);transition:all .18s ease;transform:scale(1);";
+            card.onmouseenter = () => {
+              card.style.transform = "scale(1.045)";
+              card.style.boxShadow = "0 20px 44px rgba(56,189,248,.32)";
+              card.style.border = "1px solid rgba(255,255,255,.28)";
+            };
+            card.onmouseleave = () => {
+              card.style.transform = "scale(1)";
+              card.style.boxShadow = "0 12px 30px rgba(0,0,0,.25)";
+              card.style.border = "1px solid rgba(255,255,255,.14)";
+            };
+            card.textContent = item[0] + " — " + item[2];
+            grid.appendChild(card);
+          });
+
+          const close = document.createElement("button");
+          close.textContent = "Закрыть";
+          close.onclick = () => modal.remove();
+          close.style.cssText = "width:100%;margin-top:22px;padding:16px;border:0;border-radius:18px;background:rgba(255,255,255,.1);color:white;font-weight:900;cursor:pointer;";
+
+          box.appendChild(title);
+          box.appendChild(subtitle);
+          box.appendChild(grid);
+          box.appendChild(close);
+          modal.appendChild(box);
+          document.body.appendChild(modal);
         }}
         style={{
           padding: "16px 18px",
@@ -2004,7 +2057,8 @@ if (!authChecked) return null
           marginTop: "12px",
           textAlign: "center",
           boxShadow: "0 12px 35px rgba(6,182,212,0.35)",
-          transition: "all 0.18s ease"
+          transition: "all 0.18s ease",
+          transform: "scale(1)"
         }}
       >
         🌏 Поиск и закуп товара
@@ -2033,7 +2087,7 @@ if (!authChecked) return null
           textAlign: "center",
           boxShadow: "0 12px 35px rgba(15,23,42,0.35)",
           transition: "all 0.18s ease",
-          transform: "scale(1)"
+          transform: "scale(1)",
         }}
       >
         📄 DIDOX / ЭДО
@@ -2181,12 +2235,14 @@ if (!authChecked) return null
             .catch((e) => alert(e.message));
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "scale(1.04)";
-          e.currentTarget.style.boxShadow = "0 18px 45px rgba(245,158,11,0.45)";
+          e.currentTarget.style.transform = "scale(1.045)"
+          e.currentTarget.style.boxShadow = "0 20px 48px rgba(56,189,248,0.34)"
+          e.currentTarget.style.filter = "brightness(1.08)"
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 12px 35px rgba(245,158,11,0.35)";
+          e.currentTarget.style.transform = "scale(1)"
+          e.currentTarget.style.boxShadow = "0 12px 35px rgba(15,23,42,0.35)"
+          e.currentTarget.style.filter = "brightness(1)"
         }}
         style={{
           padding: "16px 18px",
@@ -2199,7 +2255,7 @@ if (!authChecked) return null
           textAlign: "center",
           boxShadow: "0 12px 35px rgba(245,158,11,0.35)",
           transition: "all 0.18s ease",
-          transform: "scale(1)"
+          transform: "scale(1)",
         }}
       >
         📦 Дефицит товаров (Uzum)
