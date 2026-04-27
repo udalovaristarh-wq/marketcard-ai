@@ -91,13 +91,7 @@ def generate_card_image(
     payload = response.json()
     img = _decode_response_image(payload)
     if final_size:
-        # Не режем верх/низ текста: помещаем изображение целиком в нужный формат
-            bg = Image.new("RGB", final_size, (8, 8, 12))
-            img = ImageOps.contain(img, final_size, method=Image.LANCZOS)
-            x = (final_size[0] - img.width) // 2
-            y = (final_size[1] - img.height) // 2
-            bg.paste(img.convert("RGB"), (x, y))
-            img = bg
+        img = ImageOps.fit(img, final_size, method=Image.LANCZOS)
     img.save(output_file, "PNG")
 
     if not output_file.exists():
