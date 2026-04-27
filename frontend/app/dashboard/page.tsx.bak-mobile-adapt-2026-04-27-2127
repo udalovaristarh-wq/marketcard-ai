@@ -3140,8 +3140,8 @@ if (!authChecked) return null
       {activePage === "generator" && (
 <div
         style={{
-          marginTop: isMobile ? "20px" : "-1005px",
-          marginBottom: isMobile ? "24px" : "520px",
+          marginTop: "-1005px",
+          marginBottom: "520px",
           marginLeft: isMobile ? "0" : "464px",
           width: isMobile ? "100%" : "calc(100% - 464px)",
           padding: "20px",
@@ -3268,7 +3268,7 @@ if (!authChecked) return null
           style={{
             marginTop: "16px",
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 260px",
+            gridTemplateColumns: "1fr 260px",
             gap: "12px",
             alignItems: "stretch",
           }}
@@ -3731,14 +3731,12 @@ if (listingLang === "uz" && translatedListing) {
     <div
       style={{
         width: "100%",
-        maxWidth: isMobile ? "94vw" : "1040px",
-        maxHeight: isMobile ? "88vh" : "none",
-        overflowY: isMobile ? "auto" : "visible",
-        borderRadius: isMobile ? "20px" : "28px",
+        maxWidth: "1040px",
+        borderRadius: "28px",
         background: "#0f172a",
         border: "1px solid rgba(255,255,255,0.12)",
         boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
-        padding: isMobile ? "16px" : "28px",
+        padding: "28px",
         color: "white",
       }}
     >
@@ -3752,7 +3750,7 @@ if (listingLang === "uz" && translatedListing) {
           flexWrap: "wrap",
         }}
       >
-        <div style={{ fontSize: isMobile ? "24px" : "34px", fontWeight: 900 }}>
+        <div style={{ fontSize: "34px", fontWeight: 900 }}>
           {t.chooseTariff}
         </div>
 
@@ -3767,8 +3765,8 @@ if (listingLang === "uz" && translatedListing) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
-          gap: isMobile ? "12px" : "18px",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: "18px",
         }}
       >
         {(Object.keys(tariffs) as TariffName[]).map((tariff) => {
@@ -3781,8 +3779,8 @@ if (listingLang === "uz" && translatedListing) {
               onClick={() => setSelectedTariff(tariff)}
               style={{
                 textAlign: "left",
-                padding: isMobile ? "16px" : "24px",
-                borderRadius: isMobile ? "18px" : "22px",
+                padding: "24px",
+                borderRadius: "22px",
                 border: isSelected
                   ? "2px solid rgba(255,255,255,0.95)"
                   : "1px solid rgba(255,255,255,0.12)",
@@ -3796,7 +3794,7 @@ if (listingLang === "uz" && translatedListing) {
             >
               <div
                 style={{
-                  fontSize: isMobile ? "25px" : "34px",
+                  fontSize: "34px",
                   fontWeight: 900,
                   marginBottom: "10px",
                 }}
@@ -3806,7 +3804,7 @@ if (listingLang === "uz" && translatedListing) {
 
               <div
                 style={{
-                  fontSize: isMobile ? "16px" : "18px",
+                  fontSize: "18px",
                   fontWeight: 800,
                   marginBottom: "10px",
                 }}
@@ -3814,7 +3812,7 @@ if (listingLang === "uz" && translatedListing) {
                 {item.price}
               </div>
 
-              <div style={{ fontSize: isMobile ? "15px" : "17px", marginBottom: "8px" }}>
+              <div style={{ fontSize: "17px", marginBottom: "8px" }}>
                 {item.generations} генераций
               <div style={{ marginTop: "10px", display: "grid", gap: "6px" }}>
                 {getTariffFeatureLines(tariff, lang).map((line) => (
@@ -3825,7 +3823,7 @@ if (listingLang === "uz" && translatedListing) {
               </div>
               </div>
 
-              <div style={{ fontSize: isMobile ? "14px" : "15px", opacity: 0.95 }}>
+              <div style={{ fontSize: "15px", opacity: 0.95 }}>
                 {t[item.descKey]}
               </div>
             </button>
@@ -3837,7 +3835,7 @@ if (listingLang === "uz" && translatedListing) {
         style={{
           marginTop: "22px",
           display: "flex",
-          justifyContent: isMobile ? "stretch" : "flex-end",
+          justifyContent: "flex-end",
         }}
       >
         <button
@@ -3847,7 +3845,6 @@ if (listingLang === "uz" && translatedListing) {
           }}
           disabled={activatingTariff}
           style={{
-            width: isMobile ? "100%" : "auto",
             padding: "16px 22px",
             borderRadius: "16px",
             border: "none",
