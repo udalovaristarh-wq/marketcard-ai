@@ -785,7 +785,6 @@ useEffect(() => {
 
                     // редирект на оплату
                     if (selectedPayment === "payme") {
-                      localStorage.setItem("marketcard_pending_tariff_purchase", "1")
                       window.location.href = orderData.payme_url
                     } else if (selectedPayment === "click") {
                       window.location.href = orderData.click_url

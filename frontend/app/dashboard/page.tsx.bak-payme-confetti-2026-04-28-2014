@@ -24,8 +24,7 @@ const buyAudit = async (pkg: string) => {
       return
     }
 
-    localStorage.setItem("marketcard_pending_tariff_purchase", "1")
-        window.location.href = data.payme_url
+    window.location.href = data.payme_url
 
   } catch (e) {
     console.error(e)
@@ -1048,7 +1047,6 @@ useEffect(() => {
     console.log("GEN 3 STATUS", res.status)
     const data = await res.json()
       if (selectedPayment === "payme" && data?.payme_url) {
-        localStorage.setItem("marketcard_pending_tariff_purchase", "1")
         window.location.href = data.payme_url
         return
       }
@@ -1387,7 +1385,6 @@ const ikpuPromise = Promise.resolve()
       const data = await res.json().catch(() => null)
 
       if (selectedPayment === "payme" && data?.payme_url) {
-        localStorage.setItem("marketcard_pending_tariff_purchase", "1")
         window.location.href = data.payme_url
         return
       }

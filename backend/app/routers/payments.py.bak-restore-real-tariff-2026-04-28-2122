@@ -19,7 +19,7 @@ CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "").strip()
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 TARIFF_PRICES = {
-    "Start": 249000,
+    "Start": 3000,
     "Business": 799000,
     "Premium": 1900000,
 }

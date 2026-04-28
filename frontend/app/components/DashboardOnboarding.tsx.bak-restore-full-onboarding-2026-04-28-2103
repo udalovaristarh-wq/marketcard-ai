@@ -1,0 +1,190 @@
+"use client"
+
+import { useEffect, useState } from "react"
+
+type Lang = "ru" | "uz"
+
+const text = {
+  ru: {
+    welcomeTitle: "Добро пожаловать в MarketCard AI",
+    welcomeText: "Создавайте карточки, SEO, аналитику, ABC и аудит. Сейчас оплата временно доступна только через Payme.",
+    payme: "Оплата временно только через Payme",
+    close: "Начать работу",
+    congrats: "Поздравляем с приобретением тарифа",
+  },
+  uz: {
+    welcomeTitle: "MarketCard AI ga xush kelibsiz",
+    welcomeText: "Kartochka, SEO, analitika, ABC va audit yarating. Hozircha to‘lov faqat Payme orqali ishlaydi.",
+    payme: "To‘lov vaqtincha faqat Payme orqali",
+    close: "Ishni boshlash",
+    congrats: "Tarif xaridingiz bilan tabriklaymiz",
+  },
+}
+
+export default function DashboardOnboarding() {
+  const [lang, setLang] = useState<Lang>("ru")
+  const [welcomeOpen, setWelcomeOpen] = useState(false)
+  const [tip, setTip] = useState<string | null>(null)
+
+  const t = text[lang]
+
+  useEffect(() => {
+    if (!localStorage.getItem("marketcard_welcome_v2_seen")) {
+      setWelcomeOpen(true)
+    }
+
+    const currentTariff =
+      document.body.innerText.match(/Тариф:\s*(Start|Business|Premium)/)?.[1] || null
+
+    const oldTariff = localStorage.getItem("marketcard_last_tariff")
+
+    if (currentTariff && currentTariff !== oldTariff) {
+      localStorage.setItem("marketcard_last_tariff", currentTariff)
+      setTip(`${t.congrats}: ${currentTariff}`)
+    }
+  }, [lang])
+
+  const closeWelcome = () => {
+    localStorage.setItem("marketcard_welcome_v2_seen", "1")
+    setWelcomeOpen(false)
+  }
+
+  return (
+    <>
+      {welcomeOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0,0,0,.72)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 520,
+              width: "100%",
+              borderRadius: 28,
+              background: "linear-gradient(180deg,#0f172a,#020617)",
+              color: "#fff",
+              padding: 28,
+              border: "1px solid rgba(34,211,238,.35)",
+              boxShadow: "0 30px 90px rgba(0,0,0,.55)",
+            }}
+          >
+            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <button onClick={() => setLang("ru")}>RU</button>
+              <button onClick={() => setLang("uz")}>UZ</button>
+            </div>
+
+            <h2>{t.welcomeTitle}</h2>
+            <p>{t.welcomeText}</p>
+
+            <div>💳 {t.payme}</div>
+
+            <button onClick={closeWelcome}>{t.close}</button>
+          </div>
+        </div>
+      )}
+      {tip && tip.startsWith(t.congrats) && (
+        <div
+          onClick={() => setTip(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "transparent",
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              maxWidth: "720px",
+              width: "100%",
+              borderRadius: "34px",
+              background: "linear-gradient(180deg,#052e16,#064e3b,#022c22)",
+              border: "2px solid rgba(34,197,94,0.45)",
+              boxShadow: "0 0 80px rgba(34,197,94,0.35)",
+              padding: "42px",
+              textAlign: "center",
+              color: "white",
+            }}
+          >
+            <div style={{ fontSize: "64px" }}>🎉</div>
+
+            <div
+              style={{
+                position: "fixed",
+                left: "24px",
+                top: "50%",
+                fontSize: "58px",
+                transform: "translateY(-50%)",
+                animation: "sideLeft 1.2s ease-out infinite",
+              }}
+            >
+              🎊
+            </div>
+
+            <div
+              style={{
+                position: "fixed",
+                right: "24px",
+                top: "50%",
+                fontSize: "58px",
+                transform: "translateY(-50%)",
+                animation: "sideRight 1.2s ease-out infinite",
+              }}
+            >
+              🎊
+            </div>
+
+            <style>{`
+              @keyframes sideLeft {
+                0% { transform: translateY(-50%) translateX(0); opacity: 0; }
+                30% { opacity: 1; }
+                100% { transform: translateY(-50%) translateX(220px); opacity: 0; }
+              }
+
+              @keyframes sideRight {
+                0% { transform: translateY(-50%) translateX(0); opacity: 0; }
+                30% { opacity: 1; }
+                100% { transform: translateY(-50%) translateX(-220px); opacity: 0; }
+              }
+            `}</style>
+
+            <div style={{ fontSize: "42px", fontWeight: 1000 }}>
+              {t.congrats}
+            </div>
+
+            <div
+              style={{
+                fontSize: "28px",
+                color: "#bbf7d0",
+                fontWeight: 900,
+              }}
+            >
+              {tip?.split(": ")[1] || ""}
+            </div>
+
+            <div
+              style={{
+                marginTop: "20px",
+                fontSize: "18px",
+                color: "#dcfce7",
+              }}
+            >
+              Ваш тариф успешно активирован. Добро пожаловать в MarketCard AI.
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
