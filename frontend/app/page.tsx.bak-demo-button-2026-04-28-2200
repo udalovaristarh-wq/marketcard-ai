@@ -167,14 +167,6 @@ function SlideView({
   const [showLangMenu, setShowLangMenu] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [heroHover, setHeroHover] = useState("")
-  const [demoOpen, setDemoOpen] = useState(false)
-  const [demoLoading, setDemoLoading] = useState(false)
-  const [demoImage, setDemoImage] = useState("")
-  const [demoMarketplace, setDemoMarketplace] = useState("uzum")
-  const [demoTitle, setDemoTitle] = useState("")
-  const [demoBrand, setDemoBrand] = useState("")
-  const [demoCategory, setDemoCategory] = useState("")
-  const [demoFile, setDemoFile] = useState<File | null>(null)
   const [cursor, setCursor] = useState({ x: 0, y: 0 })
 
   const t = dict[lang]
@@ -1201,10 +1193,7 @@ overflow: hidden;
             display: none !important;
           }
         }
-      `}
-        
-
-</style>
+      `}</style>
 
       <div className="container">
         <div className="topbar">
@@ -1282,17 +1271,6 @@ overflow: hidden;
                 }}
               >
                 {t.login}
-              </button>
-              <button
-                className="btn demoBtn"
-                onClick={() => setDemoOpen(true)}
-                style={{
-                  background: "linear-gradient(135deg,#22c55e,#06b6d4)",
-                  color: "#fff",
-                  boxShadow: "0 18px 45px rgba(34,197,94,.28)",
-                }}
-              >
-                Попробовать бесплатно
               </button>
             </div>
 
@@ -1412,147 +1390,6 @@ overflow: hidden;
 <a href="/privacy" style={{marginRight: "20px"}}>Политика конфиденциальности</a>
 <a href="/terms">Пользовательское соглашение</a>
 </div>
-
-
-      {demoOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "radial-gradient(circle at top, rgba(34,211,238,.22), rgba(0,0,0,.86))", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "18px" }}>
-          <style>{`
-            @keyframes demoSpin { to { transform: rotate(360deg); } }
-         
-        @media (max-width: 768px) {
-          .buttons {
-            display: flex !important;
-            flex-direction: column !important;
-            width: 100% !important;
-            gap: 12px !important;
-          }
-
-          .buttons .btn {
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 0 !important;
-            justify-content: center !important;
-          }
-
-          .demoBtn {
-            display: flex !important;
-          }
-        }
-
-`}</style>
-
-          <div style={{ width: "min(880px, 96vw)", maxWidth: "880px", maxHeight: "92vh", overflowY: "auto", borderRadius: "clamp(20px, 5vw, 34px)", background: "linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.98))", border: "1px solid rgba(34,211,238,.38)", boxShadow: "0 35px 100px rgba(0,0,0,.75), 0 0 45px rgba(34,211,238,.16)", padding: "clamp(16px, 4vw, 30px)", color: "white" }}>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", alignItems: "flex-start", marginBottom: "18px" }}>
-              <div>
-                <div style={{ color: "#67e8f9", fontWeight: 1000, letterSpacing: "0.08em", marginBottom: "8px" }}>DEMO PREVIEW</div>
-                <h2 style={{ margin: 0, fontSize: "clamp(26px, 7vw, 38px)", lineHeight: 1.05, fontWeight: 1000 }}>
-                  {lang === "uz" ? "Bepul sinab ko‘ring" : "Попробовать бесплатно"}
-                </h2>
-                <p style={{ color: "#cbd5e1", lineHeight: 1.65, fontSize: "16px", marginTop: "12px", maxWidth: "680px" }}>
-                  {lang === "uz"
-                    ? "1 ta mahsulot rasmini yuklang va suv belgisi bilan demo-kartochka oling. Demo faqat 1 marta beriladi. Suv belgisiz to‘liq versiya ro‘yxatdan o‘tgandan keyin mavjud."
-                    : "Загрузите 1 фото товара и получите демо-карточку с водяным знаком. Демо доступно только 1 раз. Полная версия без водяного знака доступна после регистрации."}
-                </p>
-              </div>
-
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <button onClick={() => setLang("ru")} style={{ padding: "8px 12px", borderRadius: "999px", border: "none", background: lang === "ru" ? "#22c55e" : "rgba(255,255,255,.08)", color: "white", fontWeight: 900, cursor: "pointer" }}>RU</button>
-                <button onClick={() => setLang("uz")} style={{ padding: "8px 12px", borderRadius: "999px", border: "none", background: lang === "uz" ? "#22c55e" : "rgba(255,255,255,.08)", color: "white", fontWeight: 900, cursor: "pointer" }}>UZ</button>
-                <button onClick={() => setDemoOpen(false)} style={{ width: "38px", height: "38px", borderRadius: "999px", border: "1px solid rgba(255,255,255,.2)", background: "rgba(255,255,255,.08)", color: "white", fontWeight: 900, cursor: "pointer" }}>×</button>
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "10px", marginBottom: "18px" }}>
-              <div style={{ padding: "12px", borderRadius: "16px", background: "rgba(34,211,238,.10)", border: "1px solid rgba(34,211,238,.22)", fontWeight: 900 }}>⚡ AI-карточка</div>
-              <div style={{ padding: "12px", borderRadius: "16px", background: "rgba(34,197,94,.10)", border: "1px solid rgba(34,197,94,.22)", fontWeight: 900 }}>🔒 1 demo / IP</div>
-              <div style={{ padding: "12px", borderRadius: "16px", background: "rgba(168,85,247,.10)", border: "1px solid rgba(168,85,247,.22)", fontWeight: 900 }}>💧 Watermark</div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px", marginBottom: "14px" }}>
-              <input value={demoTitle} onChange={(e) => setDemoTitle(e.target.value)} placeholder={lang === "uz" ? "Mahsulot nomi" : "Название товара"} style={{ padding: "15px", borderRadius: "16px", background: "rgba(15,23,42,.88)", color: "white", border: "1px solid rgba(255,255,255,.16)", outline: "none", fontWeight: 800 }} />
-              <input value={demoBrand} onChange={(e) => setDemoBrand(e.target.value)} placeholder={lang === "uz" ? "Brend" : "Бренд"} style={{ padding: "15px", borderRadius: "16px", background: "rgba(15,23,42,.88)", color: "white", border: "1px solid rgba(255,255,255,.16)", outline: "none", fontWeight: 800 }} />
-              <input value={demoCategory} onChange={(e) => setDemoCategory(e.target.value)} placeholder={lang === "uz" ? "Kategoriya" : "Категория"} style={{ padding: "15px", borderRadius: "16px", background: "rgba(15,23,42,.88)", color: "white", border: "1px solid rgba(255,255,255,.16)", outline: "none", fontWeight: 800 }} />
-              <select value={demoMarketplace} onChange={(e) => setDemoMarketplace(e.target.value)} style={{ padding: "15px", borderRadius: "16px", background: "rgba(15,23,42,.88)", color: "white", border: "1px solid rgba(255,255,255,.16)", outline: "none", fontWeight: 900 }}>
-                <option value="uzum">Uzum 1080×1440</option>
-                <option value="wildberries">Wildberries 900×1200</option>
-                <option value="ozon">Ozon 1200×1600</option>
-                <option value="yandex">Yandex 1000×1000</option>
-              </select>
-            </div>
-
-            <label style={{ display: "block", padding: "16px", borderRadius: "18px", background: "linear-gradient(135deg, rgba(34,211,238,.14), rgba(34,197,94,.10))", border: "1px dashed rgba(34,211,238,.55)", color: "#e0f2fe", fontWeight: 1000, cursor: "pointer", textAlign: "center", marginBottom: "14px" }}>
-              {demoFile ? (lang === "uz" ? `Rasm tanlandi: ${demoFile.name}` : `Фото выбрано: ${demoFile.name}`) : (lang === "uz" ? "Mahsulot rasmini yuklash" : "Загрузить фото товара")}
-              <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { setDemoFile(e.target.files?.[0] || null); setDemoImage(""); }} />
-            </label>
-
-            <button
-              disabled={demoLoading || !demoFile}
-              onClick={async () => {
-                if (!demoFile) return alert(lang === "uz" ? "Avval rasm yuklang" : "Сначала загрузите фото товара")
-                try {
-                  setDemoLoading(true)
-                  setDemoImage("")
-
-                  const fd = new FormData()
-                  fd.append("image", demoFile)
-                  fd.append("marketplace", demoMarketplace)
-                  fd.append("language_mode", lang === "uz" ? "uz" : "ru")
-                  fd.append("product_title", demoTitle || "Демо товар")
-                  fd.append("brand", demoBrand || "")
-                  fd.append("category", demoCategory || "Товар")
-
-                  const res = await fetch("/api/demo-generate", { method: "POST", body: fd })
-                  const data = await res.json()
-
-                  if (!res.ok || !data?.success) {
-                    alert(data?.detail || (lang === "uz" ? "Demo ishlatib bo‘lingan yoki xatolik yuz berdi" : "Демо уже использовано или произошла ошибка"))
-                    return
-                  }
-
-                  setDemoImage(data.demo_image_url)
-                } catch (err) {
-                  console.error(err)
-                  alert(lang === "uz" ? "Demo generatsiya xatosi" : "Ошибка демо-генерации")
-                } finally {
-                  setDemoLoading(false)
-                }
-              }}
-              style={{ width: "100%", padding: "17px", borderRadius: "18px", border: "none", background: demoLoading || !demoFile ? "rgba(34,211,238,.35)" : "linear-gradient(135deg,#22c55e,#06b6d4)", color: "white", fontWeight: 1000, cursor: demoLoading || !demoFile ? "not-allowed" : "pointer", fontSize: "18px", marginBottom: "16px", boxShadow: demoLoading || !demoFile ? "none" : "0 18px 45px rgba(34,197,94,.28)" }}
-            >
-              {demoLoading ? (lang === "uz" ? "Generatsiya..." : "Генерация...") : (lang === "uz" ? "Demo yaratish" : "Сгенерировать демо")}
-            </button>
-
-            <div onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} style={{ minHeight: "min(420px, 52vh)", maxHeight: "62vh", borderRadius: "24px", background: "radial-gradient(circle at center, rgba(34,211,238,.10), rgba(255,255,255,.035))", border: "1px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", userSelect: "none", position: "relative", padding: "14px" }}>
-              {demoLoading ? (
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ width: "58px", height: "58px", borderRadius: "999px", border: "5px solid rgba(103,232,249,.22)", borderTopColor: "#67e8f9", animation: "demoSpin .9s linear infinite", margin: "0 auto 18px" }} />
-                  <div style={{ fontSize: "21px", fontWeight: 1000, color: "#67e8f9" }}>
-                    {lang === "uz" ? "Kutib turing, o‘rtacha generatsiya vaqti 3 daqiqagacha" : "Ожидайте, среднее время генерации до 3 минут"}
-                  </div>
-                </div>
-              ) : demoImage ? (
-                <img src={demoImage.startsWith("/generated_cards") ? `/api${demoImage}` : demoImage} alt="Demo MarketCard AI" draggable={false} style={{ maxWidth: "100%", maxHeight: "60vh", width: "auto", height: "auto", objectFit: "contain", display: "block", pointerEvents: "none", userSelect: "none" }} />
-              ) : (
-                <div style={{ textAlign: "center", color: "#94a3b8", fontWeight: 900, fontSize: "18px" }}>
-                  {lang === "uz" ? "Bu yerda suv belgisi bilan demo-kartochka chiqadi" : "Здесь появится демо-карточка с водяным знаком"}
-                </div>
-              )}
-            </div>
-
-            {demoImage && (
-              <div style={{ marginTop: "18px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                <button onClick={() => router.push("/register")} style={{ flex: 1, minWidth: "220px", border: "none", borderRadius: "16px", padding: "16px", background: "linear-gradient(135deg,#22c55e,#06b6d4)", color: "white", fontWeight: 1000, cursor: "pointer", fontSize: "16px" }}>
-                  {lang === "uz" ? "Suv belgisiz olish" : "Получить без водяного знака"}
-                </button>
-                <button onClick={() => router.push("/pricing")} style={{ flex: 1, minWidth: "220px", borderRadius: "16px", padding: "16px", background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.16)", color: "white", fontWeight: 1000, cursor: "pointer", fontSize: "16px" }}>
-                  {lang === "uz" ? "Tariflarni ko‘rish" : "Посмотреть тарифы"}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
     </main>
   )
