@@ -100,44 +100,61 @@ Important:
 
     
     
-
-    # 🔻 per-image fix counter (3 free fixes per original image)
+    # 🔻 списание генерации (-1)
     try:
-        counter_file = source_folder / f"{image_path.stem}_fixcount.txt"
+        email = payload.email or "udalovaristarh@gmail.com"
+        if email:
+            from app.db import engine
+            from app.models.user import User
+            from sqlmodel import select, func, Session
 
-        if counter_file.exists():
-            fix_count = int(counter_file.read_text().strip() or "0")
-        else:
-            fix_count = 0
+            with Session(engine) as session:
+                user = session.exec(
+                    select(User).where(func.lower(User.email) == email.lower())
+                ).first()
 
-        fix_count += 1
-        counter_file.write_text(str(fix_count))
-
-        # only after 3 free fixes => charge 1 generation
-        if fix_count > 3:
-            email = (payload.email or "").strip().lower() or "udalovaristarh@gmail.com"
-
-            if email:
-                from app.db import engine
-                from app.models.user import User
-                from sqlmodel import select, func, Session
-
-                with Session(engine) as session:
-                    user = session.exec(
-                        select(User).where(func.lower(User.email) == email.lower())
-                    ).first()
-
-                    if user:
-                        user.tariff_generations_used = int(user.tariff_generations_used or 0) + 1
-                        user.tariff_generations_left = max(
-                            0,
-                            int(user.tariff_generations_total or 0) - user.tariff_generations_used
-                        )
-                        session.add(user)
-                        session.commit()
-
+                if user:
+                    user.tariff_generations_used += 1
+                    user.tariff_generations_left = max(0, (user.tariff_generations_total or 0) - user.tariff_generations_used)
+                    session.add(user)
+                    session.commit()
     except Exception as e:
         print("FIX IMAGE USAGE ERROR:", e)
+
+    
+    # 🔻 FIX: принудительное списание генерации
+    try:
+        from app.db import engine
+        from app.models.user import User
+        from sqlmodel import Session, select
+
+        email = (payload.email or "").strip().lower() or "udalovaristarh@gmail.com"
+        print("FIX FORCE EMAIL:", email)
+
+        with Session(engine) as session:
+            user = session.exec(
+                select(User).where(User.email == email)
+            ).first()
+
+            print("FIX FORCE USER:", bool(user))
+
+            if user:
+                user.tariff_generations_used = int(user.tariff_generations_used or 0) + 1
+                user.tariff_generations_left = max(
+                    0,
+                    int(user.tariff_generations_total or 0) - user.tariff_generations_used
+                )
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+
+                print("FIX FORCE RESULT:", {
+                    "used": user.tariff_generations_used,
+                    "left": user.tariff_generations_left
+                })
+
+    except Exception as e:
+        print("FIX FORCE ERROR:", e)
 
     return {
         "success": True,
