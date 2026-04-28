@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from uuid import uuid4
-import re
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -104,9 +103,7 @@ Important:
 
     # 🔻 per-image fix counter (3 free fixes per original image)
     try:
-        # Count fixes by root/original image name, not by every new _fixed_ file
-        root_stem = re.sub(r"_fixed_[0-9a-fA-F]{8}.*$", "", image_path.stem)
-        counter_file = source_folder / f"{root_stem}_fixcount.txt"
+        counter_file = source_folder / f"{image_path.stem}_fixcount.txt"
 
         if counter_file.exists():
             fix_count = int(counter_file.read_text().strip() or "0")
