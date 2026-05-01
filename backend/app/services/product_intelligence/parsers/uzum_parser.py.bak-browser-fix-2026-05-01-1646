@@ -28,26 +28,9 @@ def parse_uzum(query: str, category: str | None = None, limit: int = 30) -> list
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled"
-            ],
+            args=["--no-sandbox", "--disable-dev-shm-usage"],
         )
-
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1920, "height": 1080},
-            locale="ru-RU"
-        )
-
-        page = context.new_page()
-
-        page.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-            Object.defineProperty(navigator, 'platform', {get: () => 'Win32'});
-            Object.defineProperty(navigator, 'languages', {get: () => ['ru-RU','ru','en-US','en']});
-        """)
+        page = browser.new_page()
 
         def on_response(resp):
             nonlocal result_items

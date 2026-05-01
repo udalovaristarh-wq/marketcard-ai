@@ -28,26 +28,9 @@ def parse_uzum(query: str, category: str | None = None, limit: int = 30) -> list
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled"
-            ],
+            args=["--no-sandbox", "--disable-dev-shm-usage"],
         )
-
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1920, "height": 1080},
-            locale="ru-RU"
-        )
-
-        page = context.new_page()
-
-        page.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-            Object.defineProperty(navigator, 'platform', {get: () => 'Win32'});
-            Object.defineProperty(navigator, 'languages', {get: () => ['ru-RU','ru','en-US','en']});
-        """)
+        page = browser.new_page()
 
         def on_response(resp):
             nonlocal result_items
@@ -98,55 +81,6 @@ def parse_uzum(query: str, category: str | None = None, limit: int = 30) -> list
         page.on("response", on_response)
         page.goto(search_url, timeout=60000, wait_until="domcontentloaded")
         page.wait_for_timeout(3000)
-
-        # DOM fallback если GraphQL пустой
-        if not result_items:
-            import re
-            cards = page.locator('a[href*="/product/"]').all()[:limit * 3]
-            seen = set()
-
-            for card in cards:
-                try:
-                    href = card.get_attribute("href") or ""
-                    raw_text = (card.inner_text() or "").strip()
-
-                    if not href or "/product/" not in href:
-                        continue
-
-                    full_url = href if href.startswith("http") else f"https://uzum.uz{href}"
-
-                    if full_url in seen:
-                        continue
-
-                    seen.add(full_url)
-
-                    lines = [x.strip() for x in raw_text.splitlines() if x.strip()]
-                    clean_title = lines[0][:300] if lines else "Товар Uzum"
-
-                    price = 0
-                    nums = re.findall(r'\d[\d\s]{2,}', raw_text.replace("\xa0", " "))
-                    if nums:
-                        try:
-                            price = int(nums[0].replace(" ", ""))
-                        except Exception:
-                            price = 0
-
-                    result_items.append({
-                        "title": clean_title,
-                        "price": price or 1,
-                        "seller": "uzum",
-                        "rating": None,
-                        "reviews": None,
-                        "url": full_url,
-                        "marketplace": "uzum",
-                        "category": category,
-                    })
-
-                    if len(result_items) >= limit:
-                        break
-
-                except Exception:
-                    continue
 
         for _ in range(12):
             if len(result_items) >= limit:
