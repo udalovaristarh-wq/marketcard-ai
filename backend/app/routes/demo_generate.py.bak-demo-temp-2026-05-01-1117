@@ -1,6 +1,4 @@
 from __future__ import annotations
-import os
-
 
 import hashlib
 import json
@@ -152,8 +150,6 @@ async def demo_generate(
     temp_file = TEMP_DIR / f"demo_{uuid.uuid4().hex}{suffix}"
 
     try:
-
-        os.makedirs(os.path.dirname(temp_file), exist_ok=True)
         with open(temp_file, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
 
