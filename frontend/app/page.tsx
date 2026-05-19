@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { useRouter } from "next/navigation"
 
@@ -14,11 +14,59 @@ const examples = [
 ]
 
 const marketplaces = [
-  { name: "Uzum", logo: "/marketplaces/uzum.png" },
-  { name: "Wildberries", logo: "/marketplaces/wildberries.png" },
-  { name: "Ozon", logo: "/marketplaces/ozon.png" },
-  { name: "Yandex Market", logo: "/marketplaces/yandex.png" },
+  { name: "Uzum", logo: "/marketplaces-premium/uzum.png", className: "uzumLogo" },
+  { name: "Wildberries", logo: "/marketplaces-premium/wildberries.png", className: "wbLogo" },
+  { name: "Ozon", logo: "/marketplaces-premium/ozon.png", className: "ozonLogo" },
+  { name: "Yandex Market", logo: "/marketplaces-premium/yandex.png", className: "yandexLogo" },
 ]
+
+
+
+const showcaseBlocks = [
+  [
+    "/showcase/wb/1.webp",
+    "/showcase/wb/2.webp",
+    "/showcase/wb/3.webp",
+    "/showcase/wb/4.webp",
+    "/showcase/wb/5.webp",
+  ],
+  [
+    "/showcase/wb/6.webp",
+    "/showcase/wb/7.webp",
+    "/showcase/wb/8.webp",
+    "/showcase/wb/9.webp",
+    "/showcase/wb/10.webp",
+  ],
+  [
+    "/showcase/wb/13.webp",
+    "/showcase/wb/14.webp",
+    "/showcase/wb/15.webp",
+    "/showcase/wb/16.webp",
+    "/showcase/wb/1.webp",
+  ],
+  [
+    "/showcase/wb/2.webp",
+    "/showcase/wb/4.webp",
+    "/showcase/wb/6.webp",
+    "/showcase/wb/8.webp",
+    "/showcase/wb/10.webp",
+  ],
+  [
+    "/showcase/wb/3.webp",
+    "/showcase/wb/5.webp",
+    "/showcase/wb/7.webp",
+    "/showcase/wb/9.webp",
+    "/showcase/wb/13.webp",
+  ],
+  [
+    "/showcase/wb/14.webp",
+    "/showcase/wb/15.webp",
+    "/showcase/wb/16.webp",
+    "/showcase/wb/1.webp",
+    "/showcase/wb/2.webp",
+  ]
+]
+
 
 const features = [
   "AI карточки товара",
@@ -46,6 +94,21 @@ export default function Home() {
   const [demoTitle, setDemoTitle] = useState("")
   const [demoBrand, setDemoBrand] = useState("")
   const [demoCategory, setDemoCategory] = useState("")
+  const [demoProgress, setDemoProgress] = useState(0)
+  
+const [demoStage, setDemoStage] = useState("Ожидание фото")
+const [showcaseIndex, setShowcaseIndex] = useState(0)
+
+
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowcaseIndex((prev) => (prev + 1) % 5)
+    }, 2200)
+
+    return () => clearInterval(interval)
+  }, [])
+
 
   return (
     <main className="mcPage">
@@ -167,7 +230,9 @@ export default function Home() {
       <section className="marketplaceStrip">
         {marketplaces.map((m) => (
           <div className="marketItem" key={m.name}>
-            <img src={m.logo} alt={m.name} />
+            <div className="marketLogoBox">
+              <img className={m.className} src={m.logo} alt={m.name} />
+            </div>
             <span>{m.name}</span>
           </div>
         ))}
@@ -299,20 +364,17 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="showcaseGrid">
-          {examples.map((src, i) => (
-            <div className="showcaseCard" key={src}>
-              <img src={src} alt={`Example ${i + 1}`} />
+        <div className="premiumShowcaseGrid">
+          {showcaseBlocks.map((block, blockIndex) => (
+            <div className="premiumShowcaseCard" key={blockIndex}>
+              <img
+                src={block[(showcaseIndex + blockIndex) % block.length]}
+                alt={`Marketplace example ${blockIndex + 1}`}
+              />
 
-              <div className="showcaseOverlay">
-                <div className="showcaseBadge">
-                  AI Generated
-                </div>
-
-                <div className="showcaseBottom">
-                  <strong>Premium Product Card</strong>
-                  <span>Marketplace ready</span>
-                </div>
+              <div className="premiumShowcaseOverlay">
+                <span>Marketplace card</span>
+                <strong>Пример карточки товара</strong>
               </div>
             </div>
           ))}
@@ -484,6 +546,31 @@ export default function Home() {
                       try {
                         setDemoLoading(true)
                         setDemoImage("")
+                        setDemoProgress(5)
+                        setDemoStage("AI определяет товар по фото")
+
+                        const analyzeFd = new FormData()
+                        analyzeFd.append("image", file)
+
+                        try {
+                          const analyzeRes = await fetch("/api/analyze-product-photo", {
+                            method: "POST",
+                            body: analyzeFd,
+                          })
+
+                          const analyzeData = await analyzeRes.json()
+
+                          if (analyzeRes.ok && analyzeData?.success) {
+                            if (analyzeData.title) setDemoTitle(analyzeData.title)
+                            if (analyzeData.brand) setDemoBrand(analyzeData.brand)
+                            if (analyzeData.category) setDemoCategory(analyzeData.category)
+                          }
+                        } catch (analyzeErr) {
+                          console.warn("photo analyze skipped", analyzeErr)
+                        }
+
+                        setDemoProgress(14)
+                        setDemoStage("Загружаем фото товара")
 
                         const fd = new FormData()
 
@@ -494,10 +581,24 @@ export default function Home() {
                         fd.append("brand", demoBrand || "Brand")
                         fd.append("category", demoCategory || "Товар")
 
+                        setDemoProgress(28)
+                        setDemoStage("AI анализирует товар")
+
+                        const progressTimer = setInterval(() => {
+                          setDemoProgress((prev) => {
+                            if (prev < 88) return prev + 7
+                            return prev
+                          })
+                        }, 1200)
+
                         const res = await fetch("/api/demo-generate", {
                           method: "POST",
                           body: fd,
                         })
+
+                        clearInterval(progressTimer)
+                        setDemoProgress(94)
+                        setDemoStage("Финализируем карточку")
 
                         const data = await res.json()
 
@@ -507,6 +608,8 @@ export default function Home() {
                         }
 
                         setDemoImage(data.demo_image_url)
+                        setDemoProgress(100)
+                        setDemoStage("Готово")
 
                       } catch (err) {
                         console.error(err)
@@ -522,14 +625,23 @@ export default function Home() {
 
               <div className="demoPreview">
                 {demoLoading ? (
-                  <div className="demoLoading">
-                    <div className="demoSpinner" />
+                  <div className="demoLoading aidProgressBox">
+                    <div className="magicStars">
+                      <span>✦</span>
+                      <span>✧</span>
+                      <span>✦</span>
+                    </div>
 
-                    <strong>Генерируем демо...</strong>
+                    <strong>{demoStage}</strong>
 
-                    <span>
-                      AI готовит карточку под маркетплейс
-                    </span>
+                    <div className="progressShell">
+                      <div
+                        className="progressFill"
+                        style={{ width: `${demoProgress}%` }}
+                      />
+                    </div>
+
+                    <span>{demoProgress}%</span>
                   </div>
 
                 ) : demoImage ? (
@@ -1001,30 +1113,6 @@ export default function Home() {
           padding: 90px 28px;
         }
 
-        .marketplaceStrip {
-          display: grid;
-          grid-template-columns: repeat(4,1fr);
-          gap: 18px;
-          padding-top: 30px;
-        }
-
-        .marketItem {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 14px;
-          padding: 22px;
-          border-radius: 26px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          backdrop-filter: blur(16px);
-        }
-
-        .marketItem img {
-          width: 42px;
-          height: 42px;
-          object-fit: contain;
-        }
 
         .sectionHead {
           margin-bottom: 44px;
@@ -1963,6 +2051,331 @@ export default function Home() {
           }
         }
 
+
+        .aidProgressBox {
+          width: min(360px, 90%);
+        }
+
+        .magicStars {
+          position: relative;
+          width: 92px;
+          height: 92px;
+          margin-bottom: 8px;
+        }
+
+        .magicStars span {
+          position: absolute;
+          font-size: 34px;
+          color: #ffffff;
+          filter: drop-shadow(0 0 18px rgba(34,211,238,0.8));
+          animation: starFloat 2.4s ease-in-out infinite;
+        }
+
+        .magicStars span:nth-child(1) {
+          left: 30px;
+          top: 4px;
+          font-size: 42px;
+        }
+
+        .magicStars span:nth-child(2) {
+          left: 5px;
+          top: 44px;
+          animation-delay: 0.35s;
+        }
+
+        .magicStars span:nth-child(3) {
+          right: 4px;
+          top: 50px;
+          animation-delay: 0.7s;
+        }
+
+        @keyframes starFloat {
+          0% {
+            transform: translateY(0) rotate(0deg) scale(1);
+            opacity: 0.55;
+          }
+          50% {
+            transform: translateY(-12px) rotate(14deg) scale(1.18);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(0) rotate(0deg) scale(1);
+            opacity: 0.55;
+          }
+        }
+
+        .progressShell {
+          width: 100%;
+          height: 10px;
+          margin: 12px 0 2px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.12);
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .progressFill {
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg,#7c3aed,#06b6d4,#22c55e);
+          box-shadow: 0 0 28px rgba(34,211,238,0.65);
+          transition: width 0.45s ease;
+        }
+
+
+        .demoUpload {
+          position: relative;
+          overflow: hidden;
+          isolation: isolate;
+        }
+
+        .demoUpload::before {
+          content: "";
+          position: absolute;
+          inset: -2px;
+          background: linear-gradient(120deg,#7c3aed,#06b6d4,#22c55e,#7c3aed);
+          background-size: 300% 300%;
+          animation: uploadGlowMove 4s linear infinite;
+          opacity: 0.65;
+          z-index: -2;
+        }
+
+        .demoUpload::after {
+          content: "";
+          position: absolute;
+          inset: 1px;
+          border-radius: 23px;
+          background: rgba(7,8,18,0.72);
+          z-index: -1;
+        }
+
+        @keyframes uploadGlowMove {
+          0% {
+            background-position: 0% 50%;
+          }
+          100% {
+            background-position: 300% 50%;
+          }
+        }
+
+        .demoField select {
+          appearance: none;
+          background:
+            linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)),
+            #111827;
+          color: white;
+        }
+
+        .demoField select option {
+          background: #111827;
+          color: white;
+        }
+
+
+        .marketplaceStrip {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(180px, 1fr));
+          gap: 18px;
+          padding-top: 30px;
+        }
+
+        .marketItem {
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 16px;
+          min-height: 92px;
+          padding: 18px 22px;
+          border-radius: 28px;
+          background:
+            radial-gradient(circle at top left, rgba(255,255,255,0.13), transparent 36%),
+            linear-gradient(135deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035));
+          border: 1px solid rgba(255,255,255,0.11);
+          backdrop-filter: blur(18px);
+          box-shadow:
+            0 24px 80px rgba(0,0,0,0.28),
+            inset 0 1px 0 rgba(255,255,255,0.08);
+          transition: 0.28s ease;
+        }
+
+        .marketItem::before {
+          content: "";
+          position: absolute;
+          inset: -1px;
+          background: linear-gradient(120deg, transparent, rgba(34,211,238,0.16), transparent);
+          opacity: 0;
+          transition: 0.28s ease;
+        }
+
+        .marketItem:hover {
+          transform: translateY(-4px);
+          border-color: rgba(34,211,238,0.28);
+          box-shadow:
+            0 28px 100px rgba(6,182,212,0.18),
+            inset 0 1px 0 rgba(255,255,255,0.12);
+        }
+
+        .marketItem:hover::before {
+          opacity: 1;
+        }
+
+        .marketLogoBox {
+          position: relative;
+          z-index: 2;
+          width: 58px;
+          height: 58px;
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255,255,255,0.10);
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .marketLogoBox img {
+          display: block;
+          object-fit: contain;
+          filter: drop-shadow(0 8px 18px rgba(0,0,0,0.28));
+        }
+
+        .uzumLogo {
+          width: 46px;
+          height: 46px;
+        }
+
+        .wbLogo {
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+        }
+
+        .ozonLogo {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+        }
+
+        .yandexLogo {
+          width: 48px;
+          height: 32px;
+        }
+
+        .marketItem span {
+          position: relative;
+          z-index: 2;
+          font-size: 18px;
+          font-weight: 900;
+          color: rgba(255,255,255,0.92);
+          white-space: nowrap;
+        }
+
+
+        .marketItem {
+          position: relative;
+          overflow: hidden;
+          min-height: 118px;
+          justify-content: flex-start;
+          padding: 26px 30px;
+          background:
+            radial-gradient(circle at 18% 50%, rgba(255,255,255,0.12), transparent 34%),
+            linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 25px 80px rgba(0,0,0,0.26);
+        }
+
+        .marketItem::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, transparent, rgba(255,255,255,0.08), transparent);
+          transform: translateX(-120%);
+          transition: 0.6s;
+        }
+
+        .marketItem:hover::after {
+          transform: translateX(120%);
+        }
+
+        .marketItem img {
+          width: 84px;
+          height: 84px;
+          object-fit: contain;
+          border-radius: 24px;
+          background: transparent;
+          padding: 0;
+          box-shadow: none;
+          filter:
+            drop-shadow(0 10px 24px rgba(0,0,0,0.45))
+            brightness(1.08);
+          transition: transform .25s ease;
+        }
+
+        .marketItem:hover img {
+          transform: scale(1.08);
+        }
+
+        .marketItem span {
+          font-size: 24px;
+          font-weight: 950;
+          letter-spacing: -0.03em;
+        }
+
+
+        .premiumShowcaseGrid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 22px;
+        }
+
+        .premiumShowcaseCard {
+          position: relative;
+          overflow: hidden;
+          border-radius: 34px;
+          aspect-ratio: 3/4;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 30px 90px rgba(0,0,0,0.42);
+        }
+
+        .premiumShowcaseCard img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: opacity 0.35s ease, transform 0.45s ease;
+        }
+
+        .premiumShowcaseCard:hover img {
+          transform: scale(1.04);
+        }
+
+        .premiumShowcaseOverlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 20px;
+          background: linear-gradient(to top, rgba(0,0,0,0.72), transparent 55%);
+        }
+
+        .premiumShowcaseOverlay span {
+          width: max-content;
+          padding: 8px 12px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.14);
+          backdrop-filter: blur(12px);
+          font-size: 12px;
+          font-weight: 900;
+        }
+
+        .premiumShowcaseOverlay strong {
+          font-size: 22px;
+          line-height: 1.15;
+        }
+
         @media (max-width: 1100px) {
           .hero {
             grid-template-columns: 1fr;
@@ -2073,6 +2486,131 @@ export default function Home() {
             border-radius: 28px;
           }
         }
+
+        @media (max-width: 720px) {
+          .pricingModal {
+            align-items: flex-start;
+            padding: 12px;
+            overflow-y: auto;
+          }
+
+          .pricingBox {
+            width: 100%;
+            max-height: none;
+            padding: 26px 16px;
+            border-radius: 28px;
+            overflow-x: hidden;
+          }
+
+          .modalClose {
+            top: 14px;
+            right: 14px;
+            width: 42px;
+            height: 42px;
+            font-size: 26px;
+          }
+
+          .pricingHeader {
+            padding-top: 42px;
+            margin-bottom: 24px;
+          }
+
+          .pricingHeader h2 {
+            font-size: 38px;
+            line-height: 1;
+            letter-spacing: -0.05em;
+          }
+
+          .pricingHeader p {
+            font-size: 16px;
+            line-height: 1.55;
+          }
+
+          .tariffGrid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+          }
+
+          .tariffCard,
+          .tariffCard.popular {
+            transform: none;
+            width: 100%;
+            padding: 24px;
+            border-radius: 28px;
+          }
+
+          .tariffCard h3 {
+            font-size: 36px;
+            line-height: 1.05;
+          }
+
+          .tariffCard p {
+            min-height: auto;
+            font-size: 16px;
+          }
+
+          .popularBadge {
+            position: static;
+            width: max-content;
+            margin-bottom: 14px;
+          }
+
+          .premiumShowcaseGrid {
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+          }
+
+          .premiumShowcaseCard {
+            border-radius: 22px;
+          }
+
+          .premiumShowcaseOverlay {
+            padding: 12px;
+          }
+
+          .premiumShowcaseOverlay span {
+            font-size: 10px;
+            padding: 6px 8px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .premiumShowcaseOverlay strong {
+            font-size: 14px;
+            line-height: 1.15;
+          }
+
+          .showcaseSection .sectionHead h2 {
+            font-size: 42px;
+            line-height: 1;
+          }
+
+          .showcaseSection .sectionHead p {
+            font-size: 16px;
+            line-height: 1.55;
+          }
+        }
+
+        @media (max-width: 430px) {
+          .premiumShowcaseGrid {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .premiumShowcaseOverlay strong {
+            font-size: 13px;
+          }
+
+          .pricingHeader h2 {
+            font-size: 34px;
+          }
+
+          .tariffCard h3 {
+            font-size: 32px;
+          }
+        }
+
       `}</style>
     </main>
   )
