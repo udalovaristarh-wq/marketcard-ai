@@ -1,0 +1,406 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+
+const examples = [
+  "/works/work1.jpg",
+  "/works/work2.jpg",
+  "/works/work3.jpg",
+  "/works/work4.jpg",
+]
+
+const marketplaces = ["Uzum", "Wildberries", "Ozon", "Yandex Market"]
+
+export default function Home() {
+  const router = useRouter()
+
+  return (
+    <main className="page">
+      <section className="hero">
+        <header className="nav">
+          <div className="brand">
+            <img src="/logo.jpg" alt="MarketCard AI" />
+            <span>MarketCard AI</span>
+          </div>
+
+          <div className="navBtns">
+            <button onClick={() => router.push("/login")}>Войти</button>
+            <button className="primary" onClick={() => router.push("/register")}>
+              Попробовать
+            </button>
+          </div>
+        </header>
+
+        <div className="heroGrid">
+          <div className="heroText">
+            <div className="badge">AI PLATFORM FOR MARKETPLACE SELLERS</div>
+
+            <h1>Создавай продающие карточки товаров за минуты</h1>
+
+            <p>
+              MarketCard AI генерирует инфографику, SEO-описания, слайды,
+              аналитику и визуал для Uzum, Wildberries, Ozon и Yandex Market.
+            </p>
+
+            <div className="actions">
+              <button className="bigPrimary" onClick={() => router.push("/register")}>
+                Начать генерацию
+              </button>
+              <button className="bigGhost" onClick={() => router.push("/pricing")}>
+                Смотреть тарифы
+              </button>
+            </div>
+
+            <div className="marketplaces">
+              {marketplaces.map((m) => (
+                <span key={m}>{m}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="previewPanel">
+            <div className="panelTop">
+              <span>AI Generator</span>
+              <b>Live preview</b>
+            </div>
+
+            <div className="cardsStack">
+              {examples.map((src, i) => (
+                <div className="productCard" key={src}>
+                  <img src={src} alt="Example" />
+                  <div className="cardLabel">Card #{i + 1}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+cat >> frontend/app/page.tsx <<'EOF'
+
+      <section className="steps">
+        <h2>Как это работает</h2>
+
+        <div className="stepGrid">
+          <div>
+            <b>01</b>
+            <h3>Загрузи фото</h3>
+            <p>Добавь фото товара, название, бренд и категорию.</p>
+          </div>
+          <div>
+            <b>02</b>
+            <h3>Выбери маркетплейс</h3>
+            <p>Система подстроит формат под Uzum, WB, Ozon или Yandex.</p>
+          </div>
+          <div>
+            <b>03</b>
+            <h3>Получай результат</h3>
+            <p>Карточка, SEO-текст, слайды и материалы для продажи.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="features">
+        <div>
+          <h2>Не просто дизайн. Полный AI-инструмент продавца.</h2>
+          <p>
+            Генерация карточек, улучшение изображений, аналитика товаров,
+            юнит-экономика, SEO и будущая видео-генерация в одной платформе.
+          </p>
+        </div>
+
+        <div className="featureGrid">
+          <div>AI карточки</div>
+          <div>SEO описание</div>
+          <div>Product Intelligence</div>
+          <div>AI Video Generator</div>
+        </div>
+      </section>
+
+      <section className="cta">
+        <h2>Готов создать первую карточку?</h2>
+        <button onClick={() => router.push("/register")}>Запустить MarketCard AI</button>
+      </section>
+
+      <style jsx>{`
+        .page {
+          min-height: 100vh;
+          background:
+            radial-gradient(circle at 20% 10%, rgba(124, 58, 237, 0.35), transparent 35%),
+            radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.25), transparent 30%),
+            #05060a;
+          color: white;
+          overflow: hidden;
+          font-family: Arial, sans-serif;
+        }
+
+        .hero {
+          position: relative;
+          padding: 24px;
+        }
+
+        .nav {
+          max-width: 1180px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 14px 18px;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 24px;
+          background: rgba(255,255,255,0.05);
+          backdrop-filter: blur(20px);
+        }
+
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-weight: 800;
+        }
+
+        .brand img {
+          width: 42px;
+          height: 42px;
+          border-radius: 14px;
+          object-fit: cover;
+        }
+
+        button {
+          border: 0;
+          cursor: pointer;
+          color: white;
+          border-radius: 999px;
+          padding: 12px 18px;
+          background: rgba(255,255,255,0.08);
+          font-weight: 700;
+        }
+
+        .primary,
+        .bigPrimary,
+        .cta button {
+          background: linear-gradient(135deg, #7c3aed, #06b6d4);
+          box-shadow: 0 18px 50px rgba(124,58,237,0.35);
+        }
+
+        .navBtns {
+          display: flex;
+          gap: 10px;
+        }
+
+        .heroGrid {
+          max-width: 1180px;
+          margin: 80px auto 40px;
+          display: grid;
+          grid-template-columns: 1.05fr 0.95fr;
+          gap: 42px;
+          align-items: center;
+        }
+
+        .badge {
+          display: inline-flex;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: #a5f3fc;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+        }
+
+        h1 {
+          font-size: clamp(42px, 7vw, 86px);
+          line-height: 0.92;
+          margin: 24px 0;
+          letter-spacing: -0.06em;
+        }
+
+        .heroText p {
+          color: rgba(255,255,255,0.72);
+          font-size: 20px;
+          line-height: 1.55;
+          max-width: 640px;
+        }
+
+        .actions {
+          display: flex;
+          gap: 14px;
+          margin-top: 30px;
+          flex-wrap: wrap;
+        }
+
+        .bigPrimary,
+        .bigGhost {
+          font-size: 16px;
+          padding: 16px 24px;
+        }
+
+        .bigGhost {
+          border: 1px solid rgba(255,255,255,0.14);
+        }
+
+        .marketplaces {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-top: 28px;
+        }
+
+        .marketplaces span {
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.07);
+          color: rgba(255,255,255,0.78);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .previewPanel {
+          border-radius: 34px;
+          padding: 18px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+          border: 1px solid rgba(255,255,255,0.14);
+          box-shadow: 0 30px 120px rgba(0,0,0,0.55);
+          backdrop-filter: blur(24px);
+        }
+
+        .panelTop {
+          display: flex;
+          justify-content: space-between;
+          color: rgba(255,255,255,0.7);
+          margin-bottom: 16px;
+        }
+
+        .cardsStack {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .productCard {
+          position: relative;
+          border-radius: 26px;
+          overflow: hidden;
+          background: #111827;
+          border: 1px solid rgba(255,255,255,0.1);
+          min-height: 250px;
+        }
+
+        .productCard img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .cardLabel {
+          position: absolute;
+          left: 12px;
+          bottom: 12px;
+          padding: 8px 10px;
+          border-radius: 999px;
+          background: rgba(0,0,0,0.55);
+          font-size: 12px;
+        }
+
+        .steps,
+        .features,
+        .cta {
+          max-width: 1180px;
+          margin: 0 auto;
+          padding: 70px 24px;
+        }
+
+        h2 {
+          font-size: clamp(32px, 5vw, 58px);
+          letter-spacing: -0.04em;
+          margin: 0 0 24px;
+        }
+
+        .stepGrid,
+        .featureGrid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 18px;
+        }
+
+        .stepGrid div,
+        .featureGrid div {
+          border-radius: 28px;
+          padding: 26px;
+          background: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stepGrid b {
+          color: #22d3ee;
+        }
+
+        .stepGrid p,
+        .features p {
+          color: rgba(255,255,255,0.68);
+          line-height: 1.6;
+        }
+
+        .features {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 28px;
+          align-items: center;
+        }
+
+        .featureGrid {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .cta {
+          text-align: center;
+          padding-bottom: 100px;
+        }
+
+        .cta button {
+          font-size: 18px;
+          padding: 18px 30px;
+        }
+
+        @media (max-width: 900px) {
+          .heroGrid,
+          .features {
+            grid-template-columns: 1fr;
+          }
+
+          .stepGrid,
+          .featureGrid {
+            grid-template-columns: 1fr;
+          }
+
+          .nav {
+            flex-direction: column;
+            gap: 14px;
+          }
+
+          .cardsStack {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 560px) {
+          .hero {
+            padding: 14px;
+          }
+
+          .heroGrid {
+            margin-top: 42px;
+          }
+
+          .cardsStack {
+            grid-template-columns: 1fr;
+          }
+
+          .productCard {
+            min-height: 320px;
+          }
+        }
+      `}</style>
+    </main>
+  )
+}
