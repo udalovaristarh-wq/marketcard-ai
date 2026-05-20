@@ -70,15 +70,18 @@ const showcaseBlocks = [
 
 
 const testimonials = [
-  { name: "Азиз", role: "Продавец Uzum", img: "/reviews/review-1.png", text: "С MarketCard AI стал быстрее запускать товары и не ждать дизайнера по несколько дней." },
-  { name: "Руслан", role: "Автозапчасти", img: "/reviews/review-2.png", text: "Карточки стали выглядеть дороже и профессиональнее. Для маркетплейса это реально важно." },
-  { name: "Даниил", role: "Marketplace Seller", img: "/reviews/review-3.png", text: "Удобно, что можно быстро получить визуал, описание и идеи для карточки в одном месте." },
-  { name: "Алексей", role: "Ozon Seller", img: "/reviews/review-4.png", text: "Раньше тратил деньги на макеты. Сейчас тестирую разные варианты намного быстрее." },
-  { name: "Мадина", role: "Uzum Seller", img: "/reviews/review-5.png", text: "Очень понравилось качество инфографики. Карточки выглядят современно и аккуратно." },
-  { name: "Севара", role: "WB Seller", img: "/reviews/review-6.png", text: "Сервис помогает быстро оформить товар и не зависеть от дизайнера." },
-  { name: "Камила", role: "Online Seller", img: "/reviews/review-7.png", text: "MarketCard AI экономит время и помогает делать карточки красивее." },
-  { name: "Диана", role: "Uzum Seller", img: "/reviews/review-8.png", text: "Теперь мои товары выглядят намного лучше на витрине маркетплейса." },
-  { name: "Алина", role: "Marketplace Seller", img: "/reviews/review-9.png", text: "Хороший инструмент для продавцов, когда нужно быстро запускать много товаров." },
+  { name: "Азиз", role: "Продавец автотоваров", img: "/testimonials/1.jpg", text: "Раньше ждал дизайнера по 2–3 дня. Сейчас быстро тестирую карточки и сразу запускаю товар." },
+  { name: "Мадина", role: "Товары для дома", img: "/testimonials/2.jpg", text: "Удобно, что карточка, SEO и анализ товара находятся в одном кабинете." },
+  { name: "Дилшод", role: "Электроника", img: "/testimonials/3.jpg", text: "Можно быстро проверить разные визуалы и не тратить лишние деньги на дизайн." },
+  { name: "Севара", role: "Косметика", img: "/testimonials/4.jpg", text: "MarketCard AI помогает делать карточки красивее и быстрее готовить товары к продаже." },
+  { name: "Бахром", role: "Автозапчасти", img: "/testimonials/5.jpg", text: "Для маркетплейсов скорость решает. Загрузил фото — получил готовый визуал." },
+  { name: "Нодира", role: "Одежда", img: "/testimonials/6.jpg", text: "Понравилось, что можно быстро получить идеи для карточки и описания товара." },
+  { name: "Рустам", role: "Техника", img: "/testimonials/7.jpg", text: "AI экономит время на запуске товаров и помогает не зависеть от дизайнера." },
+  { name: "Лола", role: "Детские товары", img: "/testimonials/8.jpg", text: "Карточки выглядят ярко, а SEO-текст помогает быстрее заполнить описание." },
+  { name: "Фарход", role: "Инструменты", img: "/testimonials/9.jpg", text: "Удобно тестировать нишу, конкурентов и визуал товара в одном сервисе." },
+  { name: "Зарина", role: "Товары для кухни", img: "/testimonials/10.jpg", text: "Хороший инструмент для продавцов, когда нужно быстро оформить много товаров." },
+  { name: "Акмаль", role: "Спорттовары", img: "/testimonials/11.jpg", text: "Не надо ждать макеты. Получил карточку, посмотрел результат, двигаюсь дальше." },
+  { name: "Гульнора", role: "Аксессуары", img: "/testimonials/12.jpg", text: "Для старта на маркетплейсе это сильно упрощает подготовку карточек." },
 ]
 
 const features = [
@@ -369,28 +372,10 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
       </section>
 
       <section className="showcaseSection">
-        <div
-          className="sectionHead"
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-            margin: "0 auto 34px",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ display: "block", textAlign: "center", margin: "0 auto 12px" }}>
-            SHOWCASE
-          </span>
-
-          <h2 style={{ width: "100%", textAlign: "center", margin: "0 auto 14px" }}>
-            Примеры AI-карточек
-          </h2>
-
-          <p style={{ width: "100%", maxWidth: "760px", textAlign: "center", margin: "0 auto" }}>
+        <div className="sectionHead">
+          <span>SHOWCASE</span>
+          <h2>Примеры AI-карточек</h2>
+          <p>
             Карточки, созданные системой MarketCard AI для маркетплейсов.
           </p>
         </div>
@@ -428,8 +413,8 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         </div>
 
         <div className="reviewsCarousel">
-          <div className="reviewsTrack reviewsTrackAnimated">
-            {testimonials.map((r, i) => (
+          <div className="reviewsTrack">
+            {[...testimonials, ...testimonials].map((r, i) => (
               <div className="reviewCardPremium" key={`${r.name}-${i}`}>
                 <div className="reviewTop">
                   <img src={r.img} alt={r.name} />
@@ -776,67 +761,22 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         </div>
       )}
 
-
-
-      <footer style={{
-        maxWidth: "1180px",
-        margin: "50px auto 0",
-        padding: "38px 44px",
-        borderRadius: "28px 28px 0 0",
-        background: "rgba(0,0,0,0.72)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: "60px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{ maxWidth: "360px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <img src="/logo.jpg" alt="MarketCard AI" style={{
-              width: "54px",
-              height: "54px",
-              borderRadius: "16px",
-              objectFit: "cover"
-            }} />
-
-            <div>
-              <strong style={{ display: "block", fontSize: "20px" }}>
-                MarketCard AI
-              </strong>
-              <span style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px" }}>
-                AI-платформа для маркетплейсов
-              </span>
-            </div>
+      <footer className="footer">
+        <div className="footerBrand">
+          <img src="/logo.jpg" alt="MarketCard AI" />
+          <div>
+            <strong>MarketCard AI</strong>
+            <span>AI marketplace platform</span>
           </div>
-
-          <p style={{ marginTop: "22px", color: "rgba(255,255,255,0.58)", fontSize: "13px" }}>
-            © 2026 MarketCard AI. Все права защищены.
-          </p>
         </div>
 
-        <div style={{ display: "flex", gap: "70px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h4 style={{ margin: "0 0 6px", fontSize: "12px", color: "rgba(255,255,255,0.46)" }}>ПРОДУКТ</h4>
-            <a href="/" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Главная</a>
-            <a href="/pricing" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Тарифы</a>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h4 style={{ margin: "0 0 6px", fontSize: "12px", color: "rgba(255,255,255,0.46)" }}>ПОДДЕРЖКА</h4>
-            <a href="https://t.me/marketcardai_support_bot" target="_blank" rel="noreferrer" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}><img src="/social/telegram.svg" alt="Telegram" style={{width:"18px",height:"18px"}} /></a>
-            <a href="https://www.instagram.com/marketcard.ai?igsh=MWtwM3pwdmowd3VmYg==" target="_blank" rel="noreferrer" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}><img src="/social/instagram.svg" alt="Instagram" style={{width:"18px",height:"18px"}} /></a>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h4 style={{ margin: "0 0 6px", fontSize: "12px", color: "rgba(255,255,255,0.46)" }}>ДОКУМЕНТЫ</h4>
-            <a href="/privacy" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Конфиденциальность</a>
-            <a href="/terms" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Соглашение</a>
-          </div>
+        <div className="footerLinks">
+          <a href="/about">About</a>
+          <a href="/pricing">Pricing</a>
+          <a href="/terms">Terms</a>
+          <a href="/privacy">Privacy</a>
         </div>
       </footer>
-
-
 
       <style jsx>{`
         * {
@@ -1172,7 +1112,13 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         .featureSection,
         .showcaseSection,
         .ctaSection,
-
+        .footer {
+          position: relative;
+          z-index: 2;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 90px 28px;
+        }
 
 
         .sectionHead {
@@ -1211,32 +1157,29 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
 
         .stepCard {
           position: relative;
-          padding: 24px;
-          border-radius: 24px;
-          min-height: 190px;
+          padding: 34px;
+          border-radius: 34px;
           background: rgba(255,255,255,0.05);
           border: 1px solid rgba(255,255,255,0.08);
           overflow: hidden;
         }
 
         .stepNumber {
-          font-size: 48px;
+          font-size: 72px;
           font-weight: 900;
           color: rgba(255,255,255,0.08);
-          margin-bottom: 14px;
+          margin-bottom: 18px;
         }
 
         .stepCard h3 {
-          margin: 0 0 10px;
-          font-size: 22px;
-          line-height: 1.15;
+          margin: 0 0 16px;
+          font-size: 28px;
         }
 
         .stepCard p {
           margin: 0;
           color: rgba(255,255,255,0.66);
-          font-size: 14px;
-          line-height: 1.45;
+          line-height: 1.7;
         }
 
         .featureGrid {
@@ -1247,9 +1190,8 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
 
         .featureCard {
           position: relative;
-          padding: 24px;
-          border-radius: 24px;
-          min-height: 150px;
+          padding: 32px;
+          border-radius: 32px;
           background: rgba(255,255,255,0.05);
           border: 1px solid rgba(255,255,255,0.08);
           overflow: hidden;
@@ -1269,16 +1211,14 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         .featureCard strong {
           position: relative;
           display: block;
-          font-size: 22px;
-          line-height: 1.15;
-          margin-bottom: 10px;
+          font-size: 24px;
+          margin-bottom: 14px;
         }
 
         .featureCard p {
           position: relative;
           color: rgba(255,255,255,0.66);
-          font-size: 14px;
-          line-height: 1.45;
+          line-height: 1.7;
         }
 
         .showcaseGrid {
@@ -1347,14 +1287,17 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
 
         .ctaBox {
           position: relative;
-          max-width: 980px;
-          margin: 0 auto;
-          padding: 48px 28px;
-          border-radius: 30px;
-          text-align: center;
           overflow: hidden;
-          background: linear-gradient(135deg, rgba(124,58,237,0.55), rgba(6,182,212,0.72));
-          border: 1px solid rgba(255,255,255,0.12);
+          padding: 80px 40px;
+          border-radius: 42px;
+          text-align: center;
+          background:
+            linear-gradient(
+              135deg,
+              rgba(124,58,237,0.22),
+              rgba(6,182,212,0.18)
+            );
+          border: 1px solid rgba(255,255,255,0.08);
         }
 
         .ctaGlow {
@@ -1379,19 +1322,18 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         }
 
         .ctaBox h2 {
-          font-size: 54px;
-          line-height: 1;
-          margin: 14px 0 18px;
-          text-align: center;
+          position: relative;
+          max-width: 860px;
+          margin: 0 auto;
         }
 
         .ctaBox p {
-          max-width: 620px;
-          margin: 0 auto 26px;
-          text-align: center;
-          color: rgba(255,255,255,0.78);
-          font-size: 16px;
-          line-height: 1.55;
+          position: relative;
+          max-width: 680px;
+          margin: 24px auto 0;
+          color: rgba(255,255,255,0.72);
+          font-size: 18px;
+          line-height: 1.7;
         }
 
         .ctaActions {
@@ -1403,6 +1345,54 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
           margin-top: 36px;
         }
 
+        .footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 24px;
+          padding-top: 40px;
+          padding-bottom: 60px;
+        }
+
+        .footerBrand {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .footerBrand img {
+          width: 56px;
+          height: 56px;
+          border-radius: 18px;
+          object-fit: cover;
+        }
+
+        .footerBrand strong {
+          display: block;
+          font-size: 18px;
+        }
+
+        .footerBrand span {
+          display: block;
+          margin-top: 4px;
+          color: rgba(255,255,255,0.58);
+          font-size: 13px;
+        }
+
+        .footerLinks {
+          display: flex;
+          gap: 24px;
+          flex-wrap: wrap;
+        }
+
+        .footerLinks a {
+          color: rgba(255,255,255,0.68);
+          text-decoration: none;
+        }
+
+        .footerLinks a:hover {
+          color: white;
+        }
 
 
         .compareSection {
@@ -2343,19 +2333,17 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         .premiumShowcaseGrid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 18px;
-          max-width: 1280px;
-          margin: 0 auto;
+          gap: 22px;
         }
 
         .premiumShowcaseCard {
           position: relative;
           overflow: hidden;
-          border-radius: 24px;
-          aspect-ratio: 4/5;
+          border-radius: 34px;
+          aspect-ratio: 3/4;
           background: rgba(255,255,255,0.05);
           border: 1px solid rgba(255,255,255,0.1);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+          box-shadow: 0 30px 90px rgba(0,0,0,0.42);
         }
 
         .premiumShowcaseCard img {
@@ -2414,6 +2402,10 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
             grid-template-columns: 1fr 1fr;
           }
 
+          .footer {
+            flex-direction: column;
+            align-items: flex-start;
+          }
         }
 
         @media (max-width: 720px) {
@@ -2442,33 +2434,11 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
           }
 
           h1 {
-            font-size: 38px;
+            font-size: 54px;
           }
 
           h2 {
-            font-size: 32px;
-          }
-
-          .stepCard,
-          .featureCard {
-            padding: 18px;
-            border-radius: 20px;
-            min-height: 135px;
-          }
-
-          .stepNumber {
-            font-size: 38px;
-            margin-bottom: 10px;
-          }
-
-          .stepCard h3,
-          .featureCard strong {
-            font-size: 20px;
-          }
-
-          .stepCard p,
-          .featureCard p {
-            font-size: 13px;
+            font-size: 42px;
           }
 
           .heroText,
@@ -2485,6 +2455,9 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
             padding: 60px 24px;
           }
 
+          .footerLinks {
+            gap: 18px;
+          }
         }
 
         @media (max-width: 520px) {
@@ -2494,7 +2467,10 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
           .featureSection,
           .showcaseSection,
           .ctaSection,
-
+          .footer {
+            padding-left: 18px;
+            padding-right: 18px;
+          }
 
           h1 {
             font-size: 42px;
@@ -2614,15 +2590,14 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
           }
 
           .showcaseSection .sectionHead h2 {
-          text-align: center;
-          margin: 0 auto 14px;
-        }
+            font-size: 42px;
+            line-height: 1;
+          }
 
           .showcaseSection .sectionHead p {
-          text-align: center;
-          margin: 0 auto 34px;
-          max-width: 760px;
-        }
+            font-size: 16px;
+            line-height: 1.55;
+          }
         }
 
         @media (max-width: 430px) {
@@ -2642,83 +2617,6 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
             font-size: 32px;
           }
         }
-
-
-
-        /* FINAL FORCE REVIEWS CAROUSEL */
-        .reviewsCarousel {
-          width: 100% !important;
-          overflow: hidden !important;
-          padding: 18px 0 !important;
-        }
-
-        .reviewsTrack,
-        .reviewsTrackAnimated {
-          display: flex !important;
-          flex-direction: row !important;
-          gap: 18px !important;
-          width: max-content !important;
-          align-items: stretch !important;
-          animation: reviewsMoveFinal 38s linear infinite !important;
-        }
-
-        .reviewCardPremium {
-          width: 280px !important;
-          min-width: 280px !important;
-          max-width: 280px !important;
-          padding: 16px !important;
-          border-radius: 22px !important;
-        }
-
-        .reviewTop {
-          display: flex !important;
-          align-items: center !important;
-          gap: 10px !important;
-        }
-
-        .reviewTop img {
-          width: 56px !important;
-          height: 56px !important;
-          min-width: 56px !important;
-          min-height: 56px !important;
-          max-width: 56px !important;
-          max-height: 56px !important;
-          border-radius: 999px !important;
-          object-fit: cover !important;
-        }
-
-        .reviewTop > div {
-          display: flex !important;
-          flex-direction: column !important;
-          gap: 3px !important;
-        }
-
-        .reviewTop strong {
-          font-size: 14px !important;
-          line-height: 1.1 !important;
-        }
-
-        .reviewTop span {
-          font-size: 11px !important;
-          line-height: 1.1 !important;
-          opacity: 0.75 !important;
-        }
-
-        .reviewCardPremium p {
-          font-size: 13px !important;
-          line-height: 1.4 !important;
-          margin: 10px 0 !important;
-        }
-
-        .reviewStars {
-          font-size: 12px !important;
-        }
-
-        @keyframes reviewsMoveFinal {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-
 
       `}</style>
     </main>
