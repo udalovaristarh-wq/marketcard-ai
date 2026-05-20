@@ -68,6 +68,19 @@ const showcaseBlocks = [
 ]
 
 
+
+const testimonials = [
+  { name: "Азиз", role: "Продавец Uzum", img: "/reviews/review-1.png", text: "С MarketCard AI стал быстрее запускать товары и не ждать дизайнера по несколько дней." },
+  { name: "Руслан", role: "Автозапчасти", img: "/reviews/review-2.png", text: "Карточки стали выглядеть дороже и профессиональнее. Для маркетплейса это реально важно." },
+  { name: "Даниил", role: "Marketplace Seller", img: "/reviews/review-3.png", text: "Удобно, что можно быстро получить визуал, описание и идеи для карточки в одном месте." },
+  { name: "Алексей", role: "Ozon Seller", img: "/reviews/review-4.png", text: "Раньше тратил деньги на макеты. Сейчас тестирую разные варианты намного быстрее." },
+  { name: "Мадина", role: "Uzum Seller", img: "/reviews/review-5.png", text: "Очень понравилось качество инфографики. Карточки выглядят современно и аккуратно." },
+  { name: "Севара", role: "WB Seller", img: "/reviews/review-6.png", text: "Сервис помогает быстро оформить товар и не зависеть от дизайнера." },
+  { name: "Камила", role: "Online Seller", img: "/reviews/review-7.png", text: "MarketCard AI экономит время и помогает делать карточки красивее." },
+  { name: "Диана", role: "Uzum Seller", img: "/reviews/review-8.png", text: "Теперь мои товары выглядят намного лучше на витрине маркетплейса." },
+  { name: "Алина", role: "Marketplace Seller", img: "/reviews/review-9.png", text: "Хороший инструмент для продавцов, когда нужно быстро запускать много товаров." },
+]
+
 const features = [
   "AI карточки товара",
   "SEO описание",
@@ -396,32 +409,23 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
           </div>
         </div>
 
-        <div className="reviewGrid">
-          <div className="reviewCard">
-            <p>
-              “Раньше ждал дизайнера по 2 дня. Сейчас быстро тестирую карточки
-              и сразу понимаю, какой визуал лучше работает.”
-            </p>
-            <strong>Азиз</strong>
-            <span>Продавец автотоваров, Uzum</span>
-          </div>
+        <div className="reviewsCarousel">
+          <div className="reviewsTrack reviewsTrackAnimated">
+            {testimonials.map((r, i) => (
+              <div className="reviewCardPremium" key={`${r.name}-${i}`}>
+                <div className="reviewTop">
+                  <img src={r.img} alt={r.name} />
+                  <div>
+                    <strong>{r.name}</strong>
+                    <span>{r.role}</span>
+                  </div>
+                </div>
 
-          <div className="reviewCard">
-            <p>
-              “Для новых товаров удобно: фото, описание, SEO и анализ ниши в одном месте.
-              Не надо искать отдельно дизайнера и аналитика.”
-            </p>
-            <strong>Мадина</strong>
-            <span>Продавец товаров для дома</span>
-          </div>
+                <p>“{r.text}”</p>
 
-          <div className="reviewCard">
-            <p>
-              “Главное — можно быстро проверять идеи. Если товар не заходит,
-              не трачу лишние деньги на дорогой дизайн.”
-            </p>
-            <strong>Дилшод</strong>
-            <span>Продавец электроники</span>
+                <div className="reviewStars">★★★★★</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -2610,6 +2614,83 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
             font-size: 32px;
           }
         }
+
+
+
+        /* FINAL FORCE REVIEWS CAROUSEL */
+        .reviewsCarousel {
+          width: 100% !important;
+          overflow: hidden !important;
+          padding: 18px 0 !important;
+        }
+
+        .reviewsTrack,
+        .reviewsTrackAnimated {
+          display: flex !important;
+          flex-direction: row !important;
+          gap: 18px !important;
+          width: max-content !important;
+          align-items: stretch !important;
+          animation: reviewsMoveFinal 38s linear infinite !important;
+        }
+
+        .reviewCardPremium {
+          width: 280px !important;
+          min-width: 280px !important;
+          max-width: 280px !important;
+          padding: 16px !important;
+          border-radius: 22px !important;
+        }
+
+        .reviewTop {
+          display: flex !important;
+          align-items: center !important;
+          gap: 10px !important;
+        }
+
+        .reviewTop img {
+          width: 56px !important;
+          height: 56px !important;
+          min-width: 56px !important;
+          min-height: 56px !important;
+          max-width: 56px !important;
+          max-height: 56px !important;
+          border-radius: 999px !important;
+          object-fit: cover !important;
+        }
+
+        .reviewTop > div {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 3px !important;
+        }
+
+        .reviewTop strong {
+          font-size: 14px !important;
+          line-height: 1.1 !important;
+        }
+
+        .reviewTop span {
+          font-size: 11px !important;
+          line-height: 1.1 !important;
+          opacity: 0.75 !important;
+        }
+
+        .reviewCardPremium p {
+          font-size: 13px !important;
+          line-height: 1.4 !important;
+          margin: 10px 0 !important;
+        }
+
+        .reviewStars {
+          font-size: 12px !important;
+        }
+
+        @keyframes reviewsMoveFinal {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+
 
       `}</style>
     </main>
