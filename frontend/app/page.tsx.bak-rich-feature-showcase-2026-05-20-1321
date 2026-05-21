@@ -359,124 +359,208 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
         </div>
       </section>
 
-      <section className="featureSection premiumFeatureSection" id="features">
-        <div className="sectionHead premiumFeatureHead">
+      <section className="featureSection" id="features">
+        <div className="sectionHead">
           <span>AI ECOSYSTEM</span>
           <h2>Возможности MarketCard AI</h2>
-          <p>
-            Не просто генератор картинок. Это AI-кабинет продавца: карточки,
-            SEO, аналитика, видео, проверка карточек и поиск возможностей на маркетплейсах.
-          </p>
         </div>
 
-        <div className="premiumFeatureTabs">
+        <div style={{ display: "flex", gap: 14, marginBottom: 24, flexWrap: "wrap" }}>
           {featureTabs.map((tab, i) => (
             <button
               key={tab.title}
               onClick={() => setActiveFeatureTab(i)}
-              className={i === activeFeatureTab ? "premiumTab active" : "premiumTab"}
+              style={{
+                border: "none",
+                cursor: "pointer",
+                padding: "12px 22px",
+                borderRadius: 999,
+                fontWeight: 800,
+                color: i === activeFeatureTab ? "#fff" : "rgba(255,255,255,.7)",
+                background: i === activeFeatureTab
+                  ? "linear-gradient(135deg,#2563eb,#06b6d4)"
+                  : "rgba(255,255,255,.06)",
+              }}
             >
               {tab.title}
             </button>
           ))}
         </div>
 
-        <div className="premiumFeatureHero">
-          <div className="featureAura featureAuraA" />
-          <div className="featureAura featureAuraB" />
+        <div
+          style={{
+            borderRadius: 36,
+            padding: 42,
+            minHeight: 420,
+            background: featureTabs[activeFeatureTab].gradient,
+            display: "grid",
+            gridTemplateColumns: "1.1fr 1fr",
+            gap: 40,
+            border: "1px solid rgba(255,255,255,.12)",
+            boxShadow: "0 32px 100px rgba(0,0,0,.38)",
+          }}
+        >
+          <div>
+            <h3 style={{ fontSize: 54, lineHeight: 1, margin: "0 0 22px", fontWeight: 950 }}>
+              {featureTabs[activeFeatureTab].title}
+            </h3>
 
-          <div className="featureMarketBadges">
-            <span className="mpBadge wbBadge">wb</span>
-            <span className="mpBadge ozonBadge">OZON</span>
-            <span className="mpBadge uzumBadge">Uzum</span>
-            <span className="mpBadge aiBadge">AI</span>
-            <span className="mpBadge newBadge">Новинка</span>
+            <p style={{ fontSize: 18, lineHeight: 1.7, color: "rgba(255,255,255,.82)", maxWidth: 560 }}>
+              {featureTabs[activeFeatureTab].description}
+            </p>
+
+            <button
+              onClick={() => router.push("/register")}
+              style={{
+                marginTop: 28,
+                border: "none",
+                borderRadius: 999,
+                padding: "16px 28px",
+                background: "#22c55e",
+                color: "#fff",
+                fontWeight: 900,
+                cursor: "pointer",
+              }}
+            >
+              Открыть инструменты
+            </button>
           </div>
 
-          <div className="featureLeftPanel">
-            <div className="featureMiniLabel">MARKETPLACE AI STUDIO</div>
-            <h3>{featureTabs[activeFeatureTab].title}</h3>
-            <p>{featureTabs[activeFeatureTab].description}</p>
+          
+<div
+  style={{
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 340,
+  }}
+>
+  <div
+    style={{
+      position: "absolute",
+      width: 320,
+      height: 200,
+      borderRadius: 28,
+      background: "rgba(255,255,255,.14)",
+      backdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,.18)",
+      top: 20,
+      left: 40,
+      transform: "rotate(-8deg)",
+      padding: 24,
+      boxShadow: "0 25px 80px rgba(0,0,0,.35)",
+    }}
+  >
+    <div style={{ fontSize: 14, opacity: .7, marginBottom: 18 }}>
+      MARKETPLACE AI
+    </div>
 
-            <div className="aiLivePreview">
-              <div className="aiLiveTop">
-                <span>LIVE AI OUTPUT</span>
-                <b>Генерация идёт</b>
-              </div>
-              <div className="aiTypingLine lineA" />
-              <div className="aiTypingLine lineB" />
-              <div className="aiTypingLine lineC" />
-              <div className="aiInsightRow">
-                <span>SEO</span>
-                <b>94%</b>
-                <span>CTR</span>
-                <b>+37%</b>
-              </div>
-            </div>
+    <div style={{ fontSize: 28, fontWeight: 900 }}>
+      {featureTabs[activeFeatureTab].cards[0]}
+    </div>
 
-            <div className="featureActionRow">
-              <button onClick={() => router.push("/login")}>Открыть инструменты</button>
-              <span>WB · Ozon · Uzum · Yandex</span>
-            </div>
+    <div
+      style={{
+        marginTop: 20,
+        height: 10,
+        borderRadius: 999,
+        background: "rgba(255,255,255,.12)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          width: "78%",
+          height: "100%",
+          background: "#22c55e",
+          borderRadius: 999,
+        }}
+      />
+    </div>
+  </div>
 
-            <div className="liveStatsGrid">
-              <div><b>+37%</b><span>потенциал CTR</span></div>
-              <div><b>94%</b><span>SEO score</span></div>
-              <div><b>3 мин</b><span>среднее создание</span></div>
-            </div>
-          </div>
+  <div
+    style={{
+      position: "absolute",
+      width: 340,
+      height: 220,
+      borderRadius: 28,
+      background: "rgba(255,255,255,.12)",
+      backdropFilter: "blur(20px)",
+      border: "1px solid rgba(255,255,255,.16)",
+      bottom: 10,
+      right: 20,
+      transform: "rotate(7deg)",
+      padding: 24,
+      boxShadow: "0 25px 80px rgba(0,0,0,.35)",
+    }}
+  >
+    <div style={{ fontSize: 14, opacity: .7, marginBottom: 18 }}>
+      AI SYSTEM
+    </div>
 
-          <div className="featureVisualStage">
-            <div className="floatingCard cardOne">
-              <span>AI генерация</span>
-              <b>Карточка товара</b>
-              <div className="cardProgress"><i /></div>
-            </div>
+    <div style={{ fontSize: 28, fontWeight: 900 }}>
+      {featureTabs[activeFeatureTab].cards[1]}
+    </div>
 
-            <div className="floatingCard cardTwo">
-              <span>SEO текст</span>
-              <b>Заголовок · описание · keywords</b>
-              <div className="typingLines"><i /><i /><i /></div>
-            </div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(3,1fr)",
+        gap: 12,
+        marginTop: 24,
+      }}
+    >
+      <div style={{ height: 70, borderRadius: 18, background: "rgba(255,255,255,.08)" }} />
+      <div style={{ height: 70, borderRadius: 18, background: "rgba(255,255,255,.08)" }} />
+      <div style={{ height: 70, borderRadius: 18, background: "rgba(255,255,255,.08)" }} />
+    </div>
+  </div>
 
-            <div className="floatingCard cardThree">
-              <span>Аналитика</span>
-              <b>Спрос · цена · конкуренты</b>
-              <div className="miniChart">
-                <i style={{ height: "34%" }} />
-                <i style={{ height: "58%" }} />
-                <i style={{ height: "42%" }} />
-                <i style={{ height: "76%" }} />
-                <i style={{ height: "64%" }} />
-              </div>
-            </div>
-
-            <div className="aiOrb"><span>AI</span></div>
-          </div>
+  <div
+    style={{
+      width: 160,
+      height: 160,
+      borderRadius: 999,
+      background: "rgba(255,255,255,.10)",
+      backdropFilter: "blur(30px)",
+      border: "1px solid rgba(255,255,255,.18)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 54,
+      fontWeight: 900,
+      boxShadow: "0 25px 100px rgba(0,0,0,.35)",
+    }}
+  >
+    AI
+  </div>
+</div>
         </div>
 
+      </section>
 
-        <div className="premiumToolGrid">
-          {features.map((item, i) => (
-            <div className="premiumToolCard" key={item}>
-              <div className="toolNumber">{String(i + 1).padStart(2, "0")}</div>
-              <b>{item}</b>
-              <span>
-                {i === 0 && "Создание продающих карточек товара под маркетплейсы."}
-                {i === 1 && "SEO-заголовки, описания и ключевые слова для товара."}
-                {i === 2 && "Понимание спроса, цен, конкурентов и ниши."}
-                {i === 3 && "Быстрая оценка товара перед закупом и запуском."}
-                {i === 4 && "AI находит слабые места в карточке товара."}
-                {i === 5 && "Быстрый переход к данным Soliq и кодам ИКПУ."}
-                {i === 6 && "Инструменты для документов и работы продавца."}
-                {i === 7 && "Поиск идей для закупа и новых товарных направлений."}
-                {i === 8 && "Анализ конкурентов перед запуском товара."}
-                {i === 9 && "Поиск ниш, где товара мало, а спрос есть."}
-                {i === 10 && "Определение перегретых ниш и слабых направлений."}
-                {i === 11 && "AI-видео для товара, рекламы и презентации."}
-              </span>
-            </div>
-          ))}
+
+      <section className="platformSection">
+        <div className="platformBox">
+          <div className="sectionHead">
+            <span>SELLER ECOSYSTEM</span>
+            <h2>Не просто генератор карточек. Полная система для продавца.</h2>
+            <p>
+              MarketCard AI помогает не только сделать красивую карточку,
+              но и понять товар, нишу, конкурентов, документы и потенциал продаж.
+            </p>
+          </div>
+
+          <div className="platformGrid">
+            <div><b>Аналитика маркетплейсов</b><span>Смотри конкуренцию, цены и спрос.</span></div>
+            <div><b>ABC-анализ</b><span>Понимай, стоит ли заходить в товар или нишу.</span></div>
+            <div><b>Оценка карточки</b><span>AI показывает слабые места твоей карточки.</span></div>
+            <div><b>Soliq / ИКПУ</b><span>Быстрый переход к кодам и данным товара.</span></div>
+            <div><b>DIDOX / документы</b><span>Удобная работа с документами продавца.</span></div>
+            <div><b>Поиск закупа</b><span>Ищи товары, дефицит и новые возможности.</span></div>
+          </div>
         </div>
       </section>
 
@@ -2506,641 +2590,6 @@ const [showcaseIndex, setShowcaseIndex] = useState(0)
           font-size: 22px;
           line-height: 1.15;
         }
-
-
-
-        .premiumFeatureSection {
-          position: relative;
-          padding-top: 120px !important;
-          padding-bottom: 80px !important;
-        }
-
-        .premiumFeatureTabs {
-          display: flex;
-          gap: 14px;
-          margin: 0 0 28px;
-          flex-wrap: wrap;
-        }
-
-        .premiumTab {
-          border: 1px solid rgba(255,255,255,.1);
-          cursor: pointer;
-          padding: 13px 24px;
-          border-radius: 999px;
-          font-weight: 950;
-          color: rgba(255,255,255,.72);
-          background: rgba(255,255,255,.06);
-          transition: .25s ease;
-        }
-
-        .premiumTab.active {
-          color: white;
-          background: linear-gradient(135deg,#2563eb,#06b6d4,#22c55e);
-          box-shadow: 0 20px 55px rgba(6,182,212,.28);
-        }
-
-        .premiumFeatureHero {
-          position: relative;
-          min-height: 430px;
-          border-radius: 44px;
-          padding: 42px;
-          display: grid;
-          grid-template-columns: .92fr 1.08fr;
-          gap: 34px;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 15% 20%, rgba(34,211,238,.32), transparent 34%),
-            radial-gradient(circle at 88% 12%, rgba(168,85,247,.26), transparent 32%),
-            linear-gradient(135deg, rgba(15,23,42,.94), rgba(6,78,100,.82), rgba(8,145,178,.72));
-          border: 1px solid rgba(255,255,255,.14);
-          box-shadow: 0 34px 120px rgba(0,0,0,.42);
-        }
-
-        .featureMarketBadges {
-          position: absolute;
-          z-index: 5;
-          left: 42px;
-          right: 42px;
-          top: 28px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .mpBadge {
-          width: 54px;
-          height: 54px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: 1000;
-          font-size: 13px;
-          border: 1px solid rgba(255,255,255,.32);
-          box-shadow: 0 18px 42px rgba(0,0,0,.28);
-          animation: badgeFloat 4s ease-in-out infinite;
-        }
-
-        .wbBadge { background: linear-gradient(135deg,#d946ef,#7c3aed); }
-        .ozonBadge { background: linear-gradient(135deg,#0ea5e9,#2563eb); }
-        .uzumBadge { background: linear-gradient(135deg,#facc15,#f97316); color:#111827; }
-
-
-
-
-        .aiBadge { background: rgba(255,255,255,.18); backdrop-filter: blur(16px); }
-
-        .newBadge {
-          margin-left: auto;
-          width: auto;
-          height: 42px;
-          padding: 0 22px;
-          background: linear-gradient(135deg,#fb7185,#e11d48);
-        }
-
-        .featureLeftPanel,
-        .featureVisualStage {
-          position: relative;
-          z-index: 2;
-        }
-
-        .featureLeftPanel {
-          padding-top: 70px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .featureMiniLabel {
-          width: fit-content;
-          margin-bottom: 16px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          color: #a7f3d0;
-          background: rgba(34,197,94,.13);
-          border: 1px solid rgba(34,197,94,.24);
-          font-size: 12px;
-          font-weight: 1000;
-          letter-spacing: .13em;
-        }
-
-        .featureLeftPanel h3 {
-          margin: 0;
-          font-size: clamp(42px, 5vw, 72px);
-          line-height: .9;
-          letter-spacing: -.07em;
-        }
-
-        .featureLeftPanel p {
-          margin: 22px 0 0;
-          max-width: 470px;
-          color: rgba(255,255,255,.78);
-          font-size: 18px;
-          line-height: 1.55;
-        }
-
-        .featureActionRow {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-top: 28px;
-          flex-wrap: wrap;
-        }
-
-        .featureActionRow button {
-          border: none;
-          cursor: pointer;
-          padding: 15px 22px;
-          border-radius: 999px;
-          background: linear-gradient(135deg,#22c55e,#16a34a);
-          color: white;
-          font-weight: 1000;
-        }
-
-        .liveStatsGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 12px;
-          margin-top: 28px;
-          max-width: 520px;
-        }
-
-        .liveStatsGrid div {
-          padding: 16px;
-          border-radius: 22px;
-          background: rgba(255,255,255,.09);
-          border: 1px solid rgba(255,255,255,.12);
-        }
-
-        .liveStatsGrid b {
-          display: block;
-          font-size: 24px;
-        }
-
-        .liveStatsGrid span {
-          color: rgba(255,255,255,.62);
-          font-size: 12px;
-        }
-
-
-
-
-        .featureVisualStage {
-          min-height: 350px;
-          perspective: 1100px;
-        }
-
-        .floatingCard {
-          position: absolute;
-          width: 310px;
-          min-height: 132px;
-          padding: 22px;
-          border-radius: 28px;
-          background: rgba(255,255,255,.12);
-          border: 1px solid rgba(255,255,255,.18);
-          backdrop-filter: blur(22px);
-          box-shadow: 0 30px 80px rgba(0,0,0,.3);
-        }
-
-        .floatingCard span {
-          display: block;
-          color: rgba(255,255,255,.66);
-          font-size: 12px;
-          font-weight: 1000;
-          margin-bottom: 9px;
-        }
-
-        .floatingCard b {
-          color: white;
-          font-size: 24px;
-          line-height: 1.05;
-        }
-
-        .cardOne { right: 150px; top: 68px; transform: rotate(-8deg); }
-        .cardTwo { right: 20px; top: 178px; transform: rotate(8deg); }
-        .cardThree { right: 250px; top: 238px; transform: rotate(-3deg); }
-
-        .cardProgress {
-          height: 9px;
-          margin-top: 20px;
-          border-radius: 999px;
-          overflow: hidden;
-          background: rgba(255,255,255,.14);
-        }
-
-        .cardProgress i {
-          display: block;
-          height: 100%;
-          width: 74%;
-          background: linear-gradient(90deg,#22c55e,#a3e635);
-        }
-
-        .typingLines {
-          display: grid;
-          gap: 8px;
-          margin-top: 18px;
-        }
-
-        .typingLines i {
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.32);
-        }
-
-        .miniChart {
-          height: 64px;
-          display: flex;
-          align-items: flex-end;
-          gap: 9px;
-          margin-top: 18px;
-        }
-
-        .miniChart i {
-          width: 28px;
-          border-radius: 10px 10px 4px 4px;
-          background: linear-gradient(180deg,#a3e635,#22c55e);
-        }
-
-        .aiOrb {
-          position: absolute;
-          right: 200px;
-          top: 150px;
-          width: 132px;
-          height: 132px;
-          border-radius: 999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, rgba(34,211,238,.88), rgba(59,130,246,.72));
-          box-shadow: 0 30px 90px rgba(34,211,238,.34);
-        }
-
-        .aiOrb span {
-          color: white;
-          font-size: 42px;
-          font-weight: 1000;
-        }
-
-
-
-
-        .premiumToolGrid {
-          display: grid;
-          grid-template-columns: repeat(4,1fr);
-          gap: 18px;
-          margin-top: 26px;
-        }
-
-        .premiumToolCard {
-          min-height: 178px;
-          padding: 22px;
-          border-radius: 28px;
-          background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-          border: 1px solid rgba(255,255,255,.1);
-        }
-
-        .toolNumber {
-          color: rgba(34,211,238,.88);
-          font-size: 13px;
-          font-weight: 1000;
-          margin-bottom: 26px;
-        }
-
-        .premiumToolCard b {
-          display: block;
-          color: white;
-          font-size: 20px;
-          margin-bottom: 12px;
-        }
-
-        .premiumToolCard span {
-          color: rgba(255,255,255,.62);
-          font-size: 14px;
-          line-height: 1.42;
-        }
-
-        @keyframes badgeFloat {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-
-
-
-        .aiLivePreview {
-          width: min(460px, 100%);
-          margin-top: 24px;
-          padding: 18px;
-          border-radius: 24px;
-          background:
-            linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.055));
-          border: 1px solid rgba(255,255,255,.14);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 24px 70px rgba(0,0,0,.22);
-          backdrop-filter: blur(20px);
-        }
-
-        .aiLiveTop {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          margin-bottom: 16px;
-        }
-
-        .aiLiveTop span {
-          color: #67e8f9;
-          font-size: 11px;
-          font-weight: 1000;
-          letter-spacing: .14em;
-        }
-
-        .aiLiveTop b {
-          color: white;
-          font-size: 13px;
-          padding: 7px 10px;
-          border-radius: 999px;
-          background: rgba(34,197,94,.15);
-          border: 1px solid rgba(34,197,94,.22);
-        }
-
-        .aiTypingLine {
-          height: 9px;
-          border-radius: 999px;
-          margin-bottom: 10px;
-          background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(34,211,238,.65), rgba(255,255,255,.16));
-          background-size: 220% 100%;
-          animation: shimmerLine 2.4s linear infinite;
-        }
-
-        .aiTypingLine.lineA { width: 92%; }
-        .aiTypingLine.lineB { width: 76%; animation-delay: .25s; }
-        .aiTypingLine.lineC { width: 84%; animation-delay: .5s; }
-
-        .aiInsightRow {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-top: 15px;
-          color: rgba(255,255,255,.7);
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .aiInsightRow b {
-          color: white;
-          padding: 6px 10px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.1);
-          border: 1px solid rgba(255,255,255,.12);
-        }
-
-        @keyframes shimmerLine {
-          0% { background-position: 220% 0; }
-          100% { background-position: -220% 0; }
-        }
-
-
-
-
-        .floatingCard {
-          transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
-        }
-
-        .floatingCard:hover {
-          border-color: rgba(255,255,255,.34);
-          box-shadow: 0 40px 110px rgba(0,0,0,.42), 0 0 55px rgba(34,211,238,.18);
-        }
-
-        .cardOne {
-          animation: floatCardOne 5.4s ease-in-out infinite;
-        }
-
-        .cardTwo {
-          animation: floatCardTwo 6s ease-in-out infinite;
-        }
-
-        .cardThree {
-          animation: floatCardThree 6.6s ease-in-out infinite;
-        }
-
-        .aiOrb {
-          animation: orbBreath 3.4s ease-in-out infinite;
-        }
-
-        .cardProgress i {
-          animation: progressLive 2.8s ease-in-out infinite;
-        }
-
-        .miniChart i {
-          animation: chartPulse 1.8s ease-in-out infinite;
-        }
-
-        .miniChart i:nth-child(2) { animation-delay: .15s; }
-        .miniChart i:nth-child(3) { animation-delay: .3s; }
-        .miniChart i:nth-child(4) { animation-delay: .45s; }
-        .miniChart i:nth-child(5) { animation-delay: .6s; }
-
-        @keyframes floatCardOne {
-          0%,100% { transform: rotate(-8deg) translateY(0); }
-          50% { transform: rotate(-8deg) translateY(-16px); }
-        }
-
-        @keyframes floatCardTwo {
-          0%,100% { transform: rotate(8deg) translateY(0); }
-          50% { transform: rotate(8deg) translateY(14px); }
-        }
-
-        @keyframes floatCardThree {
-          0%,100% { transform: rotate(-3deg) translateY(0); }
-          50% { transform: rotate(-3deg) translateY(-12px); }
-        }
-
-        @keyframes orbBreath {
-          0%,100% { transform: scale(1); filter: saturate(1); }
-          50% { transform: scale(1.07); filter: saturate(1.35); }
-        }
-
-        @keyframes progressLive {
-          0%,100% { width: 46%; }
-          50% { width: 90%; }
-        }
-
-        @keyframes chartPulse {
-          0%,100% { transform: scaleY(.82); opacity: .75; }
-          50% { transform: scaleY(1.08); opacity: 1; }
-        }
-
-
-
-
-        .premiumToolCard {
-          position: relative;
-          overflow: hidden;
-          transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
-        }
-
-        .premiumToolCard:before {
-          content: "";
-          position: absolute;
-          inset: -1px;
-          background: linear-gradient(135deg, rgba(34,211,238,.32), transparent 35%, rgba(34,197,94,.22));
-          opacity: 0;
-          transition: opacity .28s ease;
-          pointer-events: none;
-        }
-
-        .premiumToolCard:after {
-          content: "";
-          position: absolute;
-          width: 160px;
-          height: 160px;
-          right: -70px;
-          top: -80px;
-          border-radius: 999px;
-          background: rgba(34,211,238,.18);
-          filter: blur(38px);
-          opacity: .35;
-          pointer-events: none;
-        }
-
-        .premiumToolCard:hover {
-          transform: translateY(-7px);
-          border-color: rgba(34,211,238,.35);
-          box-shadow: 0 28px 80px rgba(0,0,0,.28), 0 0 45px rgba(34,211,238,.12);
-        }
-
-        .premiumToolCard:hover:before {
-          opacity: 1;
-        }
-
-        .premiumToolCard b,
-        .premiumToolCard span,
-        .toolNumber {
-          position: relative;
-          z-index: 2;
-        }
-
-
-
-
-        .premiumFeatureHero:after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background:
-            linear-gradient(115deg, transparent 0%, rgba(255,255,255,.13) 45%, transparent 62%);
-          transform: translateX(-120%);
-          animation: heroLightSweep 7s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        .premiumFeatureHero:before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
-          background-size: 42px 42px;
-          opacity: .15;
-          mask-image: radial-gradient(circle at 70% 50%, black, transparent 68%);
-          pointer-events: none;
-        }
-
-        @keyframes heroLightSweep {
-          0%, 58% { transform: translateX(-120%); opacity: 0; }
-          68% { opacity: 1; }
-          100% { transform: translateX(120%); opacity: 0; }
-        }
-
-        @media (max-width: 1100px) {
-          .featureVisualStage {
-            min-height: 420px;
-          }
-
-          .premiumToolGrid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        @media (max-width: 720px) {
-          .featureMarketBadges {
-            left: 24px;
-            right: 24px;
-            top: 20px;
-          }
-
-          .mpBadge {
-            width: 42px;
-            height: 42px;
-            font-size: 11px;
-          }
-
-          .newBadge {
-            height: 36px;
-            padding: 0 14px;
-          }
-
-          .featureVisualStage {
-            min-height: 430px;
-          }
-
-          .floatingCard {
-            width: 250px;
-          }
-
-          .cardOne {
-            right: 42px;
-            top: 30px;
-          }
-
-          .cardTwo {
-            right: 0;
-            top: 160px;
-          }
-
-          .cardThree {
-            right: 70px;
-            top: 295px;
-          }
-
-          .aiOrb {
-            right: 30px;
-            top: 245px;
-            width: 96px;
-            height: 96px;
-          }
-
-          .aiOrb span {
-            font-size: 30px;
-          }
-        }
-
-
-        @media (max-width: 1100px) {
-          .premiumFeatureHero,
-          .premiumToolGrid {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-
-        @media (max-width: 720px) {
-          .premiumFeatureHero,
-          .premiumToolGrid,
-          .liveStatsGrid {
-            grid-template-columns: 1fr;
-          }
-
-          .premiumFeatureHero {
-            padding: 26px;
-            border-radius: 32px;
-          }
-
-          .featureLeftPanel h3 {
-            font-size: 42px;
-          }
-        }
-
 
         @media (max-width: 1100px) {
           .hero {
