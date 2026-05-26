@@ -7,3 +7,5 @@ __pycache__/
 backups/
 .next/
 backend/.env
+backend/.env
+.env
