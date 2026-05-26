@@ -15,7 +15,12 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def _extract_json(text: str) -> dict:
     text = (text or "").strip()
-    text = text.replace("`json", "").replace("```", "").strip()
+
+    text = re.sub(r"^
+    text = re.sub(r"^
+\\s*", "", text)
+    text = re.sub(r"\\s*`$", "", text)
+
     return json.loads(text)
 
 
@@ -23,7 +28,6 @@ def _extract_json(text: str) -> dict:
 async def analyze_product_photo(image: UploadFile = File(...)):
     try:
         image_bytes = await image.read()
-
         if not image_bytes:
             raise HTTPException(status_code=400, detail="Фото обязательно")
 
@@ -36,8 +40,8 @@ async def analyze_product_photo(image: UploadFile = File(...)):
                     "role": "system",
                     "content": (
                         "Ты анализируешь фото товара для маркетплейса. "
-                        "Верни только JSON без markdown. "
-                        "Формат: {\"title\":\"...\",\"brand\":\"...\",\"category\":\"...\"}. "
+                        "Верни только JSON без markdown: "
+                        '{"title":"...","brand":"...","category":"..."} '
                         "Если бренд не виден, brand пустая строка. "
                         "Пиши на русском языке."
                     ),
@@ -69,9 +73,5 @@ async def analyze_product_photo(image: UploadFile = File(...)):
 
     except HTTPException:
         raise
-
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Ошибка анализа фото: {e}",
-        )
+        raise HTTPException(status_code=500, detail=f"Ошибка анализа фото: {e}")

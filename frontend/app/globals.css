@@ -1,49 +1,18 @@
-.gallery-section { text-align: center; color: white; padding: 20px 0; }
-.gallery-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.carousel-container {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  overflow: hidden;
-  background: rgba(0,0,0,0.2);
-  border-radius: 15px;
+body {
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-.carousel-track {
-  display: flex;
-  width: max-content;
-  animation: scroll 30s linear infinite;
-  gap: 15px;
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.carousel-item {
-  width: 250px;
-  height: 300px;
-  flex-shrink: 0;
+html, body {
+  overflow-x: hidden !important;
 }
 
-.carousel-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 16px;
-}
-
-@keyframes scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.mc-spin-loader {
-  animation: mcSpinLoader 0.9s linear infinite;
-}
-
-@keyframes mcSpinLoader {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}

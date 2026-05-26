@@ -1,41 +1,22 @@
-import SupportWidgetGate from "./components/support-widget/SupportWidgetGate"
-import './globals.css'
-
-
 export const metadata = {
   title: "MarketCard AI",
-  description: "AI генератор карточек товара для Uzum, Wildberries, Ozon и Yandex Market",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
-  },
-};
+  description: "AI генератор карточек товаров"
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import "./globals.css"
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="ru">
-      
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "MarketCard AI",
-              url: "https://marketcard.uz",
-              logo: "https://marketcard.uz/logo.jpg",
-              sameAs: [
-                "https://www.instagram.com/marketcard.ai",
-                "https://t.me/marketcardai_support_bot"
-              ]
-            }),
-          }}
-        />
+      <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+      </head>
 
-      <body style={{ margin: 0, fontFamily: "Arial, sans-serif", background: "#0b0f1a" }}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

@@ -1,3473 +1,475 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-
-import { useRouter } from "next/navigation"
-
-const examples = [
-  "/works/work1.jpg",
-  "/works/work2.jpg",
-  "/works/work3.jpg",
-  "/works/work4.jpg",
-  "/works/top1.jpg",
-  "/works/top2.jpg",
-]
-
-const marketplaces = [
-  { name: "Uzum", logo: "/marketplaces-premium/uzum.png", className: "uzumLogo" },
-  { name: "Wildberries", logo: "/marketplaces-premium/wildberries.png", className: "wbLogo" },
-  { name: "Ozon", logo: "/marketplaces-premium/ozon.png", className: "ozonLogo" },
-  { name: "Yandex Market", logo: "/marketplaces-premium/yandex.png", className: "yandexLogo" },
-]
-
-
-
-const showcaseBlocks = [
-  [
-    "/showcase/wb/1.webp",
-    "/showcase/wb/2.webp",
-    "/showcase/wb/3.webp",
-    "/showcase/wb/4.webp",
-    "/showcase/wb/5.webp",
-  ],
-  [
-    "/showcase/wb/6.webp",
-    "/showcase/wb/7.webp",
-    "/showcase/wb/8.webp",
-    "/showcase/wb/9.webp",
-    "/showcase/wb/10.webp",
-  ],
-  [
-    "/showcase/wb/13.webp",
-    "/showcase/wb/14.webp",
-    "/showcase/wb/15.webp",
-    "/showcase/wb/16.webp",
-    "/showcase/wb/1.webp",
-  ],
-  [
-    "/showcase/wb/2.webp",
-    "/showcase/wb/4.webp",
-    "/showcase/wb/6.webp",
-    "/showcase/wb/8.webp",
-    "/showcase/wb/10.webp",
-  ],
-  [
-    "/showcase/wb/3.webp",
-    "/showcase/wb/5.webp",
-    "/showcase/wb/7.webp",
-    "/showcase/wb/9.webp",
-    "/showcase/wb/13.webp",
-  ],
-  [
-    "/showcase/wb/14.webp",
-    "/showcase/wb/15.webp",
-    "/showcase/wb/16.webp",
-    "/showcase/wb/1.webp",
-    "/showcase/wb/2.webp",
-  ]
-]
-
-
-
-const testimonials = [
-  { name: "Азиз", role: "Продавец Uzum", img: "/reviews/review-1.png", text: "С MarketCard AI стал быстрее запускать товары и не ждать дизайнера по несколько дней." },
-  { name: "Руслан", role: "Автозапчасти", img: "/reviews/review-2.png", text: "Карточки стали выглядеть дороже и профессиональнее. Для маркетплейса это реально важно." },
-  { name: "Даниил", role: "Marketplace Seller", img: "/reviews/review-3.png", text: "Удобно, что можно быстро получить визуал, описание и идеи для карточки в одном месте." },
-  { name: "Алексей", role: "Ozon Seller", img: "/reviews/review-4.png", text: "Раньше тратил деньги на макеты. Сейчас тестирую разные варианты намного быстрее." },
-  { name: "Мадина", role: "Uzum Seller", img: "/reviews/review-5.png", text: "Очень понравилось качество инфографики. Карточки выглядят современно и аккуратно." },
-  { name: "Севара", role: "WB Seller", img: "/reviews/review-6.png", text: "Сервис помогает быстро оформить товар и не зависеть от дизайнера." },
-  { name: "Камила", role: "Online Seller", img: "/reviews/review-7.png", text: "MarketCard AI экономит время и помогает делать карточки красивее." },
-  { name: "Диана", role: "Uzum Seller", img: "/reviews/review-8.png", text: "Теперь мои товары выглядят намного лучше на витрине маркетплейса." },
-  { name: "Алина", role: "Marketplace Seller", img: "/reviews/review-9.png", text: "Хороший инструмент для продавцов, когда нужно быстро запускать много товаров." },
-]
-
-const features = [
-  "AI карточки товара",
-  "SEO описание",
-  "Аналитика маркетплейсов",
-  "ABC-анализ товара и ниши",
-  "Оценка карточки товара",
-  "Интеграция с Soliq / ИКПУ",
-  "DIDOX и документы",
-  "Поиск товаров для закупа",
-  "Анализ конкурентов",
-  "Поиск дефицита товара",
-  "Анализ избытка товара",
-  "AI Video Generator",
-]
-
-
-
-const featureTabs = [
-  {
-    title: "AI Карточки",
-    description: "Создавайте premium карточки товара для маркетплейсов.",
-    cards: ["AI генерация", "Инфографика", "Marketplace"],
-    gradient: "linear-gradient(135deg,#111827,#0ea5e9)",
-  },
-
-  {
-    title: "SEO",
-    description: "AI создает SEO заголовки и описания.",
-    cards: ["SEO title", "Описание", "Keywords"],
-    gradient: "linear-gradient(135deg,#111827,#7c3aed)",
-  },
-
-  {
-    title: "Аналитика",
-    description: "Следите за конкурентами и спросом.",
-    cards: ["ABC анализ", "Конкуренты", "Дефицит"],
-    gradient: "linear-gradient(135deg,#111827,#0891b2)",
-  },
-
-  {
-    title: "AI Видео",
-    description: "Создавайте AI видео showcase.",
-    cards: ["Video AI", "Motion", "Ads"],
-    gradient: "linear-gradient(135deg,#111827,#db2777)",
-  },
-]
-
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const router = useRouter()
-  const [pricingOpen, setPricingOpen] = useState(false)
-  const [lang, setLang] = useState<"ru" | "uz" | "en">("ru")
-  const [activeFeatureTab, setActiveFeatureTab] = useState(0)
-  const [demoOpen, setDemoOpen] = useState(false)
-  const [demoLoading, setDemoLoading] = useState(false)
-  const [demoImage, setDemoImage] = useState("")
-  const [demoMarketplace, setDemoMarketplace] = useState("uzum")
-  const [demoTitle, setDemoTitle] = useState("")
-  const [demoBrand, setDemoBrand] = useState("")
-  const [demoCategory, setDemoCategory] = useState("")
-  const [demoProgress, setDemoProgress] = useState(0)
-  
-const [demoStage, setDemoStage] = useState("Ожидание фото")
-const [showcaseIndex, setShowcaseIndex] = useState(0)
+  const router = useRouter();
+  const [pricingOpen, setPricingOpen] = useState(false);
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoImage, setDemoImage] = useState("");
+  const [demoFile, setDemoFile] = useState<File | null>(null);
+  const [demoTitle, setDemoTitle] = useState("");
+  const [demoSpecs, setDemoSpecs] = useState("");
+  const [demoBrand, setDemoBrand] = useState("");
+  const [demoMarketplace, setDemoMarketplace] = useState("uzum");
+  const [demoAnalyzing, setDemoAnalyzing] = useState(false);
+  const [demoGenerating, setDemoGenerating] = useState(false);
+  const [demoProgress, setDemoProgress] = useState(0);
+  const [demoResultUrl, setDemoResultUrl] = useState("");
+  const [demoError, setDemoError] = useState("");
 
+  async function handleDemoImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    setDemoFile(file);
+    setDemoResultUrl("");
+    setDemoError("");
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShowcaseIndex((prev) => (prev + 1) % 5)
-    }, 2200)
+    const url = URL.createObjectURL(file);
+    setDemoImage(url);
+    setDemoAnalyzing(true);
 
-    return () => clearInterval(interval)
-  }, [])
+    try {
+      const form = new FormData();
+      form.append("image", file);
 
+      const res = await fetch("/api/analyze-product-photo", {
+        method: "POST",
+        body: form,
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.detail || "AI не смог определить товар");
+      }
+
+      setDemoTitle(data.title || "Товар для маркетплейса");
+      setDemoSpecs(data.category || "Товар для маркетплейса");
+      if (data.brand) setDemoBrand(data.brand);
+
+    } catch (err) {
+      console.error("AI analyze error:", err);
+      setDemoTitle("Товар для маркетплейса");
+      setDemoSpecs("AI не смог точно определить характеристики. Заполните вручную.");
+    } finally {
+      setDemoAnalyzing(false);
+    }
+  }
+
+  async function handleDemoGenerate() {
+    if (!demoFile) {
+      setDemoError("Сначала загрузите фото товара.");
+      return;
+    }
+
+    setDemoGenerating(true);
+    setDemoError("");
+
+    try {
+      const form = new FormData();
+      form.append("image", demoFile);
+      form.append("product_title", demoTitle || "Демо товар");
+      form.append("category", demoSpecs || "Товар для маркетплейса");
+      form.append("brand", demoBrand || "");
+      form.append("marketplace", demoMarketplace || "uzum");
+      form.append("language_mode", "ru");
+
+      const res = await fetch("/api/demo-generate", {
+        method: "POST",
+        body: form,
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.detail || data.message || "Не удалось создать демо-карточку");
+      }
+
+      // progress timer fallback
+      setDemoProgress(100);
+
+      setDemoResultUrl(data.demo_image_url);
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : "Ошибка генерации");
+    } finally {
+      setTimeout(() => {
+        setDemoGenerating(false);
+      }, 800);
+    }
+  }
 
   return (
-    <main className="mcPage">
-      <div className="mcBg">
-        <div className="orb orbA" />
-        <div className="orb orbB" />
-        <div className="orb orbC" />
-        <div className="gridBg" />
-      </div>
-
-      <header className="nav">
-        <div className="brand">
-          <img src="/logo.jpg" alt="MarketCard AI" />
-          <div>
-            <strong>MarketCard AI</strong>
-            <span>AI marketplace studio</span>
-          </div>
-        </div>
-
-        <nav>
-          <a href="#how">Как работает</a>
-          <a href="#features">Возможности</a>
-          <button className="navLinkBtn" onClick={() => setPricingOpen(true)}>Тарифы</button>
-        </nav>
-
-        <div className="navActions">
-          <div className="langSwitch">
-            {(["ru", "uz", "en"] as const).map((l) => (
-              <button
-                key={l}
-                className={lang === l ? "activeLang" : ""}
-                onClick={() => setLang(l)}
-              >
-                {l.toUpperCase()}
-              </button>
-            ))}
+    <main className="bg-black text-white min-h-screen overflow-hidden">
+      {/* Navbar */}
+      <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-2xl border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-cyan-400 rounded-3xl flex items-center justify-center text-4xl font-black">MC</div>
+            <h1 className="text-3xl font-bold tracking-tighter">MarketCard AI</h1>
           </div>
 
-          <button className="ghostBtn" onClick={() => router.push("/login")}>
-            Войти
-          </button>
-
-          <button className="primaryBtn" onClick={() => setDemoOpen(true)}>
-            Попробовать бесплатно
-          </button>
-        </div>
-      </header>
-
-      <section className="hero">
-        <div className="heroLeft">
-          <div className="eyebrow">
-            <span className="pulseDot" />
-            AI-платформа для продавцов маркетплейсов
+          <div className="hidden md:flex gap-10 text-lg">
+            <a href="#how" className="hover:text-cyan-400 transition">Как работает</a>
+            <a href="#examples" className="hover:text-cyan-400 transition">Примеры</a>
+            <a href="#reviews" className="hover:text-cyan-400 transition">Отзывы</a>
+            <button onClick={() => setPricingOpen(true)} className="hover:text-cyan-400 transition">Тарифы</button>
           </div>
 
-          <h1>
-            Продающие карточки
-            <br />
-            за минуты, не за дни
-          </h1>
-
-          <p className="heroText">
-            Дизайнер делает карточки несколько дней и берёт $5–20 за одно фото.
-            MarketCard AI создаёт карточку примерно от $1: инфографика, SEO,
-            аналитика, оценка карточки, ABC-анализ и инструменты для продавцов
-            маркетплейсов в одном кабинете.
-          </p>
-
-          <div className="heroActions">
-            <button className="heroPrimary" onClick={() => setDemoOpen(true)}>
-              Попробовать бесплатно — 1 генерация
-            </button>
-            <button className="heroSecondary" onClick={() => router.push("/login")}>
-              Войти в кабинет
-            </button>
-          </div>
-
-          <div className="statsRow">
-            <div>
-              <strong>Минуты</strong>
-              <span>вместо ожидания дизайнера несколько дней</span>
-            </div>
-            <div>
-              <strong>4</strong>
-              <span>маркетплейса</span>
-            </div>
-            <div>
-              <strong>$1</strong>
-              <span>ориентир стоимости против $5–20 за фото у дизайнера</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="heroRight">
-          <div className="generatorCard">
-            <div className="generatorTop">
-              <div>
-                <span>MarketCard Studio</span>
-                <strong>Product card generation</strong>
-              </div>
-              <div className="statusPill">LIVE</div>
-            </div>
-
-            <div className="mainPreview">
-              <img src="/works/work1.jpg" alt="AI product card" />
-            </div>
-
-            <div className="miniGrid">
-              {examples.slice(1, 5).map((src) => (
-                <div className="miniCard" key={src}>
-                  <img src={src} alt="Example card" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="marketplaceStrip">
-        {marketplaces.map((m) => (
-          <div className="marketItem" key={m.name}>
-            <div className="marketLogoBox">
-              <img className={m.className} src={m.logo} alt={m.name} />
-            </div>
-            <span>{m.name}</span>
-          </div>
-        ))}
-      </section>
-
-      <section className="howSection" id="how">
-        <div className="sectionHead">
-          <span>WORKFLOW</span>
-          <h2>Как работает платформа</h2>
-          <p>
-            Полный AI-процесс генерации карточек товара для маркетплейсов.
-          </p>
-        </div>
-
-        <div className="stepsGrid">
-          <div className="stepCard">
-            <div className="stepNumber">01</div>
-            <h3>Загрузи товар</h3>
-            <p>
-              Добавь фотографию товара, бренд, категорию и название.
-            </p>
-          </div>
-
-          <div className="stepCard">
-            <div className="stepNumber">02</div>
-            <h3>Выбери маркетплейс</h3>
-            <p>
-              AI автоматически подстроит размеры и структуру карточки.
-            </p>
-          </div>
-
-          <div className="stepCard">
-            <div className="stepNumber">03</div>
-            <h3>Получи результат</h3>
-            <p>
-              Готовая инфографика, SEO, аналитика и дополнительные слайды.
-            </p>
-          </div>
-        </div>
-      </section>
-
-
-      <section className="compareSection">
-        <div className="sectionHead">
-          <span>WHY MARKETCARD AI</span>
-          <h2>Зачем переплачивать дизайнеру?</h2>
-          <p>
-            Продавцу важно не ждать красивые макеты неделями, а быстро тестировать
-            товары, карточки, ниши и цены. MarketCard AI помогает запускать продажи быстрее.
-          </p>
-        </div>
-
-        <div className="compareGrid">
-          <div className="compareCard weak">
-            <span>Обычный дизайнер</span>
-            <h3>$5–20 за одно фото</h3>
-            <ul>
-              <li>Ожидание 1–3 дня</li>
-              <li>Каждая правка отдельно</li>
-              <li>Нет SEO и аналитики</li>
-              <li>Нет анализа конкурентов</li>
-              <li>Нет проверки ниши</li>
-            </ul>
-          </div>
-
-          <div className="compareCard strong">
-            <span>MarketCard AI</span>
-            <h3>Карточка примерно от $1</h3>
-            <ul>
-              <li>Генерация за минуты</li>
-              <li>Карточка + SEO + описание</li>
-              <li>ABC-анализ товара и ниши</li>
-              <li>Оценка карточки товара</li>
-              <li>Анализ конкурентов и дефицита</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section className="featureSection premiumFeatureSection" id="features">
-        <div className="sectionHead premiumFeatureHead">
-          <span>AI ECOSYSTEM</span>
-          <h2>Возможности MarketCard AI</h2>
-          <p>
-            Не просто генератор картинок. Это AI-кабинет продавца: карточки,
-            SEO, аналитика, видео, проверка карточек и поиск возможностей на маркетплейсах.
-          </p>
-        </div>
-
-        <div className="premiumFeatureTabs">
-          {featureTabs.map((tab, i) => (
-            <button
-              key={tab.title}
-              onClick={() => setActiveFeatureTab(i)}
-              className={i === activeFeatureTab ? "premiumTab active" : "premiumTab"}
-            >
-              {tab.title}
-            </button>
-          ))}
-        </div>
-
-        <div className="premiumFeatureHero">
-          <div className="featureAura featureAuraA" />
-          <div className="featureAura featureAuraB" />
-
-          <div className="featureMarketBadges">
-            <span className="mpBadge wbBadge">wb</span>
-            <span className="mpBadge ozonBadge">OZON</span>
-            <span className="mpBadge uzumBadge">Uzum</span>
-            <span className="mpBadge aiBadge">AI</span>
-            <span className="mpBadge newBadge">Новинка</span>
-          </div>
-
-          <div className="featureLeftPanel">
-            <div className="featureMiniLabel">MARKETPLACE AI STUDIO</div>
-            <h3>{featureTabs[activeFeatureTab].title}</h3>
-            <p>{featureTabs[activeFeatureTab].description}</p>
-
-            <div className="aiLivePreview">
-              <div className="aiLiveTop">
-                <span>LIVE AI OUTPUT</span>
-                <b>Генерация идёт</b>
-              </div>
-              <div className="aiTypingLine lineA" />
-              <div className="aiTypingLine lineB" />
-              <div className="aiTypingLine lineC" />
-              <div className="aiInsightRow">
-                <span>SEO</span>
-                <b>94%</b>
-                <span>CTR</span>
-                <b>+37%</b>
-              </div>
-            </div>
-
-            <div className="featureActionRow">
-              <button onClick={() => router.push("/login")}>Открыть инструменты</button>
-              <span>WB · Ozon · Uzum · Yandex</span>
-            </div>
-
-            <div className="liveStatsGrid">
-              <div><b>+37%</b><span>потенциал CTR</span></div>
-              <div><b>94%</b><span>SEO score</span></div>
-              <div><b>3 мин</b><span>среднее создание</span></div>
-            </div>
-          </div>
-
-          <div className="featureVisualStage">
-            <div className="floatingCard cardOne">
-              <span>AI генерация</span>
-              <b>Карточка товара</b>
-              <div className="cardProgress"><i /></div>
-            </div>
-
-            <div className="floatingCard cardTwo">
-              <span>SEO текст</span>
-              <b>Заголовок · описание · keywords</b>
-              <div className="typingLines"><i /><i /><i /></div>
-            </div>
-
-            <div className="floatingCard cardThree">
-              <span>Аналитика</span>
-              <b>Спрос · цена · конкуренты</b>
-              <div className="miniChart">
-                <i style={{ height: "34%" }} />
-                <i style={{ height: "58%" }} />
-                <i style={{ height: "42%" }} />
-                <i style={{ height: "76%" }} />
-                <i style={{ height: "64%" }} />
-              </div>
-            </div>
-
-            <div className="aiOrb"><span>AI</span></div>
-          </div>
-        </div>
-
-
-        <div className="premiumToolGrid">
-          {features.map((item, i) => (
-            <div className="premiumToolCard" key={item}>
-              <div className="toolNumber">{String(i + 1).padStart(2, "0")}</div>
-              <b>{item}</b>
-              <span>
-                {i === 0 && "Создание продающих карточек товара под маркетплейсы."}
-                {i === 1 && "SEO-заголовки, описания и ключевые слова для товара."}
-                {i === 2 && "Понимание спроса, цен, конкурентов и ниши."}
-                {i === 3 && "Быстрая оценка товара перед закупом и запуском."}
-                {i === 4 && "AI находит слабые места в карточке товара."}
-                {i === 5 && "Быстрый переход к данным Soliq и кодам ИКПУ."}
-                {i === 6 && "Инструменты для документов и работы продавца."}
-                {i === 7 && "Поиск идей для закупа и новых товарных направлений."}
-                {i === 8 && "Анализ конкурентов перед запуском товара."}
-                {i === 9 && "Поиск ниш, где товара мало, а спрос есть."}
-                {i === 10 && "Определение перегретых ниш и слабых направлений."}
-                {i === 11 && "AI-видео для товара, рекламы и презентации."}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="showcaseSection">
-        <div
-          className="sectionHead"
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-            margin: "0 auto 34px",
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ display: "block", textAlign: "center", margin: "0 auto 12px" }}>
-            SHOWCASE
-          </span>
-
-          <h2 style={{ width: "100%", textAlign: "center", margin: "0 auto 14px" }}>
-            Примеры AI-карточек
-          </h2>
-
-          <p style={{ width: "100%", maxWidth: "760px", textAlign: "center", margin: "0 auto" }}>
-            Карточки, созданные системой MarketCard AI для маркетплейсов.
-          </p>
-        </div>
-
-        <div className="premiumShowcaseGrid">
-          {showcaseBlocks.map((block, blockIndex) => (
-            <div className="premiumShowcaseCard" key={blockIndex}>
-              <img
-                src={block[(showcaseIndex + blockIndex) % block.length]}
-                alt={`Marketplace example ${blockIndex + 1}`}
-              />
-
-              <div className="premiumShowcaseOverlay">
-                <span>Marketplace card</span>
-                <strong>Пример карточки товара</strong>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-
-      <section className="proofSection">
-        <div className="proofTop">
-          <div>
-            <span>TRUST</span>
-            <h2>Продавцы выбирают скорость</h2>
-          </div>
-
-          <div className="proofStats">
-            <div><b>5 000+</b><small>пользователей платформы</small></div>
-            <div><b>4</b><small>маркетплейса в системе</small></div>
-            <div><b>1</b><small>бесплатная генерация для старта</small></div>
-          </div>
-        </div>
-
-        <div className="reviewsCarousel">
-          <div className="reviewsTrack reviewsTrackAnimated">
-            {testimonials.map((r, i) => (
-              <div className="reviewCardPremium" key={`${r.name}-${i}`}>
-                <div className="reviewTop">
-                  <img src={r.img} alt={r.name} />
-                  <div>
-                    <strong>{r.name}</strong>
-                    <span>{r.role}</span>
-                  </div>
-                </div>
-
-                <p>“{r.text}”</p>
-
-                <div className="reviewStars">★★★★★</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="ctaSection">
-        <div className="ctaBox">
-          <div className="ctaGlow" />
-
-          <span>START NOW</span>
-
-          <h2>
-            Создай первую AI-карточку
-            <br />
-            прямо сейчас
-          </h2>
-
-          <p>
-            Загрузи фото товара и получи готовую продающую инфографику.
-          </p>
-
-          <div className="ctaActions">
-            <button
-              className="heroPrimary"
-              onClick={() => router.push("/register")}
-            >
+          <div className="flex gap-4">
+            <button onClick={() => router.push("/login")} className="px-6 py-3 hover:text-cyan-400">Войти</button>
+            <button onClick={() => setDemoOpen(true)} className="px-8 py-3 bg-gradient-to-r from-violet-600 to-cyan-500 rounded-2xl font-semibold hover:scale-105 transition">
               Попробовать бесплатно
             </button>
+          </div>
+        </div>
+      </nav>
 
-            <button
-              className="heroSecondary"
-              onClick={() => setPricingOpen(true)}
+      {/* Hero */}
+      <section className="min-h-screen pt-28 flex items-center relative bg-gradient-to-br from-zinc-950 to-black">
+        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-3 bg-white/5 px-6 py-3 rounded-full border border-white/10">
+              <span className="text-emerald-400">●</span> AI для Uzum, Wildberries, Ozon
+            </div>
+            <h1 className="text-7xl lg:text-8xl font-bold tracking-tighter leading-none">
+              Одна фото →<br />
+              <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">Продающая карточка</span><br />за 30 секунд
+            </h1>
+            <p className="text-2xl text-gray-300">Мощный AI создаёт премиум инфографику, SEO-тексты и дизайн, который реально продаёт.</p>
+            
+            <button 
+              onClick={() => setDemoOpen(true)}
+              className="px-12 py-6 text-xl bg-gradient-to-r from-violet-600 to-cyan-500 rounded-3xl font-semibold hover:scale-105 transition-all"
             >
-              Смотреть тарифы
+              Создать карточку бесплатно
             </button>
+          </div>
+
+          <div className="relative">
+            <div className="absolute -inset-12 bg-gradient-to-br from-violet-500/30 to-cyan-500/30 blur-3xl rounded-3xl" />
+            <img src="/works/work1.jpg" alt="Пример" className="relative rounded-3xl shadow-2xl border border-white/10" />
+          </div>
+        </div>
+      </section>
+      {/* Marketplaces */}
+      <section className="py-12 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-8 flex justify-center gap-16 flex-wrap">
+          <img src="/marketplaces-premium/uzum.png" className="h-12" alt="Uzum"/>
+          <img src="/marketplaces-premium/wildberries.png" className="h-12" alt="Wildberries"/>
+          <img src="/marketplaces-premium/ozon.png" className="h-12" alt="Ozon"/>
+        </div>
+      </section>
+
+      {/* Как работает */}
+      <section id="how" className="py-24 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-8 text-center">
+          <h2 className="text-5xl font-bold mb-16">Как это работает</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-10 bg-white/5 rounded-3xl border border-white/10">
+              <div className="text-5xl mb-6">📸</div>
+              <h3 className="text-2xl font-semibold">1. Загрузи фото</h3>
+            </div>
+            <div className="p-10 bg-white/5 rounded-3xl border border-white/10">
+              <div className="text-5xl mb-6">🎯</div>
+              <h3 className="text-2xl font-semibold">2. Выбери маркетплейс</h3>
+            </div>
+            <div className="p-10 bg-white/5 rounded-3xl border border-white/10">
+              <div className="text-5xl mb-6">✨</div>
+              <h3 className="text-2xl font-semibold">3. Получи результат</h3>
+            </div>
           </div>
         </div>
       </section>
 
-      
-      
+      {/* Примеры */}
+      <section id="examples" className="py-24">
+        <div className="max-w-7xl mx-auto px-8">
+          <h2 className="text-5xl font-bold text-center mb-16">Примеры работ</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} className="rounded-3xl overflow-hidden border border-white/10 hover:border-cyan-400 transition">
+                <img src={`/showcase/wb/${i}.webp`} className="w-full h-96 object-cover" alt="Пример" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      {/* Отзывы */}
+      <section id="reviews" className="py-24 bg-zinc-950">
+        <div className="max-w-7xl mx-auto px-8">
+          <h2 className="text-5xl font-bold text-center mb-16">Что говорят продавцы</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 bg-white/5 rounded-3xl border border-white/10">
+              <p>"Отличный сервис! Карточки получаются очень качественные."</p>
+              <p className="mt-6 font-semibold">- Азиз, Uzum</p>
+            </div>
+            <div className="p-8 bg-white/5 rounded-3xl border border-white/10">
+              <p>"Сэкономил кучу времени и денег на дизайнерах."</p>
+              <p className="mt-6 font-semibold">- Руслан, Wildberries</p>
+            </div>
+            <div className="p-8 bg-white/5 rounded-3xl border border-white/10">
+              <p>"Качество на уровне топовых продавцов."</p>
+              <p className="mt-6 font-semibold">- Мадина, Ozon</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Тарифы */}
+      <section className="py-32 text-center">
+        <button 
+          onClick={() => setPricingOpen(true)}
+          className="px-16 py-8 text-3xl font-bold bg-gradient-to-r from-violet-600 to-cyan-500 rounded-3xl hover:scale-105 transition"
+        >
+          Посмотреть тарифы
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-zinc-950 py-16 text-center border-t border-white/10">
+        <p>© 2026 MarketCard AI • Все права защищены</p>
+      </footer>
+
+      {/* Модальные окна */}
+      {/* DEMO GENERATION MODAL */}
       {demoOpen && (
-        <div className="demoModal" onClick={() => setDemoOpen(false)}>
-          <div className="demoBox" onClick={(e) => e.stopPropagation()}>
-            <button className="demoClose" onClick={() => setDemoOpen(false)}>×</button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-x-hidden bg-black/80 backdrop-blur-xl p-4">
 
-            <div className="demoShine" />
+          <div className="relative max-h-[92vh] w-full max-w-3xl overflow-x-hidden overflow-y-auto rounded-[32px] border border-white/15 bg-zinc-950 shadow-[0_0_120px_rgba(34,211,238,.22)]">
 
-            <div className="demoHeader">
-              <div className="demoBadge">
-                FREE AI DEMO • 1 GENERATION
+            {/* glow */}
+            <div className="pointer-events-none absolute -top-32 -left-32 h-80 w-80 rounded-full bg-violet-600/30 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-cyan-500/25 blur-3xl" />
+
+            {/* header */}
+            <div className="relative flex items-center justify-between border-b border-white/10 p-6">
+
+              <div>
+
+                <div className="mb-2 inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-xs font-black text-cyan-300">
+                  FREE AI DEMO
+                </div>
+
+                <h2 className="text-3xl font-black tracking-tight">
+                  Создать карточку бесплатно
+                </h2>
+
               </div>
 
-              <h2>
-                Попробуй MarketCard AI бесплатно
-              </h2>
+              <button
+                onClick={() => setDemoOpen(false)}
+                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-2xl hover:bg-white/20"
+              >
+                ×
+              </button>
 
-              <p>
-                Загрузи фото товара — AI создаст демо-карточку с водяным знаком.
-                Полная версия без водяного знака доступна после регистрации.
-              </p>
             </div>
 
-            <div className="demoContent">
-              <div className="demoForm">
+            <div className="relative space-y-6 p-6">
 
-                <div className="demoField">
-                  <span>Название товара</span>
+              {/* upload */}
+              <label className="block cursor-pointer rounded-[26px] border-2 border-dashed border-cyan-400/40 bg-white/[.04] p-7 text-center transition hover:border-cyan-300 hover:bg-cyan-400/5">
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleDemoImageUpload}
+                />
+
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] bg-gradient-to-br from-violet-600 to-cyan-400 text-4xl font-black shadow-[0_0_45px_rgba(34,211,238,.45)]">
+                  +
+                </div>
+
+                <h3 className="mt-5 text-2xl font-black">
+                  {demoImage ? "Фото загружено" : "Загрузить фото товара"}
+                </h3>
+
+                <p className="mt-2 text-sm text-white/50">
+                  AI определит название и характеристики автоматически
+                </p>
+
+              </label>
+
+              {/* fields */}
+              <div className="grid gap-5 md:grid-cols-2">
+
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-white/60">
+                    Название товара
+                  </label>
 
                   <input
                     value={demoTitle}
                     onChange={(e) => setDemoTitle(e.target.value)}
-                    placeholder="Например: Насос ГУР Cobalt"
+                    placeholder={demoAnalyzing ? "AI определяет..." : "Определится после загрузки фото"}
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 font-semibold text-white outline-none transition focus:border-cyan-400"
                   />
                 </div>
 
-                <div className="demoField">
-                  <span>Бренд</span>
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-white/60">
+                    Бренд
+                  </label>
 
                   <input
                     value={demoBrand}
                     onChange={(e) => setDemoBrand(e.target.value)}
-                    placeholder="Например: BRAVE"
+                    placeholder="Например: Samsung"
+                    className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 font-semibold text-white outline-none transition focus:border-cyan-400"
                   />
                 </div>
 
-                <div className="demoField">
-                  <span>Категория</span>
+              </div>
 
-                  <input
-                    value={demoCategory}
-                    onChange={(e) => setDemoCategory(e.target.value)}
-                    placeholder="Например: Автозапчасти"
-                  />
-                </div>
+              <div>
 
-                <div className="demoField">
-                  <span>Маркетплейс</span>
-
-                  <select
-                    value={demoMarketplace}
-                    onChange={(e) => setDemoMarketplace(e.target.value)}
-                  >
-                    <option value="uzum">Uzum 1080×1440</option>
-                    <option value="wildberries">Wildberries 900×1200</option>
-                    <option value="ozon">Ozon 1200×1600</option>
-                    <option value="yandex">Yandex Market 1000×1000</option>
-                  </select>
-                </div>
-                <label className="demoUpload">
-                  <b>Загрузить фото</b>
-
-                  <small>JPG / PNG / WEBP</small>
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-
-                      if (!file) return
-
-                      try {
-                        setDemoLoading(true)
-                        setDemoImage("")
-                        setDemoProgress(5)
-                        setDemoStage("AI определяет товар по фото")
-
-                        const analyzeFd = new FormData()
-                        analyzeFd.append("image", file)
-
-                        try {
-                          const analyzeRes = await fetch("/api/analyze-product-photo", {
-                            method: "POST",
-                            body: analyzeFd,
-                          })
-
-                          const analyzeData = await analyzeRes.json()
-
-                          if (analyzeRes.ok && analyzeData?.success) {
-                            if (analyzeData.title) setDemoTitle(analyzeData.title)
-                            if (analyzeData.brand) setDemoBrand(analyzeData.brand)
-                            if (analyzeData.category) setDemoCategory(analyzeData.category)
-                          }
-                        } catch (analyzeErr) {
-                          console.warn("photo analyze skipped", analyzeErr)
-                        }
-
-                        setDemoProgress(14)
-                        setDemoStage("Загружаем фото товара")
-
-                        const fd = new FormData()
-
-                        fd.append("image", file)
-                        fd.append("marketplace", demoMarketplace)
-                        fd.append("language_mode", "ru")
-                        fd.append("product_title", demoTitle || "Демо товар")
-                        fd.append("brand", demoBrand || "Brand")
-                        fd.append("category", demoCategory || "Товар")
-
-                        setDemoProgress(28)
-                        setDemoStage("AI анализирует товар")
-
-                        const progressTimer = setInterval(() => {
-                          setDemoProgress((prev) => {
-                            if (prev < 88) return prev + 7
-                            return prev
-                          })
-                        }, 1200)
-
-                        const res = await fetch("/api/demo-generate", {
-                          method: "POST",
-                          body: fd,
-                        })
-
-                        clearInterval(progressTimer)
-                        setDemoProgress(94)
-                        setDemoStage("Финализируем карточку")
-
-                        const data = await res.json()
-
-                        if (!res.ok || !data?.success) {
-                          alert(data?.detail || "Ошибка демо-генерации")
-                          return
-                        }
-
-                        setDemoImage(data.demo_image_url)
-                        setDemoProgress(100)
-                        setDemoStage("Готово")
-
-                      } catch (err) {
-                        console.error(err)
-                        alert("Ошибка демо-генерации")
-
-                      } finally {
-                        setDemoLoading(false)
-                      }
-                    }}
-                  />
+                <label className="mb-2 block text-sm font-bold text-white/60">
+                  Характеристики товара
                 </label>
+
+                <textarea
+                  value={demoSpecs}
+                  onChange={(e) => setDemoSpecs(e.target.value)}
+                  placeholder={demoAnalyzing ? "AI анализирует фото..." : "Преимущества, материал, размер, функции..."}
+                  rows={4}
+                  className="w-full resize-none rounded-2xl border border-white/10 bg-black/40 px-5 py-4 font-semibold text-white outline-none transition focus:border-cyan-400"
+                />
+
               </div>
 
-              <div className="demoPreview">
-                {demoLoading ? (
-                  <div className="demoLoading aidProgressBox">
-                    <div className="magicStars">
-                      <span>✦</span>
-                      <span>✧</span>
-                      <span>✦</span>
-                    </div>
+              {/* marketplaces */}
+              <div>
 
-                    <strong>{demoStage}</strong>
+                <label className="mb-3 block text-sm font-bold text-white/60">
+                  Формат маркетплейса
+                </label>
 
-                    <div className="progressShell">
-                      <div
-                        className="progressFill"
-                        style={{ width: `${demoProgress}%` }}
-                      />
-                    </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
 
-                    <span>{demoProgress}%</span>
+                  {[
+                    ["uzum", "Uzum", "1080×1440"],
+                    ["wb", "Wildberries", "900×1200"],
+                    ["ozon", "Ozon", "1200×1600"],
+                    ["yandex", "Yandex", "1000×1000"]
+                  ].map(([id, name, size]) => (
+
+
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setDemoMarketplace(id)}
+                      className={
+                        "rounded-2xl border p-4 text-center transition " +
+                        (demoMarketplace === id
+                          ? "border-cyan-300 bg-cyan-400/15 shadow-[0_0_35px_rgba(34,211,238,.25)]"
+                          : "border-white/10 bg-white/[.04] hover:border-violet-400/60 hover:bg-violet-400/10")
+                      }
+                    >
+                      <div className="font-black">{name}</div>
+                      <div className="mt-1 text-xs text-white/55">{size}</div>
+                    </button>
+                  ))}
+
+                </div>
+              </div>
+
+
+              {/* preview */}
+              <div className="rounded-[26px] border border-white/10 bg-white/[.04] p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black tracking-wide text-cyan-300">
+                      LIVE PREVIEW
+                    </p>
+                    <h3 className="text-xl font-black">
+                      Предпросмотр карточки
+                    </h3>
                   </div>
 
-                ) : demoImage ? (
+                  <div className="rounded-full border border-emerald-300/30 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">
+                    READY
+                  </div>
+                </div>
 
+                <div className="overflow-hidden rounded-[22px] border border-white/10 bg-black/40">
                   <img
-                    src={
-                      demoImage.startsWith("/generated_cards")
-                        ? `/api${demoImage}`
-                        : demoImage
-                    }
-                    alt="Demo MarketCard AI"
+                    src={demoResultUrl || demoImage || "/works/work1.jpg"}
+                    alt="preview"
+                    className="h-[300px] w-full object-contain"
                   />
+                </div>
+              </div>
 
-                ) : (
 
-                  <div className="demoEmpty">
-                    <div>✨</div>
-
-                    <strong>
-                      Здесь появится демо-карточка
-                    </strong>
-
-                    <span>
-                      Загрузи фото товара, чтобы увидеть результат
-                    </span>
+              {demoGenerating && (
+                <div className="rounded-[24px] border border-cyan-300/30 bg-cyan-400/10 p-5 text-center">
+                  <div className="mx-auto mb-3 flex h-16 w-16 animate-spin items-center justify-center rounded-full border border-cyan-300/40 bg-black/40 text-3xl shadow-[0_0_35px_rgba(34,211,238,.35)]">
+                    ⏳
                   </div>
 
-                )}
-              </div>
-            </div>
+                  <div className="text-xl font-black text-white">
+                    AI создаёт карточку... {demoProgress}%
+                  </div>
 
-            {demoImage && (
+                  <div className="mt-4 h-3 overflow-hidden rounded-full bg-black/50">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-violet-500 via-blue-500 to-cyan-400 transition-all duration-500"
+                      style={{ width: `${demoProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {demoError && (
+                <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-bold text-red-200">
+                  {demoError}
+                </div>
+              )}
+
               <button
-                className="demoRegister"
-                onClick={() => router.push("/register")}
+                onClick={handleDemoGenerate}
+                disabled={demoGenerating}
+                className="w-full rounded-[24px] bg-gradient-to-r from-violet-600 via-blue-500 to-cyan-400 py-5 text-xl font-black text-white shadow-[0_0_45px_rgba(34,211,238,.28)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Получить полную версию без водяного знака
+                {demoGenerating ? "AI генерирует карточку..." : "Сгенерировать карточку →"}
               </button>
-            )}
+
+            </div>
           </div>
         </div>
       )}
 
 
       {pricingOpen && (
-        <div className="pricingModal" onClick={() => setPricingOpen(false)}>
-          <div className="pricingBox" onClick={(e) => e.stopPropagation()}>
-            <button className="modalClose" onClick={() => setPricingOpen(false)}>×</button>
-
-            <div className="pricingHeader">
-              <div className="pricingBadge">1 генерация бесплатно</div>
-              <h2>Выбери тариф и начни продавать быстрее</h2>
-              <p>
-                Дизайнер берёт $5–20 за одно фото и делает несколько дней.
-                MarketCard AI создаёт карточки, SEO и аналитику за минуты.
-              </p>
-            </div>
-
-            <div className="tariffGrid">
-              <div className="tariffCard">
-                <div className="tariffTop">
-                  <span>START</span>
-                  <b>Для теста</b>
-                </div>
-                <h3>249 000 сум</h3>
-                <p>20 генераций. Подходит, чтобы попробовать AI-карточки и протестировать первые товары.</p>
-                <ul>
-                  <li>AI карточки товара</li>
-                  <li>SEO описание</li>
-                  <li>Форматы Uzum / WB / Ozon</li>
-                  <li>1 бесплатная генерация</li>
-                </ul>
-                <button onClick={() => router.push("/register")}>Начать бесплатно</button>
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
+          <div className="bg-zinc-900 p-10 rounded-3xl max-w-4xl w-full">
+            <h2 className="text-4xl font-bold text-center mb-10">Тарифы</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="p-8 border border-white/20 rounded-3xl text-center">
+                <h3 className="text-2xl font-bold">START</h3>
+                <p className="text-4xl font-bold my-6">249 000 сум</p>
+                <p>20 генераций</p>
               </div>
-
-              <div className="tariffCard popular">
-                <div className="popularBadge">Лучший выбор</div>
-                <div className="tariffTop">
-                  <span>BUSINESS</span>
-                  <b>Для продаж</b>
-                </div>
-                <h3>799 000 сум</h3>
-                <p>60 генераций для активных продавцов, которые хотят быстро запускать товары.</p>
-                <ul>
-                  <li>AI карточки + дополнительные слайды</li>
-                  <li>Product Intelligence</li>
-                  <li>ABC-анализ товара и ниши</li>
-                  <li>Анализ конкурентов</li>
-                </ul>
-                <button onClick={() => router.push("/register")}>Выбрать Business</button>
+              <div className="p-8 border border-cyan-400 rounded-3xl text-center relative">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-6 py-1 rounded-full text-sm font-bold">ПОПУЛЯРНЫЙ</div>
+                <h3 className="text-2xl font-bold">BUSINESS</h3>
+                <p className="text-4xl font-bold my-6">799 000 сум</p>
+                <p>60 генераций</p>
               </div>
-
-              <div className="tariffCard">
-                <div className="tariffTop">
-                  <span>PREMIUM</span>
-                  <b>Для команды</b>
-                </div>
-                <h3>1 900 000 сум</h3>
-                <p>200 генераций для больших объёмов, команд и системной работы с маркетплейсами.</p>
-                <ul>
-                  <li>Много товаров и ниш</li>
-                  <li>Оценка карточек</li>
-                  <li>Дефицит / избыток товара</li>
-                  <li>AI Video Generator</li>
-                </ul>
-                <button onClick={() => router.push("/register")}>Масштабировать</button>
+              <div className="p-8 border border-white/20 rounded-3xl text-center">
+                <h3 className="text-2xl font-bold">PREMIUM</h3>
+                <p className="text-4xl font-bold my-6">1 900 000 сум</p>
+                <p>200 генераций</p>
               </div>
             </div>
+            <button onClick={() => setPricingOpen(false)} className="mt-10 w-full py-4 bg-white text-black rounded-2xl">Закрыть</button>
           </div>
         </div>
       )}
-
-
-
-      <footer style={{
-        maxWidth: "1180px",
-        margin: "50px auto 0",
-        padding: "38px 44px",
-        borderRadius: "28px 28px 0 0",
-        background: "rgba(0,0,0,0.72)",
-        border: "1px solid rgba(255,255,255,0.08)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: "60px",
-        flexWrap: "wrap"
-      }}>
-        <div style={{ maxWidth: "360px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <img src="/logo.jpg" alt="MarketCard AI" style={{
-              width: "54px",
-              height: "54px",
-              borderRadius: "16px",
-              objectFit: "cover"
-            }} />
-
-            <div>
-              <strong style={{ display: "block", fontSize: "20px" }}>
-                MarketCard AI
-              </strong>
-              <span style={{ color: "rgba(255,255,255,0.62)", fontSize: "13px" }}>
-                AI-платформа для маркетплейсов
-              </span>
-            </div>
-          </div>
-
-          <p style={{ marginTop: "22px", color: "rgba(255,255,255,0.58)", fontSize: "13px" }}>
-            © 2026 MarketCard AI. Все права защищены.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", gap: "70px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h4 style={{ margin: "0 0 6px", fontSize: "12px", color: "rgba(255,255,255,0.46)" }}>ПРОДУКТ</h4>
-            <a href="/" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Главная</a>
-            <a href="/pricing" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Тарифы</a>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h4 style={{ margin: "0 0 6px", fontSize: "12px", color: "rgba(255,255,255,0.46)" }}>ПОДДЕРЖКА</h4>
-            <a href="https://t.me/marketcardai_support_bot" target="_blank" rel="noreferrer" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}><img src="/social/telegram.svg" alt="Telegram" style={{width:"18px",height:"18px"}} /></a>
-            <a href="https://www.instagram.com/marketcard.ai?igsh=MWtwM3pwdmowd3VmYg==" target="_blank" rel="noreferrer" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}><img src="/social/instagram.svg" alt="Instagram" style={{width:"18px",height:"18px"}} /></a>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <h4 style={{ margin: "0 0 6px", fontSize: "12px", color: "rgba(255,255,255,0.46)" }}>ДОКУМЕНТЫ</h4>
-            <a href="/privacy" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Конфиденциальность</a>
-            <a href="/terms" style={{ color: "white", textDecoration: "none", fontSize: "14px" }}>Соглашение</a>
-          </div>
-        </div>
-      </footer>
-
-
-
-      <style jsx>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        .mcPage {
-          position: relative;
-          min-height: 100vh;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at top left, rgba(124,58,237,0.25), transparent 28%),
-            radial-gradient(circle at bottom right, rgba(6,182,212,0.18), transparent 30%),
-            #05060a;
-          color: white;
-          font-family: Inter, Arial, sans-serif;
-        }
-
-        .mcBg {
-          position: fixed;
-          inset: 0;
-          pointer-events: none;
-          overflow: hidden;
-        }
-
-        .orb {
-          position: absolute;
-          border-radius: 999px;
-          filter: blur(120px);
-          opacity: 0.55;
-        }
-
-        .orbA {
-          width: 420px;
-          height: 420px;
-          background: #7c3aed;
-          top: -120px;
-          left: -100px;
-        }
-
-        .orbB {
-          width: 380px;
-          height: 380px;
-          background: #06b6d4;
-          right: -120px;
-          top: 120px;
-        }
-
-        .orbC {
-          width: 320px;
-          height: 320px;
-          background: #2563eb;
-          left: 40%;
-          bottom: -120px;
-        }
-
-        .gridBg {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-          background-size: 60px 60px;
-          mask-image: radial-gradient(circle at center, black, transparent 85%);
-        }
-
-        .nav {
-          position: sticky;
-          top: 0;
-          z-index: 50;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 20px 28px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          backdrop-filter: blur(18px);
-          background: rgba(5,6,10,0.55);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-
-        .brand {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-
-        .brand img {
-          width: 54px;
-          height: 54px;
-          border-radius: 18px;
-          object-fit: cover;
-          box-shadow: 0 0 30px rgba(124,58,237,0.45);
-        }
-
-        .brand strong {
-          display: block;
-          font-size: 18px;
-        }
-
-        .brand span {
-          display: block;
-          color: rgba(255,255,255,0.6);
-          font-size: 13px;
-          margin-top: 2px;
-        }
-
-        nav {
-          display: flex;
-          gap: 28px;
-        }
-
-        nav a {
-          color: rgba(255,255,255,0.72);
-          text-decoration: none;
-          transition: 0.25s;
-        }
-
-        nav a:hover {
-          color: white;
-        }
-
-        .navActions {
-          display: flex;
-          gap: 12px;
-        }
-
-        button {
-          border: 0;
-          cursor: pointer;
-          transition: 0.25s;
-        }
-
-        .ghostBtn {
-          padding: 12px 18px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.06);
-          color: white;
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .primaryBtn,
-        .heroPrimary {
-          padding: 12px 22px;
-          border-radius: 999px;
-          color: white;
-          font-weight: 700;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          box-shadow: 0 12px 40px rgba(124,58,237,0.4);
-        }
-
-        .primaryBtn:hover,
-        .heroPrimary:hover {
-          transform: translateY(-2px);
-        }
-
-        .hero {
-          position: relative;
-          z-index: 2;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 90px 28px 40px;
-          display: grid;
-          grid-template-columns: 1.05fr 0.95fr;
-          gap: 54px;
-          align-items: center;
-        }
-
-        .eyebrow {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 12px 18px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          color: rgba(255,255,255,0.75);
-          font-size: 13px;
-          margin-bottom: 28px;
-        }
-
-        .pulseDot {
-          width: 10px;
-          height: 10px;
-          border-radius: 999px;
-          background: #22c55e;
-          box-shadow: 0 0 20px #22c55e;
-        }
-
-        h1 {
-          margin: 0;
-          font-size: clamp(58px, 8vw, 108px);
-          line-height: 0.92;
-          letter-spacing: -0.07em;
-          max-width: 760px;
-        }
-
-        .heroText {
-          margin-top: 28px;
-          max-width: 680px;
-          color: rgba(255,255,255,0.72);
-          font-size: 20px;
-          line-height: 1.7;
-        }
-
-        .heroActions {
-          display: flex;
-          gap: 16px;
-          margin-top: 38px;
-          flex-wrap: wrap;
-        }
-
-        .heroSecondary {
-          padding: 14px 24px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          color: white;
-          font-weight: 600;
-        }
-
-        .statsRow {
-          display: flex;
-          gap: 18px;
-          margin-top: 42px;
-          flex-wrap: wrap;
-        }
-
-        .statsRow div {
-          min-width: 180px;
-          padding: 18px;
-          border-radius: 24px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          backdrop-filter: blur(16px);
-        }
-
-        .statsRow strong {
-          display: block;
-          font-size: 28px;
-          margin-bottom: 8px;
-        }
-
-        .statsRow span {
-          color: rgba(255,255,255,0.62);
-          font-size: 14px;
-        }
-
-        .generatorCard {
-          position: relative;
-          padding: 20px;
-          border-radius: 36px;
-          background: linear-gradient(
-            180deg,
-            rgba(255,255,255,0.12),
-            rgba(255,255,255,0.04)
-          );
-          border: 1px solid rgba(255,255,255,0.1);
-          backdrop-filter: blur(30px);
-          box-shadow:
-            0 40px 120px rgba(0,0,0,0.55),
-            inset 0 1px 0 rgba(255,255,255,0.08);
-        }
-
-        .generatorTop {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-
-        .generatorTop span {
-          display: block;
-          color: rgba(255,255,255,0.55);
-          font-size: 13px;
-        }
-
-        .generatorTop strong {
-          display: block;
-          margin-top: 4px;
-          font-size: 18px;
-        }
-
-        .statusPill {
-          padding: 10px 14px;
-          border-radius: 999px;
-          background: rgba(34,197,94,0.15);
-          color: #4ade80;
-          border: 1px solid rgba(34,197,94,0.3);
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .mainPreview {
-          position: relative;
-          border-radius: 28px;
-          overflow: hidden;
-          aspect-ratio: 3/4;
-          background: #111827;
-        }
-
-        .mainPreview img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        .miniGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px;
-          margin-top: 14px;
-        }
-
-        .miniCard {
-          border-radius: 22px;
-          overflow: hidden;
-          aspect-ratio: 1/1;
-          background: #111827;
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .miniCard img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        .marketplaceStrip,
-        .howSection,
-        .featureSection,
-        .showcaseSection,
-        .ctaSection,
-
-
-
-        .sectionHead {
-          margin-bottom: 44px;
-        }
-
-        .sectionHead span {
-          display: inline-block;
-          color: #22d3ee;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          margin-bottom: 16px;
-        }
-
-        h2 {
-          margin: 0;
-          font-size: clamp(42px, 6vw, 72px);
-          line-height: 0.95;
-          letter-spacing: -0.06em;
-        }
-
-        .sectionHead p {
-          margin-top: 18px;
-          max-width: 720px;
-          color: rgba(255,255,255,0.66);
-          font-size: 18px;
-          line-height: 1.7;
-        }
-
-        .stepsGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 22px;
-        }
-
-        .stepCard {
-          position: relative;
-          padding: 24px;
-          border-radius: 24px;
-          min-height: 190px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          overflow: hidden;
-        }
-
-        .stepNumber {
-          font-size: 48px;
-          font-weight: 900;
-          color: rgba(255,255,255,0.08);
-          margin-bottom: 14px;
-        }
-
-        .stepCard h3 {
-          margin: 0 0 10px;
-          font-size: 22px;
-          line-height: 1.15;
-        }
-
-        .stepCard p {
-          margin: 0;
-          color: rgba(255,255,255,0.66);
-          font-size: 14px;
-          line-height: 1.45;
-        }
-
-        .featureGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 22px;
-        }
-
-        .featureCard {
-          position: relative;
-          padding: 24px;
-          border-radius: 24px;
-          min-height: 150px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-          overflow: hidden;
-        }
-
-        .featureGlow {
-          position: absolute;
-          width: 180px;
-          height: 180px;
-          border-radius: 999px;
-          background: rgba(124,58,237,0.24);
-          filter: blur(60px);
-          top: -80px;
-          right: -80px;
-        }
-
-        .featureCard strong {
-          position: relative;
-          display: block;
-          font-size: 22px;
-          line-height: 1.15;
-          margin-bottom: 10px;
-        }
-
-        .featureCard p {
-          position: relative;
-          color: rgba(255,255,255,0.66);
-          font-size: 14px;
-          line-height: 1.45;
-        }
-
-        .showcaseGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 22px;
-        }
-
-        .showcaseCard {
-          position: relative;
-          overflow: hidden;
-          border-radius: 34px;
-          background: #111827;
-          border: 1px solid rgba(255,255,255,0.08);
-          aspect-ratio: 3/4;
-          box-shadow: 0 30px 80px rgba(0,0,0,0.45);
-        }
-
-        .showcaseCard img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          transition: transform 0.5s ease;
-        }
-
-        .showcaseCard:hover img {
-          transform: scale(1.05);
-        }
-
-        .showcaseOverlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 22px;
-          background:
-            linear-gradient(
-              to top,
-              rgba(0,0,0,0.75),
-              rgba(0,0,0,0.05)
-            );
-        }
-
-        .showcaseBadge {
-          align-self: flex-start;
-          padding: 10px 14px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.12);
-          backdrop-filter: blur(14px);
-          font-size: 12px;
-          font-weight: 700;
-        }
-
-        .showcaseBottom strong {
-          display: block;
-          font-size: 22px;
-        }
-
-        .showcaseBottom span {
-          display: block;
-          margin-top: 6px;
-          color: rgba(255,255,255,0.72);
-        }
-
-        .ctaBox {
-          position: relative;
-          max-width: 980px;
-          margin: 0 auto;
-          padding: 48px 28px;
-          border-radius: 30px;
-          text-align: center;
-          overflow: hidden;
-          background: linear-gradient(135deg, rgba(124,58,237,0.55), rgba(6,182,212,0.72));
-          border: 1px solid rgba(255,255,255,0.12);
-        }
-
-        .ctaGlow {
-          position: absolute;
-          width: 420px;
-          height: 420px;
-          border-radius: 999px;
-          background: rgba(124,58,237,0.28);
-          filter: blur(120px);
-          top: -180px;
-          right: -120px;
-        }
-
-        .ctaBox span {
-          position: relative;
-          display: inline-block;
-          color: #22d3ee;
-          letter-spacing: 0.14em;
-          font-size: 13px;
-          font-weight: 700;
-          margin-bottom: 20px;
-        }
-
-        .ctaBox h2 {
-          font-size: 54px;
-          line-height: 1;
-          margin: 14px 0 18px;
-          text-align: center;
-        }
-
-        .ctaBox p {
-          max-width: 620px;
-          margin: 0 auto 26px;
-          text-align: center;
-          color: rgba(255,255,255,0.78);
-          font-size: 16px;
-          line-height: 1.55;
-        }
-
-        .ctaActions {
-          position: relative;
-          display: flex;
-          justify-content: center;
-          gap: 16px;
-          flex-wrap: wrap;
-          margin-top: 36px;
-        }
-
-
-
-        .compareSection {
-          position: relative;
-          z-index: 2;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 90px 28px;
-        }
-
-        .compareGrid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
-
-        .compareCard {
-          border-radius: 36px;
-          padding: 36px;
-          border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.05);
-          backdrop-filter: blur(20px);
-        }
-
-        .compareCard span {
-          display: inline-block;
-          margin-bottom: 18px;
-          color: rgba(255,255,255,0.65);
-          font-weight: 700;
-        }
-
-        .compareCard h3 {
-          font-size: 38px;
-          line-height: 1;
-          margin: 0 0 26px;
-          letter-spacing: -0.04em;
-        }
-
-        .compareCard ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: grid;
-          gap: 14px;
-        }
-
-        .compareCard li {
-          color: rgba(255,255,255,0.75);
-          line-height: 1.5;
-        }
-
-        .compareCard li::before {
-          content: "✓";
-          margin-right: 10px;
-          color: #22d3ee;
-        }
-
-        .compareCard.strong {
-          background:
-            radial-gradient(circle at top right, rgba(34,211,238,0.22), transparent 35%),
-            linear-gradient(135deg, rgba(124,58,237,0.18), rgba(255,255,255,0.05));
-          box-shadow: 0 30px 90px rgba(124,58,237,0.25);
-        }
-
-        .compareCard.weak {
-          opacity: 0.82;
-        }
-
-
-        .platformSection {
-          position: relative;
-          z-index: 2;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 90px 28px;
-        }
-
-        .platformBox {
-          border-radius: 42px;
-          padding: 44px;
-          background:
-            radial-gradient(circle at 20% 20%, rgba(124,58,237,0.22), transparent 32%),
-            radial-gradient(circle at 80% 20%, rgba(6,182,212,0.18), transparent 30%),
-            rgba(255,255,255,0.045);
-          border: 1px solid rgba(255,255,255,0.1);
-          backdrop-filter: blur(24px);
-        }
-
-        .platformGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 18px;
-        }
-
-        .platformGrid div {
-          padding: 26px;
-          border-radius: 28px;
-          background: rgba(0,0,0,0.24);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .platformGrid b {
-          display: block;
-          font-size: 20px;
-          margin-bottom: 10px;
-        }
-
-        .platformGrid span {
-          display: block;
-          color: rgba(255,255,255,0.66);
-          line-height: 1.6;
-        }
-
-
-        .proofSection {
-          position: relative;
-          z-index: 2;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 90px 28px;
-        }
-
-        .proofTop {
-          display: grid;
-          grid-template-columns: 0.9fr 1.1fr;
-          gap: 28px;
-          align-items: end;
-          margin-bottom: 32px;
-        }
-
-        .proofTop span {
-          display: inline-block;
-          color: #22d3ee;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          margin-bottom: 16px;
-        }
-
-        .proofStats {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 16px;
-        }
-
-        .proofStats div {
-          padding: 24px;
-          border-radius: 28px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .proofStats b {
-          display: block;
-          font-size: 32px;
-          margin-bottom: 8px;
-        }
-
-        .proofStats small {
-          color: rgba(255,255,255,0.62);
-          line-height: 1.5;
-        }
-
-        .reviewGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 20px;
-        }
-
-        .reviewCard {
-          padding: 28px;
-          border-radius: 30px;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .reviewCard p {
-          margin: 0 0 24px;
-          color: rgba(255,255,255,0.78);
-          line-height: 1.7;
-        }
-
-        .reviewCard strong {
-          display: block;
-          font-size: 18px;
-          margin-bottom: 6px;
-        }
-
-        .reviewCard span {
-          color: rgba(255,255,255,0.55);
-          font-size: 14px;
-        }
-
-
-        .navLinkBtn {
-          background: transparent;
-          color: rgba(255,255,255,0.72);
-          font-size: 16px;
-          padding: 0;
-        }
-
-        .pricingModal {
-          position: fixed;
-          inset: 0;
-          z-index: 999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 24px;
-          background: rgba(0,0,0,0.78);
-          backdrop-filter: blur(22px);
-        }
-
-        .pricingBox {
-          position: relative;
-          width: min(1180px, 100%);
-          max-height: 92vh;
-          overflow: auto;
-          padding: 46px;
-          border-radius: 44px;
-          background:
-            radial-gradient(circle at 15% 0%, rgba(124,58,237,0.35), transparent 32%),
-            radial-gradient(circle at 85% 10%, rgba(6,182,212,0.24), transparent 34%),
-            linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)),
-            #070812;
-          border: 1px solid rgba(255,255,255,0.12);
-          box-shadow: 0 50px 160px rgba(0,0,0,0.75);
-        }
-
-        .modalClose {
-          position: absolute;
-          top: 22px;
-          right: 22px;
-          width: 48px;
-          height: 48px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.09);
-          color: white;
-          font-size: 30px;
-          border: 1px solid rgba(255,255,255,0.12);
-        }
-
-        .pricingHeader {
-          text-align: center;
-          max-width: 820px;
-          margin: 0 auto 38px;
-        }
-
-        .pricingBadge {
-          display: inline-flex;
-          padding: 10px 16px;
-          border-radius: 999px;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          font-size: 13px;
-          font-weight: 900;
-          margin-bottom: 18px;
-          box-shadow: 0 18px 50px rgba(124,58,237,0.38);
-        }
-
-        .pricingHeader h2 {
-          font-size: clamp(38px, 5vw, 68px);
-          line-height: 0.95;
-          margin: 0;
-          letter-spacing: -0.06em;
-        }
-
-        .pricingHeader p {
-          margin: 22px auto 0;
-          color: rgba(255,255,255,0.68);
-          font-size: 18px;
-          line-height: 1.65;
-        }
-
-
-        .tariffGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 22px;
-        }
-
-        .tariffCard {
-          position: relative;
-          padding: 30px;
-          border-radius: 34px;
-          background: rgba(255,255,255,0.055);
-          border: 1px solid rgba(255,255,255,0.1);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-        }
-
-        .tariffCard.popular {
-          transform: translateY(-10px);
-          background:
-            radial-gradient(circle at top right, rgba(34,211,238,0.28), transparent 38%),
-            linear-gradient(180deg, rgba(124,58,237,0.20), rgba(255,255,255,0.06));
-          border-color: rgba(34,211,238,0.35);
-          box-shadow: 0 35px 100px rgba(6,182,212,0.22);
-        }
-
-        .popularBadge {
-          position: absolute;
-          top: 18px;
-          right: 18px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          background: linear-gradient(135deg,#06b6d4,#7c3aed);
-          font-size: 11px;
-          font-weight: 900;
-        }
-
-        .tariffTop span {
-          display: block;
-          color: #22d3ee;
-          font-size: 13px;
-          font-weight: 900;
-          letter-spacing: 0.14em;
-          margin-bottom: 8px;
-        }
-
-        .tariffTop b {
-          color: rgba(255,255,255,0.58);
-          font-size: 14px;
-        }
-
-        .tariffCard h3 {
-          margin: 24px 0 16px;
-          font-size: 36px;
-          letter-spacing: -0.05em;
-        }
-
-        .tariffCard p {
-          color: rgba(255,255,255,0.68);
-          line-height: 1.65;
-          min-height: 82px;
-        }
-
-        .tariffCard ul {
-          list-style: none;
-          padding: 0;
-          margin: 24px 0 0;
-          display: grid;
-          gap: 12px;
-        }
-
-        .tariffCard li {
-          color: rgba(255,255,255,0.78);
-          line-height: 1.45;
-        }
-
-        .tariffCard li::before {
-          content: "✓";
-          color: #22d3ee;
-          margin-right: 10px;
-          font-weight: 900;
-        }
-
-        .tariffCard button {
-          width: 100%;
-          margin-top: 28px;
-          padding: 16px 18px;
-          border-radius: 999px;
-          color: white;
-          font-weight: 900;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          box-shadow: 0 18px 55px rgba(124,58,237,0.35);
-        }
-
-        .tariffCard button:hover {
-          transform: translateY(-2px);
-        }
-
-
-        .autoShowcase {
-          position: relative;
-          overflow: hidden;
-          width: 100%;
-          padding: 8px 0 18px;
-          mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
-        }
-
-        .autoTrack {
-          display: flex;
-          gap: 22px;
-          width: max-content;
-          animation: showcaseScroll 38s linear infinite;
-        }
-
-        .autoShowcase:hover .autoTrack {
-          animation-play-state: paused;
-        }
-
-        .autoTrack .showcaseCard {
-          width: 320px;
-          flex: 0 0 320px;
-        }
-
-        @keyframes showcaseScroll {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-
-
-        .langSwitch {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 4px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .langSwitch button {
-          width: 38px;
-          height: 34px;
-          border-radius: 999px;
-          background: transparent;
-          color: rgba(255,255,255,0.58);
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .langSwitch button.activeLang {
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          color: white;
-          box-shadow: 0 10px 30px rgba(124,58,237,0.35);
-        }
-
-
-        .demoModal {
-          position: fixed;
-          inset: 0;
-          z-index: 1000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 24px;
-          background:
-            radial-gradient(circle at 20% 10%, rgba(124,58,237,0.22), transparent 35%),
-            rgba(0,0,0,0.84);
-          backdrop-filter: blur(26px);
-        }
-
-        .demoBox {
-          position: relative;
-          width: min(1040px, 100%);
-          max-height: 92vh;
-          overflow: auto;
-          padding: 38px;
-          border-radius: 42px;
-          background:
-            radial-gradient(circle at 10% 0%, rgba(124,58,237,0.34), transparent 32%),
-            radial-gradient(circle at 92% 12%, rgba(6,182,212,0.26), transparent 34%),
-            linear-gradient(180deg, rgba(255,255,255,0.095), rgba(255,255,255,0.035)),
-            #070812;
-          border: 1px solid rgba(255,255,255,0.13);
-          box-shadow: 0 55px 170px rgba(0,0,0,0.82);
-        }
-
-        .demoShine {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.08) 22%, transparent 45%);
-          opacity: 0.55;
-        }
-
-        .demoClose {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          z-index: 3;
-          width: 46px;
-          height: 46px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.09);
-          color: white;
-          font-size: 28px;
-          border: 1px solid rgba(255,255,255,0.13);
-        }
-
-        .demoHeader {
-          position: relative;
-          z-index: 2;
-          text-align: center;
-          max-width: 820px;
-          margin: 0 auto 30px;
-        }
-
-        .demoBadge {
-          display: inline-flex;
-          padding: 11px 16px;
-          border-radius: 999px;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          font-size: 12px;
-          font-weight: 950;
-          letter-spacing: 0.12em;
-          margin-bottom: 18px;
-          box-shadow: 0 18px 55px rgba(124,58,237,0.42);
-        }
-
-        .demoHeader h2 {
-          margin: 0;
-          font-size: clamp(38px, 5vw, 66px);
-          line-height: 0.95;
-          letter-spacing: -0.06em;
-        }
-
-        .demoHeader p {
-          margin: 20px auto 0;
-          color: rgba(255,255,255,0.69);
-          line-height: 1.7;
-          font-size: 17px;
-        }
-
-        .demoContent {
-          position: relative;
-          z-index: 2;
-          display: grid;
-          grid-template-columns: 0.9fr 1.1fr;
-          gap: 22px;
-          align-items: stretch;
-        }
-
-        .demoForm {
-          display: grid;
-          gap: 12px;
-        }
-
-        .demoField span {
-          display: block;
-          color: rgba(255,255,255,0.58);
-          font-size: 13px;
-          font-weight: 800;
-          margin: 0 0 7px 4px;
-        }
-
-
-        .demoField input,
-        .demoField select {
-          width: 100%;
-          padding: 15px 16px;
-          border-radius: 18px;
-          background: rgba(255,255,255,0.065);
-          color: white;
-          border: 1px solid rgba(255,255,255,0.13);
-          outline: none;
-        }
-
-        .demoUpload {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          min-height: 116px;
-          padding: 20px;
-          border-radius: 24px;
-          cursor: pointer;
-          text-align: center;
-          background:
-            radial-gradient(circle at top, rgba(34,211,238,0.20), transparent 45%),
-            linear-gradient(135deg, rgba(124,58,237,0.30), rgba(6,182,212,0.16));
-          border: 1px dashed rgba(34,211,238,0.55);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-        }
-
-        .demoUpload b {
-          font-size: 18px;
-        }
-
-        .demoUpload small {
-          color: rgba(255,255,255,0.58);
-          margin-top: 7px;
-        }
-
-        .demoUpload input {
-          display: none;
-        }
-
-        .demoPreview {
-          min-height: 480px;
-          border-radius: 30px;
-          background:
-            radial-gradient(circle at center, rgba(124,58,237,0.15), transparent 48%),
-            rgba(255,255,255,0.045);
-          border: 1px solid rgba(255,255,255,0.1);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-
-        .demoPreview img {
-          max-width: 100%;
-          max-height: 72vh;
-          display: block;
-          object-fit: contain;
-        }
-
-        .demoLoading,
-        .demoEmpty {
-          text-align: center;
-          color: rgba(255,255,255,0.72);
-          display: grid;
-          gap: 10px;
-          place-items: center;
-          padding: 24px;
-        }
-
-        .demoEmpty div {
-          font-size: 42px;
-        }
-
-        .demoLoading strong,
-        .demoEmpty strong {
-          font-size: 20px;
-          color: white;
-        }
-
-        .demoLoading span,
-        .demoEmpty span {
-          color: rgba(255,255,255,0.58);
-        }
-
-        .demoSpinner {
-          width: 42px;
-          height: 42px;
-          border-radius: 999px;
-          border: 3px solid rgba(255,255,255,0.12);
-          border-top-color: #22d3ee;
-          animation: demoSpin 0.9s linear infinite;
-        }
-
-        @keyframes demoSpin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .demoRegister {
-          position: relative;
-          z-index: 2;
-          width: 100%;
-          margin-top: 22px;
-          padding: 17px 20px;
-          border-radius: 999px;
-          color: white;
-          font-weight: 950;
-          background: linear-gradient(135deg,#7c3aed,#06b6d4);
-          box-shadow: 0 20px 60px rgba(124,58,237,0.38);
-        }
-
-        @media (max-width: 900px) {
-          .demoContent {
-            grid-template-columns: 1fr;
-          }
-
-          .demoPreview {
-            min-height: 340px;
-          }
-        }
-
-
-        .aidProgressBox {
-          width: min(360px, 90%);
-        }
-
-        .magicStars {
-          position: relative;
-          width: 92px;
-          height: 92px;
-          margin-bottom: 8px;
-        }
-
-        .magicStars span {
-          position: absolute;
-          font-size: 34px;
-          color: #ffffff;
-          filter: drop-shadow(0 0 18px rgba(34,211,238,0.8));
-          animation: starFloat 2.4s ease-in-out infinite;
-        }
-
-        .magicStars span:nth-child(1) {
-          left: 30px;
-          top: 4px;
-          font-size: 42px;
-        }
-
-        .magicStars span:nth-child(2) {
-          left: 5px;
-          top: 44px;
-          animation-delay: 0.35s;
-        }
-
-        .magicStars span:nth-child(3) {
-          right: 4px;
-          top: 50px;
-          animation-delay: 0.7s;
-        }
-
-        @keyframes starFloat {
-          0% {
-            transform: translateY(0) rotate(0deg) scale(1);
-            opacity: 0.55;
-          }
-          50% {
-            transform: translateY(-12px) rotate(14deg) scale(1.18);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(0) rotate(0deg) scale(1);
-            opacity: 0.55;
-          }
-        }
-
-        .progressShell {
-          width: 100%;
-          height: 10px;
-          margin: 12px 0 2px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.12);
-          overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .progressFill {
-          height: 100%;
-          border-radius: 999px;
-          background: linear-gradient(90deg,#7c3aed,#06b6d4,#22c55e);
-          box-shadow: 0 0 28px rgba(34,211,238,0.65);
-          transition: width 0.45s ease;
-        }
-
-
-        .demoUpload {
-          position: relative;
-          overflow: hidden;
-          isolation: isolate;
-        }
-
-        .demoUpload::before {
-          content: "";
-          position: absolute;
-          inset: -2px;
-          background: linear-gradient(120deg,#7c3aed,#06b6d4,#22c55e,#7c3aed);
-          background-size: 300% 300%;
-          animation: uploadGlowMove 4s linear infinite;
-          opacity: 0.65;
-          z-index: -2;
-        }
-
-        .demoUpload::after {
-          content: "";
-          position: absolute;
-          inset: 1px;
-          border-radius: 23px;
-          background: rgba(7,8,18,0.72);
-          z-index: -1;
-        }
-
-        @keyframes uploadGlowMove {
-          0% {
-            background-position: 0% 50%;
-          }
-          100% {
-            background-position: 300% 50%;
-          }
-        }
-
-        .demoField select {
-          appearance: none;
-          background:
-            linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035)),
-            #111827;
-          color: white;
-        }
-
-        .demoField select option {
-          background: #111827;
-          color: white;
-        }
-
-
-        .marketplaceStrip {
-          display: grid;
-          grid-template-columns: repeat(4, minmax(180px, 1fr));
-          gap: 18px;
-          padding-top: 30px;
-        }
-
-        .marketItem {
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
-          gap: 16px;
-          min-height: 92px;
-          padding: 18px 22px;
-          border-radius: 28px;
-          background:
-            radial-gradient(circle at top left, rgba(255,255,255,0.13), transparent 36%),
-            linear-gradient(135deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035));
-          border: 1px solid rgba(255,255,255,0.11);
-          backdrop-filter: blur(18px);
-          box-shadow:
-            0 24px 80px rgba(0,0,0,0.28),
-            inset 0 1px 0 rgba(255,255,255,0.08);
-          transition: 0.28s ease;
-        }
-
-        .marketItem::before {
-          content: "";
-          position: absolute;
-          inset: -1px;
-          background: linear-gradient(120deg, transparent, rgba(34,211,238,0.16), transparent);
-          opacity: 0;
-          transition: 0.28s ease;
-        }
-
-        .marketItem:hover {
-          transform: translateY(-4px);
-          border-color: rgba(34,211,238,0.28);
-          box-shadow:
-            0 28px 100px rgba(6,182,212,0.18),
-            inset 0 1px 0 rgba(255,255,255,0.12);
-        }
-
-        .marketItem:hover::before {
-          opacity: 1;
-        }
-
-        .marketLogoBox {
-          position: relative;
-          z-index: 2;
-          width: 58px;
-          height: 58px;
-          border-radius: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255,255,255,0.10);
-          border: 1px solid rgba(255,255,255,0.12);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
-        }
-
-        .marketLogoBox img {
-          display: block;
-          object-fit: contain;
-          filter: drop-shadow(0 8px 18px rgba(0,0,0,0.28));
-        }
-
-        .uzumLogo {
-          width: 46px;
-          height: 46px;
-        }
-
-        .wbLogo {
-          width: 42px;
-          height: 42px;
-          border-radius: 12px;
-        }
-
-        .ozonLogo {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-        }
-
-        .yandexLogo {
-          width: 48px;
-          height: 32px;
-        }
-
-        .marketItem span {
-          position: relative;
-          z-index: 2;
-          font-size: 18px;
-          font-weight: 900;
-          color: rgba(255,255,255,0.92);
-          white-space: nowrap;
-        }
-
-
-        .marketItem {
-          position: relative;
-          overflow: hidden;
-          min-height: 118px;
-          justify-content: flex-start;
-          padding: 26px 30px;
-          background:
-            radial-gradient(circle at 18% 50%, rgba(255,255,255,0.12), transparent 34%),
-            linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.035));
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 25px 80px rgba(0,0,0,0.26);
-        }
-
-        .marketItem::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(120deg, transparent, rgba(255,255,255,0.08), transparent);
-          transform: translateX(-120%);
-          transition: 0.6s;
-        }
-
-        .marketItem:hover::after {
-          transform: translateX(120%);
-        }
-
-        .marketItem img {
-          width: 84px;
-          height: 84px;
-          object-fit: contain;
-          border-radius: 24px;
-          background: transparent;
-          padding: 0;
-          box-shadow: none;
-          filter:
-            drop-shadow(0 10px 24px rgba(0,0,0,0.45))
-            brightness(1.08);
-          transition: transform .25s ease;
-        }
-
-        .marketItem:hover img {
-          transform: scale(1.08);
-        }
-
-        .marketItem span {
-          font-size: 24px;
-          font-weight: 950;
-          letter-spacing: -0.03em;
-        }
-
-
-        .premiumShowcaseGrid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 18px;
-          max-width: 1280px;
-          margin: 0 auto;
-        }
-
-        .premiumShowcaseCard {
-          position: relative;
-          overflow: hidden;
-          border-radius: 24px;
-          aspect-ratio: 4/5;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-        }
-
-        .premiumShowcaseCard img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          transition: opacity 0.35s ease, transform 0.45s ease;
-        }
-
-        .premiumShowcaseCard:hover img {
-          transform: scale(1.04);
-        }
-
-        .premiumShowcaseOverlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 20px;
-          background: linear-gradient(to top, rgba(0,0,0,0.72), transparent 55%);
-        }
-
-        .premiumShowcaseOverlay span {
-          width: max-content;
-          padding: 8px 12px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.14);
-          backdrop-filter: blur(12px);
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .premiumShowcaseOverlay strong {
-          font-size: 22px;
-          line-height: 1.15;
-        }
-
-
-
-        .premiumFeatureSection {
-          position: relative;
-          padding-top: 120px !important;
-          padding-bottom: 80px !important;
-        }
-
-        .premiumFeatureTabs {
-          display: flex;
-          gap: 14px;
-          margin: 0 0 28px;
-          flex-wrap: wrap;
-        }
-
-        .premiumTab {
-          border: 1px solid rgba(255,255,255,.1);
-          cursor: pointer;
-          padding: 13px 24px;
-          border-radius: 999px;
-          font-weight: 950;
-          color: rgba(255,255,255,.72);
-          background: rgba(255,255,255,.06);
-          transition: .25s ease;
-        }
-
-        .premiumTab.active {
-          color: white;
-          background: linear-gradient(135deg,#2563eb,#06b6d4,#22c55e);
-          box-shadow: 0 20px 55px rgba(6,182,212,.28);
-        }
-
-        .premiumFeatureHero {
-          position: relative;
-          min-height: 430px;
-          border-radius: 44px;
-          padding: 42px;
-          display: grid;
-          grid-template-columns: .92fr 1.08fr;
-          gap: 34px;
-          overflow: hidden;
-          background:
-            radial-gradient(circle at 15% 20%, rgba(34,211,238,.32), transparent 34%),
-            radial-gradient(circle at 88% 12%, rgba(168,85,247,.26), transparent 32%),
-            linear-gradient(135deg, rgba(15,23,42,.94), rgba(6,78,100,.82), rgba(8,145,178,.72));
-          border: 1px solid rgba(255,255,255,.14);
-          box-shadow: 0 34px 120px rgba(0,0,0,.42);
-        }
-
-        .featureMarketBadges {
-          position: absolute;
-          z-index: 5;
-          left: 42px;
-          right: 42px;
-          top: 28px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .mpBadge {
-          width: 54px;
-          height: 54px;
-          border-radius: 999px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: 1000;
-          font-size: 13px;
-          border: 1px solid rgba(255,255,255,.32);
-          box-shadow: 0 18px 42px rgba(0,0,0,.28);
-          animation: badgeFloat 4s ease-in-out infinite;
-        }
-
-        .wbBadge { background: linear-gradient(135deg,#d946ef,#7c3aed); }
-        .ozonBadge { background: linear-gradient(135deg,#0ea5e9,#2563eb); }
-        .uzumBadge { background: linear-gradient(135deg,#facc15,#f97316); color:#111827; }
-
-
-
-
-        .aiBadge { background: rgba(255,255,255,.18); backdrop-filter: blur(16px); }
-
-        .newBadge {
-          margin-left: auto;
-          width: auto;
-          height: 42px;
-          padding: 0 22px;
-          background: linear-gradient(135deg,#fb7185,#e11d48);
-        }
-
-        .featureLeftPanel,
-        .featureVisualStage {
-          position: relative;
-          z-index: 2;
-        }
-
-        .featureLeftPanel {
-          padding-top: 70px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-        }
-
-        .featureMiniLabel {
-          width: fit-content;
-          margin-bottom: 16px;
-          padding: 8px 12px;
-          border-radius: 999px;
-          color: #a7f3d0;
-          background: rgba(34,197,94,.13);
-          border: 1px solid rgba(34,197,94,.24);
-          font-size: 12px;
-          font-weight: 1000;
-          letter-spacing: .13em;
-        }
-
-        .featureLeftPanel h3 {
-          margin: 0;
-          font-size: clamp(42px, 5vw, 72px);
-          line-height: .9;
-          letter-spacing: -.07em;
-        }
-
-        .featureLeftPanel p {
-          margin: 22px 0 0;
-          max-width: 470px;
-          color: rgba(255,255,255,.78);
-          font-size: 18px;
-          line-height: 1.55;
-        }
-
-        .featureActionRow {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          margin-top: 28px;
-          flex-wrap: wrap;
-        }
-
-        .featureActionRow button {
-          border: none;
-          cursor: pointer;
-          padding: 15px 22px;
-          border-radius: 999px;
-          background: linear-gradient(135deg,#22c55e,#16a34a);
-          color: white;
-          font-weight: 1000;
-        }
-
-        .liveStatsGrid {
-          display: grid;
-          grid-template-columns: repeat(3,1fr);
-          gap: 12px;
-          margin-top: 28px;
-          max-width: 520px;
-        }
-
-        .liveStatsGrid div {
-          padding: 16px;
-          border-radius: 22px;
-          background: rgba(255,255,255,.09);
-          border: 1px solid rgba(255,255,255,.12);
-        }
-
-        .liveStatsGrid b {
-          display: block;
-          font-size: 24px;
-        }
-
-        .liveStatsGrid span {
-          color: rgba(255,255,255,.62);
-          font-size: 12px;
-        }
-
-
-
-
-        .featureVisualStage {
-          min-height: 350px;
-          perspective: 1100px;
-        }
-
-        .floatingCard {
-          position: absolute;
-          width: 310px;
-          min-height: 132px;
-          padding: 22px;
-          border-radius: 28px;
-          background: rgba(255,255,255,.12);
-          border: 1px solid rgba(255,255,255,.18);
-          backdrop-filter: blur(22px);
-          box-shadow: 0 30px 80px rgba(0,0,0,.3);
-        }
-
-        .floatingCard span {
-          display: block;
-          color: rgba(255,255,255,.66);
-          font-size: 12px;
-          font-weight: 1000;
-          margin-bottom: 9px;
-        }
-
-        .floatingCard b {
-          color: white;
-          font-size: 24px;
-          line-height: 1.05;
-        }
-
-        .cardOne { right: 150px; top: 68px; transform: rotate(-8deg); }
-        .cardTwo { right: 20px; top: 178px; transform: rotate(8deg); }
-        .cardThree { right: 250px; top: 238px; transform: rotate(-3deg); }
-
-        .cardProgress {
-          height: 9px;
-          margin-top: 20px;
-          border-radius: 999px;
-          overflow: hidden;
-          background: rgba(255,255,255,.14);
-        }
-
-        .cardProgress i {
-          display: block;
-          height: 100%;
-          width: 74%;
-          background: linear-gradient(90deg,#22c55e,#a3e635);
-        }
-
-        .typingLines {
-          display: grid;
-          gap: 8px;
-          margin-top: 18px;
-        }
-
-        .typingLines i {
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.32);
-        }
-
-        .miniChart {
-          height: 64px;
-          display: flex;
-          align-items: flex-end;
-          gap: 9px;
-          margin-top: 18px;
-        }
-
-        .miniChart i {
-          width: 28px;
-          border-radius: 10px 10px 4px 4px;
-          background: linear-gradient(180deg,#a3e635,#22c55e);
-        }
-
-        .aiOrb {
-          position: absolute;
-          right: 200px;
-          top: 150px;
-          width: 132px;
-          height: 132px;
-          border-radius: 999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, rgba(34,211,238,.88), rgba(59,130,246,.72));
-          box-shadow: 0 30px 90px rgba(34,211,238,.34);
-        }
-
-        .aiOrb span {
-          color: white;
-          font-size: 42px;
-          font-weight: 1000;
-        }
-
-
-
-
-        .premiumToolGrid {
-          display: grid;
-          grid-template-columns: repeat(4,1fr);
-          gap: 18px;
-          margin-top: 26px;
-        }
-
-        .premiumToolCard {
-          min-height: 178px;
-          padding: 22px;
-          border-radius: 28px;
-          background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-          border: 1px solid rgba(255,255,255,.1);
-        }
-
-        .toolNumber {
-          color: rgba(34,211,238,.88);
-          font-size: 13px;
-          font-weight: 1000;
-          margin-bottom: 26px;
-        }
-
-        .premiumToolCard b {
-          display: block;
-          color: white;
-          font-size: 20px;
-          margin-bottom: 12px;
-        }
-
-        .premiumToolCard span {
-          color: rgba(255,255,255,.62);
-          font-size: 14px;
-          line-height: 1.42;
-        }
-
-        @keyframes badgeFloat {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-
-
-
-        .aiLivePreview {
-          width: min(460px, 100%);
-          margin-top: 24px;
-          padding: 18px;
-          border-radius: 24px;
-          background:
-            linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.055));
-          border: 1px solid rgba(255,255,255,.14);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 24px 70px rgba(0,0,0,.22);
-          backdrop-filter: blur(20px);
-        }
-
-        .aiLiveTop {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          margin-bottom: 16px;
-        }
-
-        .aiLiveTop span {
-          color: #67e8f9;
-          font-size: 11px;
-          font-weight: 1000;
-          letter-spacing: .14em;
-        }
-
-        .aiLiveTop b {
-          color: white;
-          font-size: 13px;
-          padding: 7px 10px;
-          border-radius: 999px;
-          background: rgba(34,197,94,.15);
-          border: 1px solid rgba(34,197,94,.22);
-        }
-
-        .aiTypingLine {
-          height: 9px;
-          border-radius: 999px;
-          margin-bottom: 10px;
-          background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(34,211,238,.65), rgba(255,255,255,.16));
-          background-size: 220% 100%;
-          animation: shimmerLine 2.4s linear infinite;
-        }
-
-        .aiTypingLine.lineA { width: 92%; }
-        .aiTypingLine.lineB { width: 76%; animation-delay: .25s; }
-        .aiTypingLine.lineC { width: 84%; animation-delay: .5s; }
-
-        .aiInsightRow {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-top: 15px;
-          color: rgba(255,255,255,.7);
-          font-size: 12px;
-          font-weight: 900;
-        }
-
-        .aiInsightRow b {
-          color: white;
-          padding: 6px 10px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.1);
-          border: 1px solid rgba(255,255,255,.12);
-        }
-
-        @keyframes shimmerLine {
-          0% { background-position: 220% 0; }
-          100% { background-position: -220% 0; }
-        }
-
-
-
-
-        .floatingCard {
-          transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
-        }
-
-        .floatingCard:hover {
-          border-color: rgba(255,255,255,.34);
-          box-shadow: 0 40px 110px rgba(0,0,0,.42), 0 0 55px rgba(34,211,238,.18);
-        }
-
-        .cardOne {
-          animation: floatCardOne 5.4s ease-in-out infinite;
-        }
-
-        .cardTwo {
-          animation: floatCardTwo 6s ease-in-out infinite;
-        }
-
-        .cardThree {
-          animation: floatCardThree 6.6s ease-in-out infinite;
-        }
-
-        .aiOrb {
-          animation: orbBreath 3.4s ease-in-out infinite;
-        }
-
-        .cardProgress i {
-          animation: progressLive 2.8s ease-in-out infinite;
-        }
-
-        .miniChart i {
-          animation: chartPulse 1.8s ease-in-out infinite;
-        }
-
-        .miniChart i:nth-child(2) { animation-delay: .15s; }
-        .miniChart i:nth-child(3) { animation-delay: .3s; }
-        .miniChart i:nth-child(4) { animation-delay: .45s; }
-        .miniChart i:nth-child(5) { animation-delay: .6s; }
-
-        @keyframes floatCardOne {
-          0%,100% { transform: rotate(-8deg) translateY(0); }
-          50% { transform: rotate(-8deg) translateY(-16px); }
-        }
-
-        @keyframes floatCardTwo {
-          0%,100% { transform: rotate(8deg) translateY(0); }
-          50% { transform: rotate(8deg) translateY(14px); }
-        }
-
-        @keyframes floatCardThree {
-          0%,100% { transform: rotate(-3deg) translateY(0); }
-          50% { transform: rotate(-3deg) translateY(-12px); }
-        }
-
-        @keyframes orbBreath {
-          0%,100% { transform: scale(1); filter: saturate(1); }
-          50% { transform: scale(1.07); filter: saturate(1.35); }
-        }
-
-        @keyframes progressLive {
-          0%,100% { width: 46%; }
-          50% { width: 90%; }
-        }
-
-        @keyframes chartPulse {
-          0%,100% { transform: scaleY(.82); opacity: .75; }
-          50% { transform: scaleY(1.08); opacity: 1; }
-        }
-
-
-
-
-        .premiumToolCard {
-          position: relative;
-          overflow: hidden;
-          transition: transform .28s ease, border-color .28s ease, box-shadow .28s ease;
-        }
-
-        .premiumToolCard:before {
-          content: "";
-          position: absolute;
-          inset: -1px;
-          background: linear-gradient(135deg, rgba(34,211,238,.32), transparent 35%, rgba(34,197,94,.22));
-          opacity: 0;
-          transition: opacity .28s ease;
-          pointer-events: none;
-        }
-
-        .premiumToolCard:after {
-          content: "";
-          position: absolute;
-          width: 160px;
-          height: 160px;
-          right: -70px;
-          top: -80px;
-          border-radius: 999px;
-          background: rgba(34,211,238,.18);
-          filter: blur(38px);
-          opacity: .35;
-          pointer-events: none;
-        }
-
-        .premiumToolCard:hover {
-          transform: translateY(-7px);
-          border-color: rgba(34,211,238,.35);
-          box-shadow: 0 28px 80px rgba(0,0,0,.28), 0 0 45px rgba(34,211,238,.12);
-        }
-
-        .premiumToolCard:hover:before {
-          opacity: 1;
-        }
-
-        .premiumToolCard b,
-        .premiumToolCard span,
-        .toolNumber {
-          position: relative;
-          z-index: 2;
-        }
-
-
-
-
-        .premiumFeatureHero:after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background:
-            linear-gradient(115deg, transparent 0%, rgba(255,255,255,.13) 45%, transparent 62%);
-          transform: translateX(-120%);
-          animation: heroLightSweep 7s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        .premiumFeatureHero:before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
-          background-size: 42px 42px;
-          opacity: .15;
-          mask-image: radial-gradient(circle at 70% 50%, black, transparent 68%);
-          pointer-events: none;
-        }
-
-        @keyframes heroLightSweep {
-          0%, 58% { transform: translateX(-120%); opacity: 0; }
-          68% { opacity: 1; }
-          100% { transform: translateX(120%); opacity: 0; }
-        }
-
-        @media (max-width: 1100px) {
-          .featureVisualStage {
-            min-height: 420px;
-          }
-
-          .premiumToolGrid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        @media (max-width: 720px) {
-          .featureMarketBadges {
-            left: 24px;
-            right: 24px;
-            top: 20px;
-          }
-
-          .mpBadge {
-            width: 42px;
-            height: 42px;
-            font-size: 11px;
-          }
-
-          .newBadge {
-            height: 36px;
-            padding: 0 14px;
-          }
-
-          .featureVisualStage {
-            min-height: 430px;
-          }
-
-          .floatingCard {
-            width: 250px;
-          }
-
-          .cardOne {
-            right: 42px;
-            top: 30px;
-          }
-
-          .cardTwo {
-            right: 0;
-            top: 160px;
-          }
-
-          .cardThree {
-            right: 70px;
-            top: 295px;
-          }
-
-          .aiOrb {
-            right: 30px;
-            top: 245px;
-            width: 96px;
-            height: 96px;
-          }
-
-          .aiOrb span {
-            font-size: 30px;
-          }
-        }
-
-
-        @media (max-width: 1100px) {
-          .premiumFeatureHero,
-          .premiumToolGrid {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-
-        @media (max-width: 720px) {
-          .premiumFeatureHero,
-          .premiumToolGrid,
-          .liveStatsGrid {
-            grid-template-columns: 1fr;
-          }
-
-          .premiumFeatureHero {
-            padding: 26px;
-            border-radius: 32px;
-          }
-
-          .featureLeftPanel h3 {
-            font-size: 42px;
-          }
-        }
-
-
-        @media (max-width: 1100px) {
-          .hero {
-            grid-template-columns: 1fr;
-            gap: 48px;
-            padding-top: 70px;
-          }
-
-          .marketplaceStrip,
-          .stepsGrid,
-          .featureGrid,
-          .showcaseGrid,
-          .compareGrid,
-          .platformGrid,
-          .proofTop,
-          .proofStats,
-          .reviewGrid {
-            grid-template-columns: 1fr 1fr;
-          }
-
-        }
-
-        @media (max-width: 720px) {
-          .nav {
-            flex-direction: column;
-            gap: 18px;
-            padding: 18px;
-          }
-
-          nav {
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 18px;
-          }
-
-          .marketplaceStrip,
-          .stepsGrid,
-          .featureGrid,
-          .showcaseGrid,
-          .compareGrid,
-          .platformGrid,
-          .proofTop,
-          .proofStats,
-          .reviewGrid {
-            grid-template-columns: 1fr;
-          }
-
-          h1 {
-            font-size: 38px;
-          }
-
-          h2 {
-            font-size: 32px;
-          }
-
-          .stepCard,
-          .featureCard {
-            padding: 18px;
-            border-radius: 20px;
-            min-height: 135px;
-          }
-
-          .stepNumber {
-            font-size: 38px;
-            margin-bottom: 10px;
-          }
-
-          .stepCard h3,
-          .featureCard strong {
-            font-size: 20px;
-          }
-
-          .stepCard p,
-          .featureCard p {
-            font-size: 13px;
-          }
-
-          .heroText,
-          .sectionHead p,
-          .ctaBox p {
-            font-size: 16px;
-          }
-
-          .statsRow {
-            flex-direction: column;
-          }
-
-          .ctaBox {
-            padding: 60px 24px;
-          }
-
-        }
-
-        @media (max-width: 520px) {
-          .hero,
-          .marketplaceStrip,
-          .howSection,
-          .featureSection,
-          .showcaseSection,
-          .ctaSection,
-
-
-          h1 {
-            font-size: 42px;
-          }
-
-          .generatorCard {
-            padding: 14px;
-            border-radius: 28px;
-          }
-
-          .mainPreview {
-            border-radius: 22px;
-          }
-
-          .miniCard {
-            border-radius: 18px;
-          }
-
-          .ctaBox {
-            border-radius: 28px;
-          }
-        }
-
-        @media (max-width: 720px) {
-          .pricingModal {
-            align-items: flex-start;
-            padding: 12px;
-            overflow-y: auto;
-          }
-
-          .pricingBox {
-            width: 100%;
-            max-height: none;
-            padding: 26px 16px;
-            border-radius: 28px;
-            overflow-x: hidden;
-          }
-
-          .modalClose {
-            top: 14px;
-            right: 14px;
-            width: 42px;
-            height: 42px;
-            font-size: 26px;
-          }
-
-          .pricingHeader {
-            padding-top: 42px;
-            margin-bottom: 24px;
-          }
-
-          .pricingHeader h2 {
-            font-size: 38px;
-            line-height: 1;
-            letter-spacing: -0.05em;
-          }
-
-          .pricingHeader p {
-            font-size: 16px;
-            line-height: 1.55;
-          }
-
-          .tariffGrid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 18px;
-          }
-
-          .tariffCard,
-          .tariffCard.popular {
-            transform: none;
-            width: 100%;
-            padding: 24px;
-            border-radius: 28px;
-          }
-
-          .tariffCard h3 {
-            font-size: 36px;
-            line-height: 1.05;
-          }
-
-          .tariffCard p {
-            min-height: auto;
-            font-size: 16px;
-          }
-
-          .popularBadge {
-            position: static;
-            width: max-content;
-            margin-bottom: 14px;
-          }
-
-          .premiumShowcaseGrid {
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-          }
-
-          .premiumShowcaseCard {
-            border-radius: 22px;
-          }
-
-          .premiumShowcaseOverlay {
-            padding: 12px;
-          }
-
-          .premiumShowcaseOverlay span {
-            font-size: 10px;
-            padding: 6px 8px;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-
-          .premiumShowcaseOverlay strong {
-            font-size: 14px;
-            line-height: 1.15;
-          }
-
-          .showcaseSection .sectionHead h2 {
-          text-align: center;
-          margin: 0 auto 14px;
-        }
-
-          .showcaseSection .sectionHead p {
-          text-align: center;
-          margin: 0 auto 34px;
-          max-width: 760px;
-        }
-        }
-
-        @media (max-width: 430px) {
-          .premiumShowcaseGrid {
-            grid-template-columns: 1fr 1fr;
-          }
-
-          .premiumShowcaseOverlay strong {
-            font-size: 13px;
-          }
-
-          .pricingHeader h2 {
-            font-size: 34px;
-          }
-
-          .tariffCard h3 {
-            font-size: 32px;
-          }
-        }
-
-
-
-        /* FINAL FORCE REVIEWS CAROUSEL */
-        .reviewsCarousel {
-          width: 100% !important;
-          overflow: hidden !important;
-          padding: 18px 0 !important;
-        }
-
-        .reviewsTrack,
-        .reviewsTrackAnimated {
-          display: flex !important;
-          flex-direction: row !important;
-          gap: 18px !important;
-          width: max-content !important;
-          align-items: stretch !important;
-          animation: reviewsMoveFinal 38s linear infinite !important;
-        }
-
-        .reviewCardPremium {
-          width: 280px !important;
-          min-width: 280px !important;
-          max-width: 280px !important;
-          padding: 16px !important;
-          border-radius: 22px !important;
-        }
-
-        .reviewTop {
-          display: flex !important;
-          align-items: center !important;
-          gap: 10px !important;
-        }
-
-        .reviewTop img {
-          width: 56px !important;
-          height: 56px !important;
-          min-width: 56px !important;
-          min-height: 56px !important;
-          max-width: 56px !important;
-          max-height: 56px !important;
-          border-radius: 999px !important;
-          object-fit: cover !important;
-        }
-
-        .reviewTop > div {
-          display: flex !important;
-          flex-direction: column !important;
-          gap: 3px !important;
-        }
-
-        .reviewTop strong {
-          font-size: 14px !important;
-          line-height: 1.1 !important;
-        }
-
-        .reviewTop span {
-          font-size: 11px !important;
-          line-height: 1.1 !important;
-          opacity: 0.75 !important;
-        }
-
-        .reviewCardPremium p {
-          font-size: 13px !important;
-          line-height: 1.4 !important;
-          margin: 10px 0 !important;
-        }
-
-        .reviewStars {
-          font-size: 12px !important;
-        }
-
-        @keyframes reviewsMoveFinal {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-
-
-      `}</style>
     </main>
-  )
+  );
 }
