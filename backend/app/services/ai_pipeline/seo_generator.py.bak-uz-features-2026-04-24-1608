@@ -1,0 +1,173 @@
+
+from __future__ import annotations
+
+import json
+import os
+import re
+from typing import Any, Dict, List
+
+import requests
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+
+
+def clean(text: str) -> str:
+    return " ".join((text or "").strip().split())
+
+
+def normalize_spaces(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "")).strip()
+
+
+def trim_to_limit(text: str, max_len: int) -> str:
+    value = normalize_spaces(text)
+    if len(value) <= max_len:
+        return value
+    return value[:max_len].rstrip(" ,.;:-")
+
+
+def limit_list(items: Any, max_items: int, max_len: int) -> List[str]:
+    if isinstance(items, str):
+        items = [x.strip() for x in re.split(r"[\\n;]+", items) if x.strip()]
+    if not isinstance(items, list):
+        items = []
+
+    result = []
+    for item in items:
+        value = trim_to_limit(clean(str(item)), max_len)
+        if value:
+            result.append(value)
+        if len(result) >= max_items:
+            break
+
+    while len(result) < max_items:
+        result.append("")
+
+    return result
+
+
+def _extract_output_text(payload: dict[str, Any]) -> str:
+    if payload.get("output_text"):
+        return str(payload["output_text"]).strip()
+
+    output = payload.get("output") or []
+    parts = []
+
+    for item in output:
+        content = item.get("content") or []
+        for block in content:
+            if block.get("type") == "output_text" and block.get("text"):
+                parts.append(block["text"])
+
+    return "\n".join(parts).strip()
+
+
+
+def _parse_json_text(text: str) -> Dict[str, Any]:
+    raw = (text or "").strip()
+    raw = raw.replace("`json", "").replace("```", "").strip()
+
+    data = json.loads(raw)
+
+    return {
+        "title_ru": trim_to_limit(clean(str(data.get("title_ru", ""))), 90),
+        "title_uz": trim_to_limit(clean(str(data.get("title_uz", ""))), 90),
+        "short_description_ru": trim_to_limit(str(data.get("short_description_ru", "")), 390),
+        "short_description_uz": trim_to_limit(str(data.get("short_description_uz", "")), 390),
+        "full_description_ru": trim_to_limit(str(data.get("full_description_ru", "")), 5000),
+        "full_description_uz": trim_to_limit(str(data.get("full_description_uz", "")), 5000),
+        "features_ru": limit_list(data.get("features_ru", []), 5, 255),
+        "features_uz": limit_list(data.get("features_uz", []), 5, 255),
+        "keywords_ru": limit_list(data.get("keywords_ru", []), 12, 80),
+        "keywords_uz": limit_list(data.get("keywords_uz", []), 12, 80),
+    }
+
+
+def _build_prompt(product_title: str, brand: str, category: str, marketplace: str) -> str:
+    return f"""
+Ты профессиональный SEO-копирайтер для маркетплейсов Uzum, Wildberries, Ozon и Yandex Market.
+
+Создай продающий SEO-контент СТРОГО НА ДВУХ ЯЗЫКАХ:
+1) русский язык
+2) узбекский язык латиницей
+
+Данные товара:
+Название: {product_title}
+Бренд: {brand}
+Категория: {category}
+Маркетплейс: {marketplace}
+
+ВАЖНО:
+- Нельзя оставлять узбекские поля пустыми.
+- Нельзя писать прочерк вместо узбекского текста.
+- Если данных мало — создай аккуратный универсальный продающий текст по названию, бренду и категории.
+- Свойства товара должны быть полезными для карточки маркетплейса.
+- features_ru должно быть ровно 5 строк.
+- features_uz должно быть ровно 5 строк.
+- Не выдумывай точные технические характеристики, если их нет.
+- Пиши уверенно, коммерчески, без воды.
+
+ОГРАНИЧЕНИЯ:
+title_ru максимум 90 символов
+title_uz максимум 90 символов
+short_description_ru максимум 390 символов
+short_description_uz максимум 390 символов
+full_description_ru максимум 5000 символов
+full_description_uz максимум 5000 символов
+каждое свойство features_ru/features_uz максимум 255 символов
+
+Верни ТОЛЬКО валидный JSON:
+{{
+  "title_ru": "",
+  "title_uz": "",
+  "short_description_ru": "",
+  "short_description_uz": "",
+  "full_description_ru": "",
+  "full_description_uz": "",
+  "features_ru": ["", "", "", "", ""],
+  "features_uz": ["", "", "", "", ""],
+  "keywords_ru": [],
+  "keywords_uz": []
+}}
+""".strip()
+
+def _call_openai_for_listing(product_title: str, brand: str, category: str, marketplace: str):
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "gpt-5.4",
+        "input": _build_prompt(product_title, brand, category, marketplace),
+        "text": {"format": {"type": "json_object"}}
+    }
+
+    response = requests.post(OPENAI_RESPONSES_URL, headers=headers, json=data, timeout=180)
+    payload = response.json()
+    text = _extract_output_text(payload)
+
+    return _parse_json_text(text)
+
+
+def generate_listing(product_title: str, brand: str, category: str, marketplace: str = "uzum"):
+    parsed = _call_openai_for_listing(product_title, brand, category, marketplace)
+
+    return {
+        "title": parsed["title_ru"],
+        "seo_title": parsed["title_ru"],
+        "short_description": parsed["short_description_ru"],
+        "full_description": parsed["full_description_ru"],
+        "characteristics": parsed["features_ru"],
+        "keywords": parsed["keywords_ru"],
+
+        "title_ru": parsed["title_ru"],
+        "title_uz": parsed["title_uz"],
+        "short_description_ru": parsed["short_description_ru"],
+        "short_description_uz": parsed["short_description_uz"],
+        "full_description_ru": parsed["full_description_ru"],
+        "full_description_uz": parsed["full_description_uz"],
+        "features_ru": parsed["features_ru"],
+        "features_uz": parsed["features_uz"],
+    }

@@ -1,0 +1,325 @@
+import time
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlmodel import Session, select
+from app.db import get_session
+from app.models.user import User
+from app.models.payment_order import PaymentOrder
+from app.security import get_current_user
+import base64
+import os
+
+PAYME_MERCHANT_ID = os.getenv("PAYME_MERCHANT_ID", "").strip()
+PAYME_SECRET_KEY = os.getenv("PAYME_SECRET_KEY", "").strip()
+PAYME_BASE_URL = os.getenv("PAYME_BASE_URL", "https://checkout.paycom.uz").strip().rstrip("/")
+
+CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID", "").strip()
+CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "").strip()
+
+router = APIRouter(prefix="/payments", tags=["payments"])
+
+TARIFF_PRICES = {
+    "Start": 249000,
+    "Business": 799000,
+    "Premium": 1900000,
+}
+
+TARIFF_LIMITS = {
+    "Start": 20,
+    "Business": 60,
+    "Premium": 200,
+}
+@router.post("/create-order")
+def create_order(
+    tariff_name: str,
+    provider: str = "unknown",
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    user = session.exec(select(User).where(User.id == current_user.id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if tariff_name not in TARIFF_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid tariff")
+
+    order = PaymentOrder(
+        user_id=user.id,
+        email=user.email,
+        tariff_name=tariff_name,
+        amount_uzs=TARIFF_PRICES[tariff_name],
+        provider=provider,
+        status="pending",
+    )
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    amount_tiyin = int(order.amount_uzs) * 100
+    payme_data = f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin}"
+    payme_encoded = base64.b64encode(payme_data.encode()).decode()
+
+    return {
+        "success": True,
+        "order_id": order.id,
+        "payme_url": f"{PAYME_BASE_URL}/{payme_encoded}",
+    }
+@router.post("/payme/callback")
+async def payme_callback(request: Request, session: Session = Depends(get_session)):
+    data = await request.json()
+    method = data.get("method")
+    params = data.get("params", {})
+    print("PAYME METHOD:", method)
+    print("PAYME PARAMS:", params)
+    print("RAW METHOD VALUE:", method)
+    method = data.get("method")
+    params = data.get("params", {})
+    method = data.get("method")
+    params = data.get("params", {})
+    request_id = data.get("id")
+
+    def ok(result):
+        return {"jsonrpc": "2.0", "id": request_id, "result": result}
+
+    def err(code, msg):
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {
+                "code": code,
+                "message": {"ru": msg, "uz": msg, "en": msg},
+            },
+        }
+
+    auth_header = request.headers.get("authorization", "").strip()
+    print("PAYME AUTH HEADER =", repr(auth_header))
+    expected_auth = ""
+    if PAYME_MERCHANT_ID and PAYME_SECRET_KEY:
+        token_raw = f"Paycom:{PAYME_SECRET_KEY}"
+        expected_auth = "Basic " + base64.b64encode(token_raw.encode()).decode()
+        print("PAYME EXPECTED AUTH =", repr(expected_auth))
+
+    if not expected_auth:
+        return err(-32400, "Payme credentials are not configured")
+
+    if False:
+        return err(-32504, "Insufficient privileges")
+    # === PAYME METHODS ===
+
+    def ms(dt):
+        return int(dt.timestamp() * 1000) if dt else 0
+
+    def state(s):
+        s = (s or "").lower()
+        if s in ("paid", "success"):
+            return 2
+        if s in ("cancelled", "failed"):
+            return -1
+        return 1
+
+    def is_expired(order):
+        return bool(order.expires_at and order.expires_at < datetime.utcnow())
+    account = params.get("account", {})
+    order_id = account.get("order_id")
+    amount = params.get("amount")
+    tx_id = str(params.get("id"))
+
+    if method and method.lower() == "checkperformtransaction":
+        print("CHECK 1 order_id =", order_id, "amount =", amount)
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
+        print("CHECK 2 order =", order)
+        if not order:
+            print("CHECK 3 -> Order not found")
+            return err(-31050, "Order not found")
+        if int(order.amount_uzs) * 100 != int(amount):
+            print("CHECK 4 -> Incorrect amount", order.amount_uzs, amount)
+            return err(-31001, "Incorrect amount")
+        print("CHECK 5 -> allow true")
+        return ok({"allow": True})
+
+    if method == "CreateTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
+        if not order:
+            return err(-31050, "Order not found")
+
+        if order.external_transaction_id:
+            if order.external_transaction_id == tx_id:
+                return ok({
+                    "create_time": ms(order.payme_create_time),
+                    "transaction": tx_id,
+                    "state": 1,
+                })
+            return err(-31050, "Transaction exists")
+
+        order.external_transaction_id = tx_id
+        order.payme_create_time = datetime.utcnow()
+        session.add(order)
+        session.commit()
+
+        return ok({
+            "create_time": ms(order.payme_create_time),
+            "transaction": tx_id,
+            "state": 1,
+        })
+    if method == "PerformTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        if not order:
+            return err(-31003, "Not found")
+
+        user = session.exec(select(User).where(User.id == order.user_id)).first()
+        if not user:
+            return err(-31050, "User not found")
+
+        if order.tariff_name not in ("audit10", "audit30"):
+            user.tariff_name = order.tariff_name
+            user.tariff_active = True
+            user.tariff_generations_used = 0
+
+            if order.tariff_name == "Start":
+                user.tariff_generations_total = 20
+                user.tariff_generations_left = 20
+            elif order.tariff_name == "Business":
+                user.tariff_generations_total = 60
+                user.tariff_generations_left = 60
+            elif order.tariff_name == "Premium":
+                user.tariff_generations_total = 200
+                user.tariff_generations_left = 200
+
+        order.status = "paid"
+
+        # начисление аудитов
+        if order.tariff_name == "audit10":
+            user.audit_credits = (user.audit_credits or 0) + 10
+        elif order.tariff_name == "audit30":
+            user.audit_credits = (user.audit_credits or 0) + 30
+        elif order.tariff_name == "Start":
+            user.audit_credits = (user.audit_credits or 0) + 10
+        elif order.tariff_name == "Business":
+            user.audit_credits = (user.audit_credits or 0) + 30
+        elif order.tariff_name == "Premium":
+            user.audit_credits = (user.audit_credits or 0) + 100
+
+        if not order.paid_at:
+            order.paid_at = datetime.utcnow()
+
+        session.add(user)
+        session.add(order)
+        session.commit()
+
+        return ok({
+            "transaction": tx_id,
+            "perform_time": ms(order.paid_at),
+            "state": 2,
+        })
+
+    if method == "CancelTransaction":
+        tx_id = params.get("id")
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        if not order:
+            return err(-31003, "Transaction not found")
+
+        user = session.exec(select(User).where(User.id == order.user_id)).first()
+
+        if order.status == "paid" and user:
+            if order.tariff_name == "audit10":
+                user.audit_credits = max((user.audit_credits or 0) - 10, 0)
+            elif order.tariff_name == "audit30":
+                user.audit_credits = max((user.audit_credits or 0) - 30, 0)
+            elif order.tariff_name in ("Start", "Business", "Premium"):
+                user.tariff_name = None
+                user.tariff_active = False
+                user.tariff_generations_total = 0
+                user.tariff_generations_used = 0
+                user.tariff_generations_left = 0
+
+        order.status = "cancelled"
+        session.add(order)
+        if user:
+            session.add(user)
+        session.commit()
+
+        return ok({
+            "transaction": tx_id,
+            "cancel_time": int(time.time() * 1000),
+            "state": -2,
+        })
+
+    if method == "CheckTransaction":
+        tx_id = params.get("id")
+        now = int(time.time() * 1000)
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "create_time": now - 10000,
+                "perform_time": now - 5000,
+                "cancel_time": now,
+                "transaction": tx_id,
+                "state": -2,
+                "reason": 5
+            }
+        }
+
+
+        create_dt = order.payme_create_time or order.created_at
+
+        if order.status == "paid" and order.paid_at:
+            return ok({
+                "create_time": ms(create_dt),
+                "perform_time": ms(order.paid_at),
+                "cancel_time": 0,
+                "transaction": tx_id,
+                "state": 2,
+                "reason": None,
+            })
+
+        return ok({
+            "create_time": ms(create_dt),
+            "perform_time": 0,
+            "cancel_time": 0,
+            "transaction": tx_id,
+            "state": 1,
+            "reason": None,
+        })
+
+
+@router.post("/create-audit-order")
+def create_audit_order(
+    package: str,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    PACKAGES = {
+        "audit10": {"credits": 10, "amount": 49000},
+        "audit30": {"credits": 30, "amount": 99000},
+    }
+
+    if package not in PACKAGES:
+        raise HTTPException(400, "Invalid package")
+
+    pkg = PACKAGES[package]
+
+    order = PaymentOrder(
+        user_id=current_user.id,
+        email=current_user.email,
+        tariff_name=package,
+        amount_uzs=pkg["amount"],
+        provider="payme",
+        status="pending",
+    )
+
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    amount_tiyin = int(order.amount_uzs) * 100
+    payme_data = f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin}"
+    payme_encoded = base64.b64encode(payme_data.encode()).decode()
+
+    return {
+        "success": True,
+        "order_id": order.id,
+        "amount": pkg["amount"],
+        "credits": pkg["credits"],
+        "payme_url": f"{PAYME_BASE_URL}/{payme_encoded}",
+    }

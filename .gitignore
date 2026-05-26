@@ -1,0 +1,20 @@
+.env
+venv/
+node_modules/
+generated_cards/
+__pycache__/
+*.log
+backups/
+.next/
+backend/.env
+backend/.env
+.env
+
+# secrets
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.local

@@ -1,0 +1,136 @@
+from __future__ import annotations
+
+import json
+import os
+import re
+from typing import Any, Dict, List
+
+import requests
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+
+
+def clean(text: str) -> str:
+    return " ".join((text or "").strip().split())
+
+
+def normalize_spaces(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "")).strip()
+
+
+def trim_to_limit(text: str, max_len: int) -> str:
+    value = normalize_spaces(text)
+    if len(value) <= max_len:
+        return value
+    return value[:max_len].rstrip(" ,.;:-")
+
+
+def limit_list(items: Any, max_items: int, max_len: int) -> List[str]:
+    if isinstance(items, str):
+        items = [x.strip() for x in re.split(r"[\\n;]+", items) if x.strip()]
+    if not isinstance(items, list):
+        items = []
+
+    result: List[str] = []
+    for item in items:
+        value = trim_to_limit(clean(str(item)), max_len)
+        if value:
+            result.append(value)
+        if len(result) >= max_items:
+            break
+
+    while len(result) < max_items:
+        result.append("—")
+
+    return result
+def _extract_output_text(payload: dict[str, Any]) -> str:
+    if payload.get("output_text"):
+        return str(payload["output_text"]).strip()
+
+    output = payload.get("output") or []
+    parts = []
+    for item in output:
+        content = item.get("content") or []
+        for block in content:
+            if block.get("type") == "output_text" and block.get("text"):
+                parts.append(block["text"])
+    return "\n".join(parts).strip()
+
+
+def _parse_json_text(text: str) -> Dict[str, Any]:
+    raw = (text or "").strip()
+    raw = raw.replace("`json", "").replace("```", "").strip()
+    data = json.loads(raw)
+
+    return {
+        "title": trim_to_limit(clean(str(data.get("title", ""))), 90),
+        "seo_title": trim_to_limit(clean(str(data.get("seo_title", data.get("title", "")))), 90),
+        "short_description": trim_to_limit(str(data.get("short_description", "")), 390),
+        "full_description": trim_to_limit(str(data.get("full_description", "")), 5000),
+        "characteristics": limit_list(data.get("characteristics", []), 5, 255),
+        "keywords": limit_list(data.get("keywords", []), 12, 80),
+    }
+
+
+def _build_prompt(product_title: str, brand: str, category: str, marketplace: str) -> str:
+    return f"""
+Ты профессиональный SEO-копирайтер.
+
+Сгенерируй SEO-контент ТОЛЬКО на русском языке.
+
+Название: {product_title}
+Бренд: {brand}
+Категория: {category}
+Маркетплейс: {marketplace}
+
+Ограничения:
+title — до 90 символов
+seo_title — до 90 символов
+short_description — до 390 символов
+full_description — до 5000 символов
+characteristics — 5 пунктов
+keywords — 8-12 слов
+
+Верни JSON:
+{{
+  "title": "",
+  "seo_title": "",
+  "short_description": "",
+  "full_description": "",
+  "characteristics": ["", "", "", "", ""],
+  "keywords": []
+}}
+""".strip()
+def _call_openai(product_title: str, brand: str, category: str, marketplace: str) -> Dict[str, Any]:
+    headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "model": "gpt-5.4",
+        "input": _build_prompt(product_title, brand, category, marketplace),
+        "text": {"format": {"type": "json_object"}},
+    }
+
+    r = requests.post(OPENAI_RESPONSES_URL, headers=headers, json=data, timeout=180)
+    r.raise_for_status()
+
+    payload = r.json()
+    text = _extract_output_text(payload)
+    return _parse_json_text(text)
+
+
+def generate_listing(product_title: str, brand: str, category: str, marketplace: str = "uzum", language: str = "ru") -> Dict[str, Any]:
+    data = _call_openai(product_title, brand, category, marketplace)
+
+    return {
+        "marketplace": marketplace,
+        "title": data["title"],
+        "seo_title": data["seo_title"],
+        "short_description": data["short_description"],
+        "full_description": data["full_description"],
+        "characteristics": data["characteristics"],
+        "keywords": data["keywords"],
+    }

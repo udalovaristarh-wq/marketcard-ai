@@ -1,0 +1,11 @@
+.mc-bg-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(600px 300px at 75% 10%, rgba(56,189,248,0.10), transparent 60%),
+    radial-gradient(500px 300px at 20% 90%, rgba(59,130,246,0.06), transparent 60%),
+    linear-gradient(180deg, #020617 0%, #030712 100%);
+}

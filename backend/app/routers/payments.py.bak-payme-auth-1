@@ -1,0 +1,176 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session, select
+
+from app.db import get_session
+from app.models.user import User
+from app.models.payment_order import PaymentOrder
+
+
+import base64
+import os
+
+PAYME_MERCHANT_ID = os.getenv("PAYME_MERCHANT_ID", "").strip()
+PAYME_BASE_URL = os.getenv("PAYME_BASE_URL", "https://checkout.paycom.uz").strip().rstrip("/")
+CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID", "").strip()
+CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "").strip()
+
+router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+TARIFF_PRICES = {
+    "Start": 249000,
+    "Business": 799000,
+    "Premium": 1900000,
+}
+
+
+@router.post("/create-order")
+def create_order(
+    email: str,
+    tariff_name: str,
+    provider: str = "unknown",
+    session: Session = Depends(get_session),
+):
+    user = session.exec(select(User).where(User.email == email)).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if tariff_name not in TARIFF_PRICES:
+        raise HTTPException(status_code=400, detail="Invalid tariff")
+
+    order = PaymentOrder(
+        user_id=user.id,
+        email=user.email,
+        tariff_name=tariff_name,
+        amount_uzs=TARIFF_PRICES[tariff_name],
+        provider=provider,
+        status="pending",
+    )
+
+    session.add(order)
+    session.commit()
+    session.refresh(order)
+
+    amount_tiyin = order.amount_uzs * 100
+    payme_data = f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin}"
+    payme_encoded = base64.b64encode(payme_data.encode()).decode()
+    payme_url = f"{PAYME_BASE_URL}/{payme_encoded}"
+
+    click_url = (
+        f"https://my.click.uz/services/pay"
+        f"?service_id={CLICK_SERVICE_ID}"
+        f"&merchant_id={CLICK_MERCHANT_ID}"
+        f"&amount={order.amount_uzs}"
+        f"&transaction_param={order.id}"
+    )
+
+    return {
+        "success": True,
+        "order_id": order.id,
+        "amount": order.amount_uzs,
+        "provider": provider,
+        "payme_url": payme_url,
+        "click_url": click_url,
+    }
+
+
+
+
+import time
+from datetime import datetime
+
+@router.post("/payme/callback")
+async def payme_callback(data: dict, session: Session = Depends(get_session)):
+    method = data.get("method")
+    params = data.get("params", {})
+    request_id = data.get("id")
+
+    def ok(result):
+        return {"jsonrpc": "2.0", "id": request_id, "result": result}
+
+    def err(code, msg):
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {
+                "code": code,
+                "message": {"ru": msg, "uz": msg, "en": msg},
+            },
+        }
+
+    def ms(dt):
+        return int(dt.timestamp()*1000) if dt else 0
+
+    def state(s):
+        s = (s or "").lower()
+        if s in ("paid","success"): return 2
+        if s in ("cancelled","failed"): return -1
+        return 1
+
+    account = params.get("account", {})
+    order_id = account.get("order_id")
+    amount = params.get("amount")
+    tx_id = str(params.get("id"))
+    req_time = int(params.get("time", int(time.time()*1000)))
+
+    if method == "CheckPerformTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
+        if not order: return err(-31050, "Order not found")
+        if int(order.amount_uzs)*100 != int(amount): return err(-31001, "Incorrect amount")
+        return ok({"allow": True})
+
+    if method == "CreateTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
+        if not order: return err(-31050, "Order not found")
+        if int(order.amount_uzs)*100 != int(amount): return err(-31001, "Incorrect amount")
+
+        if order.external_transaction_id:
+            if order.external_transaction_id == tx_id:
+                return ok({
+                    "create_time": ms(order.created_at),
+                    "transaction": tx_id,
+                    "state": state(order.status)
+                })
+            else:
+                return err(-31050, "Transaction exists")
+
+        order.external_transaction_id = tx_id
+        session.add(order)
+        session.commit()
+
+        return ok({
+            "create_time": ms(order.created_at),
+            "transaction": tx_id,
+            "state": 1
+        })
+
+    if method == "CheckTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        if not order: return err(-31003, "Not found")
+
+        return ok({
+            "create_time": ms(order.created_at),
+            "perform_time": ms(order.paid_at) if state(order.status)==2 else 0,
+            "cancel_time": 0,
+            "transaction": tx_id,
+            "state": state(order.status),
+            "reason": None
+        })
+
+    if method == "PerformTransaction":
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        if not order: return err(-31003, "Not found")
+
+        order.status = "paid"
+        order.paid_at = datetime.utcnow()
+        session.add(order)
+        session.commit()
+
+        return ok({
+            "transaction": tx_id,
+            "perform_time": ms(order.paid_at),
+            "state": 2
+        })
+
+    return err(-32601, "Method not found")

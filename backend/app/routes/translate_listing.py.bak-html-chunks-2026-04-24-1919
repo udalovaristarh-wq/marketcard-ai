@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+from typing import Any, List
+
+import requests
+from fastapi import APIRouter
+from pydantic import BaseModel
+
+router = APIRouter(prefix="/translate", tags=["translate"])
+
+
+class ListingTranslateRequest(BaseModel):
+    title: str = ""
+    short_description: str = ""
+    full_description: str = ""
+    characteristics: List[Any] = []
+
+
+def translate_text(text: Any) -> str:
+    value = str(text or "").strip()
+    if not value or value == "—":
+        return "—"
+
+    try:
+        r = requests.get(
+            "https://api.mymemory.translated.net/get",
+            params={"q": value, "langpair": "ru|uz"},
+            timeout=20,
+        )
+        data = r.json()
+        translated = data.get("responseData", {}).get("translatedText")
+        return translated or value
+    except Exception:
+        return value
+
+
+def translate_characteristic(item: Any) -> Any:
+    if isinstance(item, dict):
+        return {
+            "key": translate_text(item.get("key", "")),
+            "value": translate_text(item.get("value", "")),
+        }
+
+    return translate_text(item)
+
+
+@router.post("/listing")
+def translate_listing(payload: ListingTranslateRequest):
+    return {
+        "title": translate_text(payload.title),
+        "short_description": translate_text(payload.short_description),
+        "full_description": translate_text(payload.full_description),
+        "characteristics": [
+            translate_characteristic(x) for x in payload.characteristics[:5]
+        ],
+    }

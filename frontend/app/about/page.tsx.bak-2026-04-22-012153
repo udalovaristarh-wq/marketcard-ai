@@ -1,0 +1,86 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+
+const cardStyle = {
+  borderRadius: "24px",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.10)",
+  boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
+  backdropFilter: "blur(18px)",
+  padding: "28px",
+}
+
+export default function AboutPage() {
+  const router = useRouter()
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(circle at top left, rgba(59,130,246,0.26), transparent 26%), radial-gradient(circle at bottom right, rgba(34,197,94,0.18), transparent 22%), linear-gradient(135deg,#071226,#0b1730,#101827)",
+        color: "white",
+        padding: "32px 20px",
+      }}
+    >
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+
+        <button onClick={() => router.back()}>
+          ← Back
+        </button>
+
+        <h1 style={{ fontSize: "48px", fontWeight: 900 }}>
+          MarketCard AI
+        </h1>
+
+        <p style={{ fontSize: "20px", lineHeight: 1.7 }}>
+          Full-scale AI SaaS platform for marketplace product content generation.
+
+        </p>
+
+        <div style={{ display: "grid", gap: "12px", marginTop: "20px" }}>
+          <div style={cardStyle}>
+            <b>Founder:</b> Aristarkh Aleksandrovich Udalov
+          </div>
+          <div style={cardStyle}>
+            <b>Company:</b> MarketcardAI
+          </div>
+          <div style={cardStyle}>
+            <b>Location:</b> Tashkent, Uzbekistan
+          </div>
+          <div style={cardStyle}>
+            <b>Email:</b> marketcardai@gmail.com
+          </div>
+        </div>
+
+        <div style={{ marginTop: "30px" }}>
+          <h2>Core Features</h2>
+
+          <div style={{ display: "grid", gap: "10px" }}>
+            <div style={cardStyle}>AI product card generation</div>
+            <div style={cardStyle}>SEO descriptions</div>
+            <div style={cardStyle}>Marketplace formats (Uzum / WB / Ozon / Yandex)</div>
+            <div style={cardStyle}>Infographic generation</div>
+            <div style={cardStyle}>Unit economics tools</div>
+            <div style={cardStyle}>Analytics and seller tools</div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: "30px" }}>
+          <h2>Positioning</h2>
+          <p>
+            MarketCard AI is built as a real SaaS platform, not a prototype.
+            It combines AI generation, marketplace adaptation,
+            and business tools in a single system.
+          </p>
+        </div>
+
+        <footer style={{ marginTop: "40px", opacity: 0.6 }}>
+          © 2026 MarketcardAI. All rights reserved.
+        </footer>
+
+      </div>
+    </main>
+  )
+}

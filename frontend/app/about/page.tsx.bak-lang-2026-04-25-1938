@@ -1,0 +1,46 @@
+'use client'
+import { useState, useEffect } from 'react'
+import { initParticlesEngine, Particles } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import { HeaderSection } from './components/HeaderSection'
+import { ContactSection } from './components/ContactSection'
+import { GallerySection } from './components/GallerySection'
+import { HeroSection } from './components/HeroSection'
+import { FounderSeoSection, FounderMissionSection, FounderExpertiseSection, ProductToolsSection } from './components/FounderSeoSection' 
+
+export default function AboutPage() {
+  const [lang, setLang] = useState<"ru" | "en">("ru")
+  const [init, setInit] = useState(false);
+
+  useEffect(() => {
+    initParticlesEngine(async (engine) => { await loadSlim(engine); }).then(() => setInit(true));
+  }, []);
+
+  return (
+    <main style={{ minHeight: "100vh", backgroundColor: "#05070a", color: "#ffffff", padding: "40px 20px", position: "relative", fontFamily: "'Inter', sans-serif" }}>
+      {init && <Particles style={{ position: "absolute", top: 0, left: 0, zIndex: 0 }} options={{ particles: { color: { value: "#007bff" }, links: { color: "#007bff", distance: 200, enable: true, opacity: 0.8, width: 1 }, move: { enable: true, speed: 0.5 }, number: { value: 60 }, opacity: { value: 0.9 }, size: { value: 3 } } }} />}
+      
+      <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
+          <a href="https://marketcard.uz/" style={{ backgroundColor: "#1a1f2e", color: "#ffffff", padding: "10px 20px", borderRadius: "8px", textDecoration: "none", border: "1px solid #3b82f6", fontWeight: "bold" }}>Перейти на платформу</a>
+          <div>
+            <button onClick={() => setLang("ru")} style={{ marginRight: "10px", background: lang === "ru" ? "#3b82f6" : "#1a1f2e", border: "none", color: "white", padding: "8px 20px", borderRadius: "8px", cursor: "pointer" }}>RU</button>
+            <button onClick={() => setLang("en")} style={{ background: lang === "en" ? "#3b82f6" : "#1a1f2e", border: "none", color: "white", padding: "8px 20px", borderRadius: "8px", cursor: "pointer" }}>EN</button>
+          </div>
+        </div>
+        
+        <HeaderSection title="MarketCard AI" subtitle="AI-платформа для создания контента" />
+        <ContactSection title="Поддержка" />
+        <section style={{ backgroundColor: "#0b101d", padding: "40px", borderRadius: "20px", border: "1px solid #2d3748", marginBottom: "40px" }}><GallerySection /></section>
+        <section style={{ backgroundColor: "#0b101d", padding: "40px", borderRadius: "20px", border: "1px solid #2d3748", marginBottom: "40px" }}><HeroSection /></section>
+        
+<FounderSeoSection />
+<FounderMissionSection />
+<FounderExpertiseSection />
+<ProductToolsSection />
+
+
+      </div>
+    </main>
+  )
+}

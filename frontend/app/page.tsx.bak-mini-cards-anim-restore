@@ -1,0 +1,1303 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+
+type Lang = "ru" | "uz" | "en"
+
+const dict = {
+  ru: {
+    title: "MarketCard AI",
+    subtitle: "AI-генератор премиальных карточек товаров для маркетплейсов",
+    register: "Регистрация",
+    login: "Войти",
+    examples: "Примеры готовых работ",
+    slide1: "Беспроводные наушники",
+    slide2: "Функции наушников",
+    slide3: "Спортивный дизайн",
+    slide4: "Быстрая зарядка",
+    badge: "AI Showcase",
+  },
+  uz: {
+    title: "MarketCard AI",
+    subtitle: "Marketpleyslar uchun premium mahsulot kartalari AI-generatori",
+    register: "Ro‘yxatdan o‘tish",
+    login: "Kirish",
+    examples: "Tayyor ish namunalari",
+    slide1: "Simsiz quloqchinlar",
+    slide2: "Quloqchin funksiyalari",
+    slide3: "Sport dizayn",
+    slide4: "Tez quvvatlash",
+    badge: "AI Showcase",
+  },
+  en: {
+    title: "MarketCard AI",
+    subtitle: "AI generator of premium product cards for marketplaces",
+    register: "Register",
+    login: "Login",
+    examples: "Ready-made examples",
+    slide1: "Wireless headphones",
+    slide2: "Headphones features",
+    slide3: "Sport design",
+    slide4: "Fast charging",
+    badge: "AI Showcase",
+  },
+} as const
+
+const slides = [
+  { src: "/works/work1.jpg", key: "slide1" as const, accent: "#22d3ee" },
+  { src: "/works/work2.jpg", key: "slide2" as const, accent: "#60a5fa" },
+  { src: "/works/work3.jpg", key: "slide3" as const, accent: "#22c55e" },
+  { src: "/works/work4.jpg", key: "slide4" as const, accent: "#f59e0b" },
+]
+
+const topCards = [
+  { src: "/works/top1.jpg", alt: "Top work 1" },
+  { src: "/works/top2.jpg", alt: "Top work 2" },
+]
+
+const marketplaces = [
+  {
+    name: "Uzum",
+    logo: "/marketplaces/uzum.png",
+    color: "linear-gradient(135deg,#7c3aed,#a855f7)",
+    glow: "rgba(168,85,247,0.26)",
+  },
+  {
+    name: "Wildberries",
+    logo: "/marketplaces/wildberries.png",
+    color: "linear-gradient(135deg,#a21caf,#ec4899)",
+    glow: "rgba(236,72,153,0.26)",
+  },
+  {
+    name: "Ozon",
+    logo: "/marketplaces/ozon.png",
+    color: "linear-gradient(135deg,#0284c7,#2563eb)",
+    glow: "rgba(37,99,235,0.26)",
+  },
+  {
+    name: "Yandex Market",
+    logo: "/marketplaces/yandex.png",
+    color: "linear-gradient(135deg,#f59e0b,#fb923c)",
+    glow: "rgba(251,146,60,0.26)",
+  },
+]
+
+function FallbackSlide({
+  title,
+  accent,
+  badge,
+}: {
+  title: string
+  accent: string
+  badge: string
+}) {
+  return (
+    
+    <div className="fallback">
+      <div className="fallbackGlow" />
+      <div className="fallbackBadge">{badge}</div>
+
+      <div className="fallbackBody">
+        <div className="fallbackTitle">{title}</div>
+        <div
+          className="fallbackLine"
+          style={{
+            background: accent,
+            boxShadow: `0 0 30px ${accent}`,
+          }}
+        />
+        <div className="fallbackChip">Bluetooth 5.3</div>
+        <div className="fallbackChip">IPX5</div>
+        <div className="fallbackChip">PNG Export</div>
+      </div>
+    </div>
+  )
+}
+
+function SlideView({
+  src,
+  title,
+  accent,
+  badge,
+}: {
+  src: string
+  title: string
+  accent: string
+  badge: string
+}) {
+  const [imgError, setImgError] = useState(false)
+
+  if (imgError) {
+    return <FallbackSlide title={title} accent={accent} badge={badge} />
+  }
+
+  return (
+    <div className="slideImageWrap">
+      <div className="slideImageShell" style={{ position: "absolute", inset: 0, padding: 0, margin: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <img
+          src={src}
+          alt={title}
+          className="slideImage" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", display: "block" }}
+          onError={() => setImgError(true)}
+        />
+      </div>
+
+      <div className="slideOverlay">
+        <div className="slideBadge">{badge}</div>
+
+        <div className="slideBottom">
+          <div
+            className="slideAccent"
+            style={{
+              background: accent,
+              boxShadow: `0 0 22px ${accent}`,
+            }}
+          />
+          <div className="slideCaption">
+            <div className="slideTitle">{title}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}export default function Home() {
+  const router = useRouter()
+  const [lang, setLang] = useState<Lang>("ru")
+  const [showLangMenu, setShowLangMenu] = useState(false)
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [heroHover, setHeroHover] = useState("")
+  const [cursor, setCursor] = useState({ x: 0, y: 0 })
+
+  const t = dict[lang]
+  const activeSlide = slides[currentSlide]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
+    }, 3200)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      setCursor({ x: e.clientX, y: e.clientY })
+    }
+
+    window.addEventListener("mousemove", move)
+    return () => window.removeEventListener("mousemove", move)
+  }, [])
+
+  const cursorStyle = useMemo(
+    () => ({
+      left: `${cursor.x}px`,
+      top: `${cursor.y}px`,
+    }),
+    [cursor]
+  )
+
+  return (
+    <main className="page">
+      <div className="cursorGlow" style={cursorStyle} />
+
+      <style jsx>{`
+        .page {
+          height: 100vh;
+          overflow: hidden;
+          position: relative;
+          color: white;
+          font-family: Arial, sans-serif;
+          background:
+            radial-gradient(circle at 10% 12%, rgba(34, 211, 238, 0.14), transparent 24%),
+            radial-gradient(circle at 84% 16%, rgba(59, 130, 246, 0.14), transparent 24%),
+            radial-gradient(circle at 82% 82%, rgba(34, 197, 94, 0.1), transparent 24%),
+            linear-gradient(135deg, #030712 0%, #07111f 16%, #081425 30%, #0b1324 54%, #08101d 72%, #02050c 100%);
+        }
+
+        .page::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+          background-size: 34px 34px;
+          opacity: 0.2;
+          pointer-events: none;
+        }
+
+        .page::after {
+          content: "";
+          position: absolute;
+          right: -220px;
+          top: -180px;
+          width: 760px;
+          height: 760px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(34,211,238,0.08), transparent 66%);
+          filter: blur(34px);
+          pointer-events: none;
+        }
+
+        .cursorGlow {
+          position: fixed;
+          width: 320px;
+          height: 320px;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+          z-index: 1;
+          background: radial-gradient(circle, rgba(34,211,238,0.12), rgba(59,130,246,0.07), transparent 68%);
+          filter: blur(26px);
+        }
+
+        .container {
+          position: relative;
+          width: 100%;
+          max-width: 100vw;
+          z-index: 2;
+          max-width: 1440px;
+          height: 100vh;
+          margin: 0 auto;
+          padding: 20px 28px 18px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .topbar {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          margin-bottom: 16px;
+          flex: 0 0 auto;
+        }
+
+        .langWrap {
+          position: relative;
+        }
+
+        .langBtn {
+          min-width: 78px;
+          padding: 12px 16px;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.06);
+          color: white;
+          cursor: pointer;
+          font-weight: 900;
+          font-size: 14px;
+          box-shadow:
+            0 12px 28px rgba(0,0,0,0.22),
+            0 0 0 1px rgba(255,255,255,0.04) inset;
+          backdrop-filter: blur(14px);
+          transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .langBtn:hover {
+          transform: translateY(-2px);
+          background: rgba(255,255,255,0.08);
+        }.langMenu {
+          position: absolute;
+          top: 56px;
+          right: 0;
+          min-width: 108px;
+          border-radius: 16px;
+          background: rgba(10,18,32,0.95);
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: 0 26px 50px rgba(0,0,0,0.35);
+          overflow: hidden;
+          z-index: 10;
+          backdrop-filter: blur(14px);
+        }
+
+        .langItem {
+          width: 100%;
+          padding: 12px 14px;
+          border: none;
+          color: white;
+          cursor: pointer;
+          text-align: left;
+          font-weight: 800;
+          background: transparent;
+        }
+
+        .hero {
+          flex: 1 1 auto;
+          width: 100%;
+          max-width: 100%;
+          min-height: 0;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 620px;
+          gap: 38px;
+          align-items: center;
+          overflow: hidden;
+        }
+
+        .left {
+          min-width: 0;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding-right: 6px;
+          overflow: hidden;
+        }
+
+        .topCards {
+          height: 150px;
+          display: flex;
+          gap: 18px;
+          align-items: flex-end;
+          margin-bottom: 16px;
+          overflow: hidden;
+        }
+
+        .miniCard {
+          width: 210px;
+          height: 136px;
+          border-radius: 24px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.05);
+          box-shadow:
+            0 24px 46px rgba(0,0,0,0.28),
+            0 0 0 1px rgba(255,255,255,0.04) inset,
+            0 0 28px rgba(34,211,238,0.08);
+          backdrop-filter: blur(12px);
+          flex-shrink: 0;
+          position: relative;
+          transition: transform 0.28s ease, box-shadow 0.28s ease;
+        }
+
+        .miniCard::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.16), transparent 42%);
+          pointer-events: none;
+        }
+
+        .miniCard:hover {
+          box-shadow:
+            0 34px 56px rgba(0,0,0,0.34),
+            0 0 0 1px rgba(255,255,255,0.04) inset,
+            0 0 42px rgba(34,211,238,0.14);
+        }
+
+        .miniCard img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .miniCardLeft {
+  animation: floatTopA 4.8s ease-in-out infinite;
+  transform: rotate(-7deg);
+}
+
+        .miniCardRight {
+  animation: floatTopB 5s ease-in-out infinite;
+  transform: rotate(7deg);
+}
+
+        .title {
+          margin: 0 0 12px;
+          font-size: 82px;
+          line-height: 0.9;
+          font-weight: 900;
+          letter-spacing: -2px;
+          background: linear-gradient(90deg, #22c55e 0%, #22d3ee 34%, #60a5fa 76%, #93c5fd 100%);
+          -webkit-background-clip: text;
+          color: transparent;
+          filter: drop-shadow(0 0 20px rgba(34,211,238,0.14));
+          text-wrap: balance;
+        }
+
+        .subtitle {
+          margin: 0 0 24px;
+          max-width: 650px;
+          font-size: 22px;
+          line-height: 1.3;
+          color: #dbe4f0;
+          font-weight: 700;
+        }
+
+        .buttons {
+          display: flex;
+          gap: 16px;
+          flex-wrap: wrap;
+          margin-bottom: 24px;
+        }
+
+        .btn {
+          min-width: 220px;
+          padding: 18px 30px;
+          font-size: 22px;
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.14);
+          cursor: pointer;
+          color: white;
+          font-weight: 900;
+          letter-spacing: 0.2px;
+          transition:
+            transform 0.2s ease,box-shadow 0.22s ease,
+            filter 0.22s ease,
+            border-color 0.22s ease;
+          box-shadow:
+            0 20px 40px rgba(0,0,0,0.3),
+            0 0 0 1px rgba(255,255,255,0.05) inset,
+            0 0 24px rgba(255,255,255,0.05);
+          position: relative;
+                    overflow: hidden;
+overflow: hidden;
+          backdrop-filter: blur(10px);
+        }
+
+        .btn::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.22), transparent 42%);
+          opacity: 0.85;
+          pointer-events: none;
+        }
+
+        .btn::after {
+          content: "";
+          position: absolute;
+          inset: -40%;
+          background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 42%);
+          opacity: 0;
+          transition: opacity 0.24s ease;
+          pointer-events: none;
+        }
+
+        .btn:hover::after {
+          opacity: 1;
+        }
+
+        .btn:hover {
+          filter: brightness(1.06);
+          box-shadow:
+            0 28px 52px rgba(0,0,0,0.34),
+            0 0 36px rgba(255,255,255,0.08),
+            0 0 18px rgba(34,211,238,0.1);
+        }
+
+        .registerBtn {
+          background: linear-gradient(135deg, #06b6d4, #22d3ee 55%, #67e8f9);
+        }
+
+        .loginBtn {
+          background: linear-gradient(135deg, #f59e0b, #facc15 55%, #fb923c);
+        }
+
+        .marketRow {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 12px;
+          max-width: 760px;
+        }
+
+        .marketCard {
+          height: 64px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.05);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .marketCard:hover {
+          transform: translateY(-4px) scale(1.025);
+          box-shadow:
+            0 22px 38px rgba(0,0,0,0.28),
+            0 0 28px rgba(255,255,255,0.08);
+        }
+
+        .marketGlow {
+          position: absolute;
+          inset: 0;
+          opacity: 0.16;
+        }
+
+        .marketShine {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.16), transparent 44%);
+          pointer-events: none;
+        }
+
+        .marketLogo {
+          width: 80%;
+          height: 80%;
+          object-fit: contain;
+          object-position: center;
+          display: block;
+          margin: auto;
+        }
+
+        .right {
+          width: 100%;
+          max-width: 100%;
+          height: 100%;
+                              overflow: hidden !important;
+overflow: hidden !important;
+display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 0;
+        }
+
+        .sliderBlock {
+  display: flex !important;
+  justify-content: center !important;
+          width: 100%;
+          max-width: 520px;
+          height: 100%;
+                              overflow: hidden !important;
+overflow: hidden !important;
+min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          max-height: 760px;
+          margin: 0 auto;
+        }
+
+        .examples {
+          margin-bottom: 14px;
+          font-size: 18px;
+          font-weight: 900;
+          color: #e5e7eb;
+          text-transform: uppercase;
+          letter-spacing: 0.9px;
+          text-align: left;
+        }
+
+        .sliderBox {
+          flex: 1 1 auto;
+          min-height: 0;
+          max-height: none;
+          aspect-ratio: 1.7 / 3;
+                    width: 100%;
+          margin: 0 auto;
+border-radius: 34px;
+          overflow: hidden;
+overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.04);
+          box-shadow:
+            0 38px 90px rgba(0,0,0,0.42),0 0 0 1px rgba(255,255,255,0.04) inset,
+            0 0 60px rgba(34,211,238,0.08);
+          position: relative;
+          animation: breatheFrame 5.2s ease-in-out infinite;
+          display: flex;
+          transition: transform 0.18s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+          transform-style: preserve-3d;
+          will-change: transform;
+        }
+
+        .sliderBox:hover {
+          border-color: rgba(125,211,252,0.28);
+          box-shadow:
+            0 46px 100px rgba(0,0,0,0.46),
+            0 0 0 1px rgba(255,255,255,0.05) inset,
+            0 0 90px rgba(34,211,238,0.16);
+        }
+
+        .sliderBox::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.16), transparent 30%);
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .sliderBox::after {
+          content: none;
+        }
+
+        .slideImageWrap {
+          width: 100%;
+          height: 100%;
+          flex: 1;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        }
+
+        .slideImageShell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+          position: absolute;
+          inset: 0;
+          padding: 0;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .slideImage {
+          width: auto !important;
+          height: auto !important;
+          max-width: 100% !important;
+          max-height: 100% !important;
+          object-fit: contain !important;
+          object-position: center center !important;
+          display: block;
+          filter: drop-shadow(0 22px 42px rgba(0,0,0,0.3));
+          transition: none !important;
+        }
+
+        .sliderBox:hover .slideImage {
+          transform: none !important;
+        }
+
+        .slideOverlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 18px;
+          box-sizing: border-box;
+          pointer-events: none;
+          z-index: 3;
+        }
+
+        .slideBadge {
+          align-self: flex-start;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: rgba(12,20,34,0.72);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: white;
+          font-weight: 900;
+          font-size: 14px;
+          letter-spacing: 0.3px;
+          backdrop-filter: blur(12px);
+          box-shadow: 0 14px 24px rgba(0,0,0,0.25);
+        }
+
+        .slideBottom {
+          display: grid;
+          gap: 12px;
+        }
+
+        .slideAccent {
+          width: 120px;
+          height: 10px;
+          border-radius: 999px;
+        }
+
+        .slideCaption {
+          padding: 16px 18px 38px;
+          border-radius: 20px;
+          background: rgba(7,14,27,0.48);
+          border: 1px solid rgba(255,255,255,0.1);
+          backdrop-filter: blur(16px);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.22);
+        }
+
+        .slideTitle {
+          font-size: 28px;
+          line-height: 1.1;
+          font-weight: 900;
+        }
+
+        .dots {
+          position: absolute;
+          left: 18px;
+          right: 18px;
+          bottom: 16px;
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          z-index: 5;
+        }
+
+        .dot {
+          height: 10px;
+          border-radius: 999px;
+          transition: 0.24s ease;
+          box-shadow: 0 0 10px rgba(255,255,255,0.08);
+        }.fallback {
+          width: 100%;
+          height: 100%;
+          background:
+            radial-gradient(circle at top left, rgba(255,255,255,0.18), transparent 28%),
+            linear-gradient(135deg, #0a1222, #173b79, #111827);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 24px;
+          box-sizing: border-box;
+          position: relative;
+        }
+
+        .fallbackGlow {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent 32%);
+          pointer-events: none;
+        }
+
+        .fallbackBadge {
+          align-self: flex-start;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: rgba(15,23,42,0.72);
+          border: 1px solid rgba(255,255,255,0.12);
+          font-size: 14px;
+          font-weight: 900;
+          z-index: 1;
+        }
+
+        .fallbackBody {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .fallbackTitle {
+          font-size: 34px;
+          line-height: 1.03;
+          font-weight: 900;
+          color: white;
+        }
+
+        .fallbackLine {
+          width: 140px;
+          height: 10px;
+          border-radius: 999px;
+        }
+
+        .fallbackChip {
+          padding: 10px 14px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.08);
+          color: #e5e7eb;
+          font-weight: 800;
+          font-size: 14px;
+          width: fit-content;
+        }
+
+        .slideImageWrap {
+          width: 100%;
+          height: 100%;
+          flex: 1;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+        }
+
+        .slideImageShell {
+          position: absolute;
+          inset: 0;
+          padding: 0;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+        .slideImageShell .slideImage,
+        .slideImage {
+          width: auto !important;
+          height: auto !important;
+          max-width: 100% !important;
+          max-height: 100% !important;
+          object-fit: contain !important;
+          object-position: center center !important;
+          display: block;
+          filter: drop-shadow(0 22px 42px rgba(0,0,0,0.3));
+          transition: none !important;
+        }
+
+        .sliderBox:hover .slideImage {
+          transform: none !important;
+        }
+
+         floatTopA {
+          0% {
+            transform: translateY(0px) scale(1) rotate(-7deg);
+          }
+          50% {
+            transform: translateY(-12px) scale(1.04) rotate(-5deg);
+          }
+          100% {
+            transform: translateY(0px) scale(1) rotate(-7deg);
+          }
+        }
+
+         floatTopA {
+  0% {
+    transform: translateY(0px) scale(1) rotate(-7deg);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.04) rotate(-5deg);
+  }
+  100% {
+    transform: translateY(0px) scale(1) rotate(-7deg);
+  }
+}
+
+ floatTopA {
+  0% {
+    transform: translateY(0px) scale(1) rotate(-7deg);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.04) rotate(-5deg);
+  }
+  100% {
+    transform: translateY(0px) scale(1) rotate(-7deg);
+  }
+}
+
+ floatTopB {
+          0% {
+            transform: translateY(0px) scale(1) rotate(7deg);
+          }
+          50% {
+            transform: translateY(12px) scale(1.04) rotate(5deg);
+          }
+          100% {
+            transform: translateY(0px) scale(1) rotate(7deg);
+          }
+        }
+
+        @keyframes breatheFrame {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.012);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @media (max-width: 1380px) {
+          .hero {
+            grid-template-columns: minmax(0, 1fr) 560px;
+            gap: 30px;
+          }
+
+          .title {
+            font-size: 72px;
+          }
+
+          .subtitle {
+            font-size: 21px;
+          }
+
+          .miniCard {
+            width: 190px;
+            height: 128px;
+          }
+        }
+
+        @media (max-width: 1120px) {
+          .page {
+            height: auto;
+            min-height: 100vh;
+            overflow: auto;
+          }
+
+          .container {
+            height: auto;
+            min-height: 100vh;
+            overflow: visible;
+          }
+
+          .hero {
+            grid-template-columns: 1fr;
+            gap: 28px;
+          }
+
+          .left {
+            text-align: center;
+            padding-right: 0;
+            overflow: visible;
+          }
+
+          .topCards {
+            justify-content: center;
+          }
+
+          .subtitle {
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          .buttons {
+            justify-content: center;
+          }
+
+          .marketRow {
+            margin: 0 auto;
+          }
+
+          .examples {
+            text-align: center;
+          }
+
+          .sliderBlock {
+            height: 760px;
+            max-width: 760px;
+            margin: 0 auto;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .container {
+            padding: 16px 14px 24px;
+          }
+
+          .topbar {
+            margin-bottom: 12px;
+          }.topCards {
+            gap: 12px;
+            height: auto;
+            margin-bottom: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+          }
+
+          .miniCard {
+            width: 44vw;
+            max-width: 150px;
+            height: auto;
+            aspect-ratio: 1.7 / 3;
+            border-radius: 20px;
+          }
+
+          .title {
+            font-size: 42px;
+            line-height: 1;
+            letter-spacing: -1px;
+            max-width: 100%;
+            word-break: break-word;
+          }
+
+          .subtitle {
+            font-size: 16px;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            max-width: 100%;
+          }
+
+          .buttons {
+            gap: 12px;
+            margin-bottom: 22px;
+            width: 100%;
+          }
+
+          .btn {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            font-size: 20px;
+            padding: 16px 20px;
+            border-radius: 16px;
+          }
+
+          .marketRow {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+          }
+
+          .marketCard {
+          height: 64px;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.05);
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+          .marketLogo {
+          width: 80%;
+          height: 80%;
+          object-fit: contain;
+          object-position: center;
+          display: block;
+          margin: auto;
+        }
+
+          .sliderBlock {
+            width: 100%;
+            height: auto;
+            max-width: 520px;
+            margin: 0 auto;
+          }
+
+          .sliderBox {
+            min-height: auto;
+            max-height: none;
+            aspect-ratio: 1.7 / 3;
+            border-radius: 24px;
+          }
+
+          .slideImageShell {
+          position: absolute;
+          inset: 0;
+          padding: 0;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
+          .slideCaption {
+            padding: 14px 14px 34px;
+            border-radius: 16px;
+          }
+
+          .slideTitle {
+            font-size: 20px;
+          }
+
+          .examples {
+            font-size: 15px;
+          }
+
+          .cursorGlow {
+            display: none;
+          }
+          
+        
+        .container,
+        .hero,
+        .left,
+        .right,
+        .sliderBlock,
+        .sliderBox {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .container::-webkit-scrollbar,
+        .hero::-webkit-scrollbar,
+        .left::-webkit-scrollbar,
+        .right::-webkit-scrollbar,
+        .sliderBlock::-webkit-scrollbar,
+        .sliderBox::-webkit-scrollbar {
+          width: 0 !important;
+          height: 0 !important;
+          display: none !important;
+          background: transparent !important;
+        }
+.right::-webkit-scrollbar,
+        .sliderBlock::-webkit-scrollbar,
+        .sliderBox::-webkit-scrollbar {
+          display: none;
+          width: 0;
+          height: 0;
+        }
+.sliderBox {
+  width: 100% !important;
+  max-width: 420px !important;
+  aspect-ratio: 1 / 1.7 !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  display: flex !important;
+  animation: none !important;
+}
+          .sliderBox::before,
+          .sliderBox::after {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      <div className="container">
+        <div className="topbar">
+          <div className="langWrap">
+            <button
+              className="langBtn"
+              onClick={() => setShowLangMenu((prev) => !prev)}
+            >
+              {lang.toUpperCase()}
+            </button>
+
+            {showLangMenu && (
+              <div className="langMenu">
+                {(["ru", "uz", "en"] as Lang[]).map((item) => (
+                  <button
+                    key={item}
+                    className="langItem"
+                    onClick={() => {
+                      setLang(item)
+                      setShowLangMenu(false)
+                    }}
+                    style={{
+                      background:
+                        item === lang ? "rgba(59,130,246,0.2)" : "transparent",
+                    }}
+                  >
+                    {item.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="hero">
+          <div className="left">
+            <div className="topCards">
+              <div className="miniCard miniCardLeft">
+                <img src={topCards[0].src} alt={topCards[0].alt} />
+              </div>
+
+              <div className="miniCard miniCardRight">
+                <img src={topCards[1].src} alt={topCards[1].alt} />
+              </div>
+            </div>
+
+            <h1 className="title">{t.title}</h1>
+            <p className="subtitle">{t.subtitle}</p>
+
+            <div className="buttons">
+              <button
+                className="btn registerBtn"
+                onClick={() => router.push("/register")}
+                onMouseEnter={() => setHeroHover("register")}
+                onMouseLeave={() => setHeroHover("")}
+                style={{
+                  transform:
+                    heroHover === "register"
+                      ? "translateY(-6px) scale(1.04)"
+                      : "translateY(0) scale(1)",
+                }}
+              >
+                {t.register}
+              </button>
+
+              <button
+                className="btn loginBtn"
+                onClick={() => router.push("/login")}
+                onMouseEnter={() => setHeroHover("login")}onMouseLeave={() => setHeroHover("")}
+                style={{
+                  transform:
+                    heroHover === "login"
+                      ? "translateY(-6px) scale(1.04)"
+                      : "translateY(0) scale(1)",
+                }}
+              >
+                {t.login}
+              </button>
+            </div>
+
+            <div className="marketRow">
+              {marketplaces.map((item) => (
+                <div
+                  key={item.name}
+                  className="marketCard"
+                  style={{
+                    boxShadow: `0 14px 30px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 24px ${item.glow}`,
+                  }}
+                >
+                  <div
+                    className="marketGlow"
+                    style={{ background: item.color }}
+                  />
+                  <div className="marketShine" />
+                  <img
+                    src={item.logo}
+                    alt={item.name}
+                    className="marketLogo"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="right">
+            <div className="sliderBlock" style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+              <div className="examples" style={{ width: "340px", margin: "0 auto 14px", textAlign: "center" }}>{t.examples}</div>
+
+              <div
+  className="sliderBox"
+  style={{
+    width: "340px",
+    aspectRatio: "1.9 / 3"
+  }}
+  onMouseMove={(e) => {
+                  const box = e.currentTarget
+                  const rect = box.getBoundingClientRect()
+
+                  const x = e.clientX - rect.left
+                  const y = e.clientY - rect.top
+
+                  const rotateY = ((x / rect.width) - 0.5) * 10
+                  const rotateX = ((y / rect.height) - 0.5) * -10
+
+                  box.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`
+                  box.style.setProperty("--mx", `${x}px`)
+                  box.style.setProperty("--my", `${y}px`)
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform =
+                    "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)"
+                  e.currentTarget.style.setProperty("--mx", "50%")
+                  e.currentTarget.style.setProperty("--my", "50%")
+                }}
+              >
+                <SlideView
+                  src={activeSlide.src}
+                  title={t[activeSlide.key]}
+                  accent={activeSlide.accent}
+                  badge={t.badge}
+                />
+
+                <div className="dots">
+                  {slides.map((slide, index) => (
+                    <div
+                      key={slide.key}
+                      className="dot"
+                      style={{
+                        width: currentSlide === index ? "30px" : "10px",
+                        background:
+                          currentSlide === index
+                            ? "linear-gradient(135deg,#22c55e,#22d3ee)"
+                            : "rgba(255,255,255,0.45)",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  )
+}
