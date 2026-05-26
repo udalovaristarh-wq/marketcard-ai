@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MarketCard AI — Премиальные AI-карточки для маркетплейсов",
+  title: "MarketCard AI - Создавай продающие карточки за 30 секунд",
   description:
-    "Превращаем одно фото в продающую карточку для Uzum, Wildberries, Ozon и Yandex Market. AI-генерация за 25 секунд.",
+    "ИИ-сервис для создания инфографики и продающих карточек для Wildberries, Ozon, Uzum и Yandex Market. Премиум качество за секунды.",
   keywords: [
     "маркетплейс",
     "карточки товаров",
@@ -13,11 +14,13 @@ export const metadata: Metadata = {
     "Uzum",
     "Wildberries",
     "Ozon",
+    "Yandex Market",
   ],
   authors: [{ name: "MarketCard AI" }],
   openGraph: {
-    title: "MarketCard AI — Премиальные AI-карточки для маркетплейсов",
-    description: "Превращаем одно фото в продающую карточку за 25 секунд",
+    title: "MarketCard AI - Создавай продающие карточки за 30 секунд",
+    description:
+      "AI-платформа для премиальной инфографики и запуска товаров на маркетплейсах.",
     type: "website",
   },
 };
@@ -31,7 +34,7 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html lang="ru" className="dark bg-background">
