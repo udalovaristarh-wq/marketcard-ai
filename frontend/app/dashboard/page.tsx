@@ -1798,6 +1798,113 @@ const handleDownloadPng = async () => {
     },
   ]
 
+  const closeDashboardMenu = () => {
+    if (isMobile) setIsMobileMenuOpen(false)
+  }
+
+  const selectDashboardPage = (page: DashboardPageKey) => {
+    setActivePage(page)
+    closeDashboardMenu()
+  }
+
+  const openSourcingLinks = () => {
+    const sites = [
+      ["1688", "https://www.1688.com", "Китайский оптовый маркетплейс"],
+      ["Alibaba", "https://www.alibaba.com", "Международные поставщики"],
+      ["Taobao", "https://world.taobao.com", "Товары и тренды Китая"],
+      ["Made-in-China", "https://www.made-in-china.com", "Фабрики и производство"],
+      ["Global Sources", "https://www.globalsources.com", "B2B поставщики"],
+      ["DHgate", "https://www.dhgate.com", "Мелкий опт"],
+      ["Курс юаня", "https://www.google.com/search?q=курс+юаня+к+суму", "CNY к UZS"],
+    ]
+
+    const modal = document.createElement("div")
+    modal.className = "mc-dashboard-native-modal"
+    modal.innerHTML = `
+      <div class="mc-dashboard-native-modal-card">
+        <div class="mc-dashboard-native-modal-kicker">MarketCard AI sourcing</div>
+        <h2>Поиск и закуп товара</h2>
+        <p>Быстрый переход к поставщикам, фабрикам и площадкам для запуска товаров.</p>
+        <div class="mc-dashboard-native-modal-grid">
+          ${sites
+            .map(
+              ([name, url, description]) => `
+                <button type="button" data-url="${url}">
+                  <strong>${name}</strong>
+                  <span>${description}</span>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+        <button class="mc-dashboard-native-modal-close" type="button">Закрыть</button>
+      </div>
+    `
+
+    modal.querySelectorAll<HTMLButtonElement>("[data-url]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const url = button.dataset.url
+        if (url) window.open(url, "_blank")
+      })
+    })
+
+    modal.querySelector(".mc-dashboard-native-modal-close")?.addEventListener("click", () => {
+      modal.remove()
+    })
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) modal.remove()
+    })
+
+    document.body.appendChild(modal)
+  }
+
+  const openDeficitProducts = async () => {
+    const niche = window.prompt("Введите нишу для анализа дефицита товаров на Uzum")
+    if (!niche?.trim()) return
+
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/deficit-products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          query: niche.trim(),
+          limit: 100,
+          marketplace: "uzum",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || "Ошибка анализа")
+
+      const fileUrl = data.download_url?.startsWith("/")
+        ? data.download_url
+        : `/api${data.download_url || ""}`
+      window.open(fileUrl, "_blank")
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Ошибка анализа")
+    }
+  }
+
+  const mainDashboardNav = [
+    { key: "generator" as const, label: "Создать карточку", meta: "AI", onClick: () => selectDashboardPage("generator") },
+    { key: "listing" as const, label: "SEO и описание", meta: listingReady ? "1" : "", onClick: () => selectDashboardPage("listing") },
+    { key: "economy" as const, label: "Экономика товара", meta: "", onClick: () => selectDashboardPage("economy") },
+    { key: "audit" as const, label: "Оценка карточки", meta: String(profile?.audit_credits ?? 0), onClick: () => selectDashboardPage("audit") },
+    { key: "intelligence" as const, label: "Аналитика товара", meta: "", onClick: () => selectDashboardPage("intelligence") },
+  ]
+
+  const toolDashboardNav = [
+    { label: "ABC анализ", meta: "URL", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
+    { label: "ИКПУ", meta: "TASNIF", onClick: () => window.open("https://tasnif.soliq.uz", "_blank") },
+    { label: "Закуп товара", meta: "B2B", onClick: openSourcingLinks },
+    { label: "DIDOX / ЭДО", meta: "DOC", onClick: () => window.open("https://didox.uz", "_blank") },
+    { label: "Дефицит Uzum", meta: "XLS", onClick: openDeficitProducts },
+  ]
+
 if (!authChecked) return null 
   return (
     <>
@@ -1858,7 +1965,84 @@ if (!authChecked) return null
 )}
 
  <aside
-  className="mc-dashboard-sidebar"
+  className="mc-dashboard-sidebar mc-dashboard-sidebar-v2"
+  style={{
+    display: isMobile ? (isMobileMenuOpen ? "flex" : "none") : "flex",
+    position: isMobile ? "fixed" : "relative",
+    top: isMobile ? "0" : undefined,
+    left: isMobile ? "0" : undefined,
+    zIndex: isMobile ? 9998 : undefined,
+    width: isMobile ? "300px" : "320px",
+    minWidth: isMobile ? "300px" : "320px",
+  }}
+>
+  <div className="mc-dashboard-brand">
+    <div className="mc-dashboard-brand-mark">MC</div>
+    <div>
+      <strong>MarketCard</strong>
+      <span>AI</span>
+    </div>
+  </div>
+
+  <nav className="mc-dashboard-nav" aria-label="Главные разделы">
+    <div className="mc-dashboard-nav-label">Основное</div>
+    {mainDashboardNav.map((item) => (
+      <button
+        key={item.key}
+        type="button"
+        onClick={item.onClick}
+        className={activePage === item.key ? "mc-dashboard-nav-item is-active" : "mc-dashboard-nav-item"}
+      >
+        <span className="mc-dashboard-nav-dot" />
+        <span>{item.label}</span>
+        {item.meta && <b>{item.meta}</b>}
+      </button>
+    ))}
+  </nav>
+
+  <nav className="mc-dashboard-nav mc-dashboard-nav-tools" aria-label="Инструменты">
+    <div className="mc-dashboard-nav-label">Инструменты</div>
+    {toolDashboardNav.map((item) => (
+      <button
+        key={item.label}
+        type="button"
+        onClick={() => {
+          item.onClick()
+          closeDashboardMenu()
+        }}
+        className="mc-dashboard-nav-item"
+      >
+        <span className="mc-dashboard-nav-dot" />
+        <span>{item.label}</span>
+        <b>{item.meta}</b>
+      </button>
+    ))}
+  </nav>
+
+  <div className="mc-dashboard-sidebar-spacer" />
+
+  <div className="mc-dashboard-credit-card">
+    <div className="mc-dashboard-credit-card-top">
+      <span>Кредиты</span>
+      <strong>{dashboardLeft}/{dashboardTotal || 0}</strong>
+    </div>
+    <div className="mc-dashboard-credit-bar">
+      <span style={{ width: `${Math.max(4, 100 - dashboardProgress)}%` }} />
+    </div>
+    <button type="button" onClick={() => setShowTariffModal(true)}>
+      Пополнить тариф
+    </button>
+  </div>
+
+  <div className="mc-dashboard-sidebar-bottom">
+    <button type="button" onClick={() => setShowTariffModal(true)}>Тарифы</button>
+    <button type="button" onClick={() => window.open("https://t.me/marketcardai_support_bot", "_blank")}>Поддержка</button>
+    <button type="button" onClick={handleLogout}>Выйти</button>
+  </div>
+</aside>
+
+ <aside
+  className="mc-dashboard-sidebar mc-dashboard-sidebar-legacy"
   style={{
     display: isMobile ? (isMobileMenuOpen ? "block" : "none") : "block",
     position: isMobile ? "fixed" : "relative",
@@ -2353,6 +2537,54 @@ if (!authChecked) return null
     maxHeight: "none",
   }}
 >
+  <header className="mc-dashboard-topbar">
+    <label className="mc-dashboard-topbar-search">
+      <span>Поиск</span>
+      <input type="text" placeholder="Поиск карточек, шаблонов, аудитов..." readOnly />
+    </label>
+
+    <div className="mc-dashboard-topbar-actions">
+      <button
+        type="button"
+        className="mc-dashboard-topbar-primary"
+        onClick={() => selectDashboardPage("generator")}
+      >
+        Новая карточка
+      </button>
+      <button
+        type="button"
+        className="mc-dashboard-topbar-icon"
+        onClick={() => setShowLangMenu((prev) => !prev)}
+      >
+        {lang.toUpperCase()}
+      </button>
+      <button type="button" className="mc-dashboard-topbar-user" onClick={() => setShowTariffModal(true)}>
+        <span>{dashboardInitial}</span>
+        <div>
+          <strong>{dashboardName}</strong>
+          <small>{profile?.tariff_name || "без тарифа"}</small>
+        </div>
+      </button>
+    </div>
+
+    {showLangMenu && (
+      <div className="mc-dashboard-lang-menu">
+        {(["ru", "uz", "en"] as Lang[]).map((item: Lang) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => {
+              setLang(item)
+              setShowLangMenu(false)
+            }}
+          >
+            {item.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    )}
+  </header>
+
   {false && (
   <div
     style={{
@@ -2790,6 +3022,7 @@ if (!authChecked) return null
       </div>
     </div>
 
+    <div className="mc-dashboard-workspace">
     {activePage === "generator" && (
       <div
         style={{
@@ -3851,6 +4084,7 @@ if (listingLang === "uz" && translatedListing) {
         </div>
       </div>
     )}
+    </div>
   </div>
 </section>
 </div>
