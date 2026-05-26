@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import PremiumAboutPage from "./components/premium/PremiumAboutPage";
+import AboutLanding from "./components/v0/AboutLanding";
 
 export const metadata: Metadata = {
-  title: "MarketCard AI — Premium AI cards for marketplaces",
+  title: "MarketCard AI — Премиальные AI-карточки для маркетплейсов",
   description:
-    "MarketCard AI превращает одно фото товара в продающие карточки, SEO, аудит и visual assets для Uzum, Wildberries, Ozon и Yandex Market.",
+    "Превращаем одно фото в продающую карточку для Uzum, Wildberries, Ozon и Yandex Market. AI-генерация за 25 секунд.",
 };
 
 export default function AboutPage() {
-  return <PremiumAboutPage />;
+  return <AboutLanding />;
 }

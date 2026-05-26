@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -7,6 +8,13 @@ import { heroShowcase, marketplaceLogos } from "./aboutContent";
 import styles from "./premium-about.module.css";
 
 export default function PremiumHero() {
+  const [activeCard, setActiveCard] = useState(0);
+  const orderedShowcase = [
+    ...heroShowcase.slice(activeCard, activeCard + 1),
+    ...heroShowcase.slice(activeCard + 1),
+    ...heroShowcase.slice(0, activeCard),
+  ];
+
   return (
     <section className={styles.heroSection}>
       <div className={styles.heroVideoLayer} aria-hidden="true">
@@ -16,6 +24,7 @@ export default function PremiumHero() {
       </div>
       <div className={styles.heroGradientLayer} aria-hidden="true" />
       <div className={styles.heroGridLayer} aria-hidden="true" />
+      <div className={styles.heroParticles} aria-hidden="true" />
 
       <motion.header
         className={styles.topbar}
@@ -24,13 +33,22 @@ export default function PremiumHero() {
         transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
       >
         <Link href="/" className={styles.brandMark} aria-label="MarketCard AI">
-          <span>MC</span>
+          <span className={styles.brandLogoFrame}>
+            <Image
+              src="/logo.jpg"
+              alt=""
+              width={44}
+              height={44}
+              className={styles.brandLogo}
+              priority
+            />
+          </span>
           <strong>MarketCard AI</strong>
         </Link>
         <nav className={styles.heroNav} aria-label="About navigation">
           <a href="#compare">До/После</a>
           <a href="#results">Результаты</a>
-          <a href="#pipeline">Pipeline</a>
+          <a href="#pipeline">Пайплайн</a>
         </nav>
         <Link href="/login" className={styles.loginButton}>
           Войти
@@ -75,6 +93,12 @@ export default function PremiumHero() {
               </div>
             ))}
           </div>
+
+          <div className={styles.heroMetricDock} aria-label="MarketCard AI launch system">
+            <span>AI-визуал</span>
+            <span>SEO-аудит</span>
+            <span>Логика маркетплейса</span>
+          </div>
         </motion.div>
 
         <motion.div
@@ -85,35 +109,41 @@ export default function PremiumHero() {
         >
           <div className={styles.visualAura} aria-hidden="true" />
           <div className={styles.generatorWindow}>
-            <div className={styles.windowChrome}>
-              <span />
-              <span />
-              <span />
-              <strong>MarketCard AI Studio</strong>
-            </div>
+            <div className={styles.visualMesh} aria-hidden="true" />
+            <div className={styles.generatorBeam} aria-hidden="true" />
+            <div className={styles.visualTitle}>Студия генерации</div>
             <div className={styles.visualStack}>
-              {heroShowcase.map((src, index) => (
-                <div
-                  key={src}
-                  className={styles.showcaseCard}
-                  style={{ zIndex: heroShowcase.length - index }}
-                >
-                  <Image
-                    src={src}
-                    alt="Пример карточки MarketCard AI"
-                    width={280}
-                    height={360}
-                    priority={index === 0}
-                  />
-                </div>
-              ))}
+              {orderedShowcase.map((src, slot) => {
+                const originalIndex = heroShowcase.indexOf(src);
+
+                return (
+                  <button
+                    key={src}
+                    type="button"
+                    className={styles.showcaseCard}
+                    data-slot={slot}
+                    onClick={(event) => {
+                      setActiveCard(originalIndex);
+                      event.currentTarget.blur();
+                    }}
+                    aria-label="Показать эту карточку первой"
+                    style={{ zIndex: heroShowcase.length - slot }}
+                  >
+                    <Image
+                      src={src}
+                      alt="Пример карточки MarketCard AI"
+                      width={280}
+                      height={360}
+                      priority={slot === 0}
+                    />
+                  </button>
+                );
+              })}
             </div>
-            <div className={styles.promptPanel}>
-              <span>Prompt pipeline</span>
-              <strong>product photo → AI art direction → marketplace-ready card</strong>
-              <div className={styles.aiProgress}>
-                <i />
-              </div>
+            <div className={styles.showcaseDots} aria-hidden="true">
+              {heroShowcase.map((src, index) => (
+                <span key={src} data-active={index === activeCard} />
+              ))}
             </div>
           </div>
           <div className={styles.orbitBadge}>

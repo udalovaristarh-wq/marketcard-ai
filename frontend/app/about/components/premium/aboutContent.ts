@@ -7,9 +7,9 @@ export const marketplaceLogos = [
 
 export const heroShowcase = [
   "/examples/1.webp",
+  "/examples/4.webp",
   "/examples/2.webp",
   "/examples/3.webp",
-  "/examples/4.webp",
 ];
 
 export const stats = [
@@ -38,19 +38,19 @@ export const stats = [
 
 export const pipelineSteps = [
   {
-    title: "Product intake",
+    title: "Приём товара",
     text: "Система принимает фото, категорию, бренд, преимущества, цену и marketplace-контекст.",
   },
   {
-    title: "Market logic",
+    title: "Логика рынка",
     text: "AI выбирает selling angle, формат, плотность информации и правила площадки.",
   },
   {
-    title: "AI art direction",
+    title: "AI-арт-дирекшн",
     text: "Генерируется стиль: свет, композиция, акценты, визуальная иерархия и typography rules.",
   },
   {
-    title: "Image generation",
+    title: "Генерация изображений",
     text: "Создаются hero, benefits, specs, usage и trust-слайды для карточки товара.",
   },
   {
@@ -61,19 +61,19 @@ export const pipelineSteps = [
 
 export const ecosystemCards = [
   {
-    title: "AI Card Studio",
+    title: "Студия карточек",
     text: "Превращает фото товара в серию карточек с премиальной подачей и ясной структурой.",
-    accent: "Visual",
+    accent: "Визуал",
   },
   {
-    title: "Marketplace Brain",
+    title: "Маркетплейс-мозг",
     text: "Учитывает формат, язык, конкуренцию, ожидания покупателя и правила площадки.",
-    accent: "Logic",
+    accent: "Логика",
   },
   {
-    title: "Launch OS",
+    title: "ОС запуска",
     text: "Собирает визуал, SEO, аудит и рекомендации в один поток запуска товара.",
-    accent: "Ops",
+    accent: "Запуск",
   },
 ];
 
@@ -84,7 +84,7 @@ export const results = [
     quote:
       "Загрузили обычное фото наушников и получили серию, которую не стыдно ставить в топ выдачи. Карточка стала выглядеть как бренд.",
     metric: "+38% CTR",
-    image: "/works/top1.jpg",
+    image: "/reviews/review-1.png",
   },
   {
     marketplace: "Wildberries",
@@ -92,7 +92,7 @@ export const results = [
     quote:
       "Раньше дизайнер собирал карточки два дня. Сейчас тестируем несколько визуальных гипотез за вечер и быстрее выводим SKU.",
     metric: "5× быстрее",
-    image: "/works/work3.jpg",
+    image: "/reviews/review-4.png",
   },
   {
     marketplace: "Ozon",
@@ -100,11 +100,11 @@ export const results = [
     quote:
       "MarketCard AI сразу думает как продавец: где показать выгоду, где доверие, где характеристики. Это не просто картинка.",
     metric: "+21% в корзину",
-    image: "/works/work4.jpg",
+    image: "/reviews/review-7.png",
   },
 ];
 
 export const beforeAfter = {
-  before: "/works/work1.jpg",
+  before: "/about/lacoste-lhomme-source.png",
   after: "/examples/2.webp",
 };
