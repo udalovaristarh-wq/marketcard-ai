@@ -46,7 +46,7 @@ import DashboardOnboarding from "../components/DashboardOnboarding"
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
-type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu" | "audit" | "intelligence" | "intelligence"
+type DashboardPageKey = "generator" | "video" | "economy" | "listing" | "ikpu" | "audit" | "intelligence" | "intelligence"
 type LanguageMode = "ru" | "uz" | "both"
 
 type ProfileResponse = {
@@ -774,6 +774,7 @@ function CardTextBlock({
         {title}
       </div>
       <div
+        className="mc-payment-grid"
         style={{
           fontSize: "18px",
           lineHeight: 1.7,
@@ -999,6 +1000,12 @@ export default function DashboardPage() {
   const [selectedFixIndex, setSelectedFixIndex] = useState(0)
   const [fixedImages, setFixedImages] = useState<Record<number, string>>({})
   const [isGenerating, setIsGenerating] = useState(false)
+  const [videoPrompt, setVideoPrompt] = useState("")
+  const [videoStyle, setVideoStyle] = useState("cinematic")
+  const [videoAspect, setVideoAspect] = useState("9:16")
+  const [videoMarketplace, setVideoMarketplace] = useState<MarketplaceKey>("uzum")
+  const [isVideoGenerating, setIsVideoGenerating] = useState(false)
+  const [videoResultReady, setVideoResultReady] = useState(false)
   const [listingData, setlistingData] = useState<ListingResponse | null>(null)
   const [listingLang, setListingLang] = useState<"ru" | "uz">("ru")
   const [translatedListing, setTranslatedListing] = useState<any | null>(null)
@@ -1778,6 +1785,12 @@ const handleDownloadPng = async () => {
       detail: "для проверки инфографики",
       tone: "pink",
     },
+    {
+      label: "AI видео",
+      value: videoResultReady ? "1" : "0",
+      detail: "короткие промо-ролики товара",
+      tone: "amber",
+    },
   ]
 
   const dashboardTips = [
@@ -1805,6 +1818,15 @@ const handleDownloadPng = async () => {
   const selectDashboardPage = (page: DashboardPageKey) => {
     setActivePage(page)
     closeDashboardMenu()
+  }
+
+  const handleVideoGenerate = () => {
+    setIsVideoGenerating(true)
+    setVideoResultReady(false)
+    window.setTimeout(() => {
+      setIsVideoGenerating(false)
+      setVideoResultReady(true)
+    }, 1800)
   }
 
   const openSourcingLinks = () => {
@@ -1890,20 +1912,59 @@ const handleDownloadPng = async () => {
   }
 
   const mainDashboardNav = [
-    { key: "generator" as const, label: "Создать карточку", meta: "AI", onClick: () => selectDashboardPage("generator") },
-    { key: "listing" as const, label: "SEO и описание", meta: listingReady ? "1" : "", onClick: () => selectDashboardPage("listing") },
-    { key: "economy" as const, label: "Экономика товара", meta: "", onClick: () => selectDashboardPage("economy") },
-    { key: "audit" as const, label: "Оценка карточки", meta: String(profile?.audit_credits ?? 0), onClick: () => selectDashboardPage("audit") },
-    { key: "intelligence" as const, label: "Аналитика товара", meta: "", onClick: () => selectDashboardPage("intelligence") },
+    { key: "generator" as const, label: "Создать карточку", meta: "AI", icon: "AI", onClick: () => selectDashboardPage("generator") },
+    { key: "video" as const, label: "AI видео", meta: "NEW", icon: "VI", onClick: () => selectDashboardPage("video") },
+    { key: "listing" as const, label: "SEO и описание", meta: listingReady ? "1" : "", icon: "SE", onClick: () => selectDashboardPage("listing") },
+    { key: "economy" as const, label: "Экономика товара", meta: "", icon: "EC", onClick: () => selectDashboardPage("economy") },
+    { key: "audit" as const, label: "Оценка карточки", meta: String(profile?.audit_credits ?? 0), icon: "AU", onClick: () => selectDashboardPage("audit") },
+    { key: "intelligence" as const, label: "Аналитика товара", meta: "", icon: "BI", onClick: () => selectDashboardPage("intelligence") },
   ]
 
   const toolDashboardNav = [
-    { label: "ABC анализ", meta: "URL", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
-    { label: "ИКПУ", meta: "TASNIF", onClick: () => window.open("https://tasnif.soliq.uz", "_blank") },
-    { label: "Закуп товара", meta: "B2B", onClick: openSourcingLinks },
-    { label: "DIDOX / ЭДО", meta: "DOC", onClick: () => window.open("https://didox.uz", "_blank") },
-    { label: "Дефицит Uzum", meta: "XLS", onClick: openDeficitProducts },
+    { label: "ABC анализ", meta: "URL", icon: "AB", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
+    { label: "ИКПУ", meta: "TASNIF", icon: "IK", onClick: () => window.open("https://tasnif.soliq.uz", "_blank") },
+    { label: "Закуп товара", meta: "B2B", icon: "BZ", onClick: openSourcingLinks },
+    { label: "DIDOX / ЭДО", meta: "DOC", icon: "DX", onClick: () => window.open("https://didox.uz", "_blank") },
+    { label: "Дефицит Uzum", meta: "XLS", icon: "DF", onClick: openDeficitProducts },
   ]
+
+  const dashboardSectionMeta: Record<DashboardPageKey, { title: string; subtitle: string; badge: string }> = {
+    generator: {
+      title: "AI генератор карточек",
+      subtitle: "Создавайте премиальную инфографику для маркетплейсов из одного фото товара.",
+      badge: "Image studio",
+    },
+    video: {
+      title: "AI видео генератор",
+      subtitle: "Собирайте короткие промо-ролики и motion-preview товара в едином стиле MarketCard AI.",
+      badge: "Video studio",
+    },
+    listing: {
+      title: "SEO и описание",
+      subtitle: "Готовьте название, описание, свойства и локализацию карточки под площадку.",
+      badge: "Marketplace copy",
+    },
+    economy: {
+      title: "Экономика товара",
+      subtitle: "Считайте цену, маржу, ROI и сценарии запуска без таблиц и хаоса.",
+      badge: "Profit cockpit",
+    },
+    audit: {
+      title: "Оценка карточки",
+      subtitle: "Проверяйте инфографику, визуальную логику и готовность к продажам.",
+      badge: "Card audit",
+    },
+    intelligence: {
+      title: "Аналитика товара",
+      subtitle: "Смотрите сигналы продукта, гипотезы, конкурентов и потенциал ниши.",
+      badge: "Product intelligence",
+    },
+    ikpu: {
+      title: "ИКПУ",
+      subtitle: "Быстрый переход к классификатору и рабочим инструментам продавца.",
+      badge: "Tasnif",
+    },
+  }
 
 if (!authChecked) return null 
   return (
@@ -1993,7 +2054,7 @@ if (!authChecked) return null
         onClick={item.onClick}
         className={activePage === item.key ? "mc-dashboard-nav-item is-active" : "mc-dashboard-nav-item"}
       >
-        <span className="mc-dashboard-nav-dot" />
+        <span className="mc-dashboard-nav-dot">{item.icon}</span>
         <span>{item.label}</span>
         {item.meta && <b>{item.meta}</b>}
       </button>
@@ -2012,7 +2073,7 @@ if (!authChecked) return null
         }}
         className="mc-dashboard-nav-item"
       >
-        <span className="mc-dashboard-nav-dot" />
+        <span className="mc-dashboard-nav-dot">{item.icon}</span>
         <span>{item.label}</span>
         <b>{item.meta}</b>
       </button>
@@ -3023,6 +3084,115 @@ if (!authChecked) return null
     </div>
 
     <div className="mc-dashboard-workspace">
+    <div className="mc-dashboard-section-hero">
+      <div>
+        <span>{dashboardSectionMeta[activePage].badge}</span>
+        <h2>{dashboardSectionMeta[activePage].title}</h2>
+        <p>{dashboardSectionMeta[activePage].subtitle}</p>
+      </div>
+      <div className="mc-dashboard-section-orbit" aria-hidden="true">
+        <i />
+        <b />
+      </div>
+    </div>
+
+    {activePage === "video" && (
+      <div className="mc-video-studio">
+        <div className="mc-video-panel">
+          <div className="mc-panel-eyebrow">AI video pipeline</div>
+          <h3>Промо-видео товара</h3>
+          <p>
+            Задайте сценарий, площадку и формат. Этот блок готов для подключения backend video generation,
+            а сейчас даёт продавцу рабочий видео-brief и preview-состояния.
+          </p>
+
+          <label className="mc-field">
+            <span>Сценарий ролика</span>
+            <textarea
+              value={videoPrompt}
+              onChange={(e) => setVideoPrompt(e.target.value)}
+              placeholder="Например: показать флакон Lacoste, подсветить аромат, финальный кадр с оффером..."
+            />
+          </label>
+
+          <div className="mc-video-controls">
+            <label className="mc-field">
+              <span>Стиль</span>
+              <select value={videoStyle} onChange={(e) => setVideoStyle(e.target.value)}>
+                <option value="cinematic">Cinematic premium</option>
+                <option value="marketplace">Marketplace motion</option>
+                <option value="clean">Clean studio</option>
+                <option value="neon">Neon AI</option>
+              </select>
+            </label>
+
+            <label className="mc-field">
+              <span>Формат</span>
+              <select value={videoAspect} onChange={(e) => setVideoAspect(e.target.value)}>
+                <option value="9:16">9:16 Shorts</option>
+                <option value="1:1">1:1 Card</option>
+                <option value="16:9">16:9 Wide</option>
+              </select>
+            </label>
+
+            <label className="mc-field">
+              <span>Площадка</span>
+              <select
+                value={videoMarketplace}
+                onChange={(e) => setVideoMarketplace(e.target.value as MarketplaceKey)}
+              >
+                <option value="uzum">Uzum</option>
+                <option value="wildberries">Wildberries</option>
+                <option value="ozon">Ozon</option>
+                <option value="yandex">Yandex Market</option>
+              </select>
+            </label>
+          </div>
+
+          <button
+            type="button"
+            className="mc-video-generate"
+            onClick={handleVideoGenerate}
+            disabled={isVideoGenerating}
+          >
+            {isVideoGenerating ? "Генерация видео..." : "Собрать видео-концепт"}
+          </button>
+        </div>
+
+        <div className="mc-video-preview">
+          <div className={`mc-video-frame mc-video-frame-${videoAspect.replace(":", "-")}`}>
+            <div className="mc-video-noise" />
+            <div className="mc-video-product">
+              <span>{videoMarketplace.toUpperCase()}</span>
+              <strong>{productTitle || "Premium product"}</strong>
+            </div>
+            <div className="mc-video-timeline">
+              <i />
+              <i />
+              <i />
+            </div>
+            {isVideoGenerating && <div className="mc-video-processing">AI motion render</div>}
+            {videoResultReady && <div className="mc-video-ready">Видео-концепт готов</div>}
+          </div>
+
+          <div className="mc-video-shotlist">
+            <div>
+              <strong>01</strong>
+              <span>Hero product reveal</span>
+            </div>
+            <div>
+              <strong>02</strong>
+              <span>Benefit motion badges</span>
+            </div>
+            <div>
+              <strong>03</strong>
+              <span>Marketplace CTA frame</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     {activePage === "generator" && (
       <div
         style={{
@@ -4093,6 +4263,7 @@ if (listingLang === "uz" && translatedListing) {
 
 {showTariffModal && (
   <div
+    className="mc-modal-shell mc-tariff-modal-shell"
     style={{
       position: "fixed",
       inset: 0,
@@ -4104,6 +4275,7 @@ if (listingLang === "uz" && translatedListing) {
     }}
   >
     <div
+      className="mc-modal-card mc-tariff-modal-card"
       style={{
         width: "100%",
         maxWidth: isMobile ? "94vw" : "1040px",
@@ -4118,6 +4290,7 @@ if (listingLang === "uz" && translatedListing) {
       }}
     >
       <div
+        className="mc-modal-head"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -4140,6 +4313,7 @@ if (listingLang === "uz" && translatedListing) {
       </div>
 
       <div
+        className="mc-tariff-grid"
         style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
@@ -4152,6 +4326,7 @@ if (listingLang === "uz" && translatedListing) {
 
           return (
             <button
+              className={isSelected ? "mc-tariff-card is-selected" : "mc-tariff-card"}
               key={tariff}
               onClick={() => setSelectedTariff(tariff)}
               style={{
@@ -4216,6 +4391,7 @@ if (listingLang === "uz" && translatedListing) {
         }}
       >
         <button
+          className="mc-modal-primary"
           onClick={() => {
             setShowTariffModal(false)
             setShowPaymentModal(true)
@@ -4243,6 +4419,7 @@ if (listingLang === "uz" && translatedListing) {
 
 {showPaymentModal && (
   <div
+    className="mc-modal-shell mc-payment-modal-shell"
     style={{
       position: "fixed",
       inset: 0,
@@ -4254,6 +4431,7 @@ if (listingLang === "uz" && translatedListing) {
     }}
   >
     <div
+      className="mc-modal-card mc-payment-modal-card"
       style={{
         width: "100%",
         maxWidth: "760px",
@@ -4299,6 +4477,7 @@ if (listingLang === "uz" && translatedListing) {
         }}
       >
         <button
+          className={selectedPayment === "payme" ? "mc-payment-card is-selected" : "mc-payment-card"}
           onClick={() => setSelectedPayment("payme")}
           style={{
             padding: "22px",
@@ -4326,6 +4505,7 @@ if (listingLang === "uz" && translatedListing) {
         </button>
         
         <button
+  className={selectedPayment === "visa" ? "mc-payment-card is-selected" : "mc-payment-card"}
   onClick={() => setSelectedPayment("visa")}
   style={{
     padding: "22px",
@@ -4354,6 +4534,7 @@ if (listingLang === "uz" && translatedListing) {
 </button>
 
         <button
+          className={selectedPayment === "click" ? "mc-payment-card is-selected" : "mc-payment-card"}
           onClick={() => setSelectedPayment("click")}
           style={{
             padding: "22px",
@@ -4383,6 +4564,7 @@ if (listingLang === "uz" && translatedListing) {
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
+          className="mc-modal-primary"
           onClick={handleConfirmPayment}
           style={{
             padding: "16px 24px",
