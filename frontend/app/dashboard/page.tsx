@@ -37,6 +37,7 @@ import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
 import CardAuditPanel from "@/app/components/CardAuditPanel"
 import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
 import "./effects/index.css";
+import "./dashboard-premium.css";
 
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -1742,10 +1743,66 @@ const handleDownloadPng = async () => {
     }
   }, [])
 
+  const dashboardName =
+    profile?.full_name?.trim() ||
+    (userEmail ? userEmail.split("@")[0] : "продавец")
+  const dashboardInitial = (dashboardName || "M").charAt(0).toUpperCase()
+  const dashboardTotal = Math.max(profile?.tariff_generations_total ?? 0, 0)
+  const dashboardUsed = Math.max(profile?.tariff_generations_used ?? 0, 0)
+  const dashboardLeft = Math.max(profile?.tariff_generations_left ?? 0, 0)
+  const dashboardProgress =
+    dashboardTotal > 0 ? Math.min(100, Math.round((dashboardUsed / dashboardTotal) * 100)) : 0
+
+  const dashboardStats = [
+    {
+      label: "Карточек создано",
+      value: profileLoading ? "..." : String(dashboardUsed),
+      detail: `${dashboardLeft} генераций осталось`,
+      tone: "cyan",
+    },
+    {
+      label: "Лимит тарифа",
+      value: profileLoading ? "..." : String(dashboardTotal),
+      detail: profile?.tariff_name || "Тариф не выбран",
+      tone: "violet",
+    },
+    {
+      label: "AI варианты",
+      value: String(generatedVariants.length),
+      detail: generatedVariants.length > 0 ? "готовы к просмотру" : "после генерации появятся здесь",
+      tone: "emerald",
+    },
+    {
+      label: "Аудиты карточек",
+      value: String(profile?.audit_credits ?? 0),
+      detail: "для проверки инфографики",
+      tone: "pink",
+    },
+  ]
+
+  const dashboardTips = [
+    {
+      title: "Быстрый старт",
+      text: "Загружайте чистое фото товара и сразу выбирайте площадку: Uzum, Wildberries или Ozon.",
+      accent: "cyan",
+    },
+    {
+      title: "Pro логика",
+      text: "Добавьте бренд, категорию и 2-3 преимущества товара, чтобы AI точнее собрал инфографику.",
+      accent: "violet",
+    },
+    {
+      title: "SEO и аудит",
+      text: "После генерации проверьте карточку через аудит и соберите описание для маркетплейса.",
+      accent: "emerald",
+    },
+  ]
+
 if (!authChecked) return null 
   return (
     <>
       <main
+        className="mc-dashboard-shell"
         style={{
           columnGap: isMobile ? "0" : "28px",
     minHeight: "100vh",
@@ -1756,7 +1813,13 @@ if (!authChecked) return null
         }}
       >
       <DashboardOnboarding />
+      <div className="mc-dashboard-ambient" aria-hidden="true">
+        <span className="mc-dashboard-ambient-one" />
+        <span className="mc-dashboard-ambient-two" />
+        <span className="mc-dashboard-ambient-grid" />
+      </div>
 <div
+  className="mc-dashboard-layout"
   style={{
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "320px minmax(0, 1fr)", 
@@ -1776,6 +1839,7 @@ if (!authChecked) return null
     }}
   >
     <button
+      className="mc-dashboard-mobile-toggle"
       onClick={() => setIsMobileMenuOpen((prev) => !prev)}
       style={{
         background: "#0ea5e9",
@@ -1794,6 +1858,7 @@ if (!authChecked) return null
 )}
 
  <aside
+  className="mc-dashboard-sidebar"
   style={{
     display: isMobile ? (isMobileMenuOpen ? "block" : "none") : "block",
     position: isMobile ? "fixed" : "relative",
@@ -2277,6 +2342,7 @@ if (!authChecked) return null
   />
 )}
         <section
+  className="mc-dashboard-content"
   style={{
     padding: "24px",
     paddingBottom: "24px",
@@ -2386,13 +2452,85 @@ if (!authChecked) return null
   </div>
 )}
   <div
+    className="mc-dashboard-container"
     style={{
       maxWidth: "1360px",
       margin: "0 auto",
       padding: "28px",
     }}
   >
+    <div className="mc-dashboard-command">
+      <div className="mc-dashboard-command-copy">
+        <div className="mc-dashboard-kicker">MarketCard AI workspace</div>
+        <h1>Добро пожаловать, {dashboardName}</h1>
+        <p>
+          Управляйте генерациями, аудитами и SEO-логикой карточек в одном премиальном AI-кабинете.
+        </p>
+      </div>
+
+      <div className="mc-dashboard-command-actions">
+        <label className="mc-dashboard-search">
+          <span>Поиск</span>
+          <input type="text" placeholder="Карточки, шаблоны, маркетплейсы..." readOnly />
+        </label>
+
+        <button
+          className="mc-dashboard-primary-action"
+          type="button"
+          onClick={() => setActivePage("generator")}
+        >
+          Новая карточка
+        </button>
+
+        <div className="mc-dashboard-user-chip" aria-label="Аккаунт">
+          <span>{dashboardInitial}</span>
+          <div>
+            <strong>{profile?.tariff_name || "Start"}</strong>
+            <small>{profile?.tariff_active ? "активен" : "нужно активировать"}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="mc-dashboard-stats-grid">
+      {dashboardStats.map((stat) => (
+        <div key={stat.label} className={`mc-dashboard-stat-card mc-dashboard-stat-${stat.tone}`}>
+          <div className="mc-dashboard-stat-top">
+            <span>{stat.label}</span>
+            <i />
+          </div>
+          <strong>{stat.value}</strong>
+          <p>{stat.detail}</p>
+        </div>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-quick-tips">
+      {dashboardTips.map((tip) => (
+        <button
+          key={tip.title}
+          className={`mc-dashboard-tip-card mc-dashboard-tip-${tip.accent}`}
+          type="button"
+          onClick={() => setActivePage(tip.title === "SEO и аудит" ? "audit" : "generator")}
+        >
+          <span>{tip.title}</span>
+          <p>{tip.text}</p>
+        </button>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-credits-strip">
+      <div>
+        <span>Использование тарифа</span>
+        <strong>{dashboardProgress}%</strong>
+      </div>
+      <div className="mc-dashboard-progress">
+        <span style={{ width: `${dashboardProgress}%` }} />
+      </div>
+    </div>
+
     <div
+      className="mc-dashboard-legacy-card"
       style={{
         padding: "28px",
         borderRadius: "24px",
