@@ -9,3 +9,12 @@ backups/
 backend/.env
 backend/.env
 .env
+
+# secrets
+.env
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.local
