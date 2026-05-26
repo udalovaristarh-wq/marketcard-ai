@@ -1,124 +1,110 @@
 export const marketplaceLogos = [
-  {
-    name: "Uzum",
-    detail: "3:4 product cards, RU / UZ copy, seller-ready visuals",
-    image: "/marketplaces-premium/uzum.png",
-  },
-  {
-    name: "Wildberries",
-    detail: "High-density catalog visuals and conversion-first infographics",
-    image: "/marketplaces-premium/wildberries.png",
-  },
-  {
-    name: "Ozon",
-    detail: "Premium hero shots, feature slides, SEO-ready descriptions",
-    image: "/marketplaces-premium/ozon.png",
-  },
-  {
-    name: "Yandex Market",
-    detail: "Clean square format, trust-first presentation, AI copy",
-    image: "/marketplaces-premium/yandex.png",
-  },
+  { name: "Uzum", image: "/marketplaces-premium/uzum.png" },
+  { name: "Wildberries", image: "/marketplaces-premium/wildberries.png" },
+  { name: "Ozon", image: "/marketplaces-premium/ozon.png" },
+  { name: "Yandex Market", image: "/marketplaces-premium/yandex.png" },
 ];
 
-export const heroShots = [
+export const heroShowcase = [
   "/examples/1.webp",
   "/examples/2.webp",
   "/examples/3.webp",
   "/examples/4.webp",
-  "/examples/5.webp",
-  "/examples/6.webp",
 ];
 
-export const ecosystemItems = [
+export const stats = [
   {
-    label: "AI Card Generator",
-    title: "Карточки товаров",
-    text: "Генерация premium-инфографики под маркетплейс, категорию, язык и тариф.",
+    value: "17×",
+    label: "конверсия",
+    text: "рост кликов и заявок после замены обычных фото на AI-карточки",
   },
   {
-    label: "SEO Engine",
-    title: "Описания и ключи",
-    text: "Названия, характеристики, short/full description и keyword-пакет для публикации.",
+    value: "25",
+    suffix: "секунд",
+    label: "до первого варианта",
+    text: "от загрузки исходного фото до готовой визуальной концепции",
   },
   {
-    label: "Product Intelligence",
-    title: "Рынок и конкуренты",
-    text: "Сравнение цен, спроса, насыщенности и рыночной позиции товара.",
+    value: "12 400+",
+    label: "карточек",
+    text: "сгенерировано для товарных категорий Uzum, WB, Ozon и Yandex Market",
   },
   {
-    label: "Card Audit",
-    title: "Оценка карточек",
-    text: "AI-аудит дизайна, читаемости, доверия и вероятности конверсии.",
-  },
-  {
-    label: "Unit Economics",
-    title: "Прибыльность",
-    text: "Расчёт цены, маржи, ROI и стратегии выхода на маркетплейс.",
-  },
-  {
-    label: "Seller OS",
-    title: "Операционная система",
-    text: "Один интерфейс для запуска товара: визуал, текст, аналитика и экономика.",
+    value: "94%",
+    label: "экономия",
+    text: "меньше ручной работы на дизайн, тексты, SEO и аудит карточки",
   },
 ];
 
 export const pipelineSteps = [
   {
-    step: "01",
     title: "Product intake",
-    text: "Фото товара, категория, бренд, marketplace, язык и особенности превращаются в generation brief.",
+    text: "Система принимает фото, категорию, бренд, преимущества, цену и marketplace-контекст.",
   },
   {
-    step: "02",
     title: "Market logic",
-    text: "Система выбирает формат, визуальный профиль, структуру серии и selling angle.",
+    text: "AI выбирает selling angle, формат, плотность информации и правила площадки.",
   },
   {
-    step: "03",
     title: "AI art direction",
-    text: "Prompt layer собирает стиль, свет, композицию, typography rules и ограничения качества.",
+    text: "Генерируется стиль: свет, композиция, акценты, визуальная иерархия и typography rules.",
   },
   {
-    step: "04",
     title: "Image generation",
-    text: "Генерируются hero, benefits, specs, usage и trust slides под выбранный marketplace.",
+    text: "Создаются hero, benefits, specs, usage и trust-слайды для карточки товара.",
   },
   {
-    step: "05",
     title: "SEO and audit",
-    text: "Карточка дополняется SEO-контентом, проверкой качества и готовыми assets для продавца.",
+    text: "Финальный пакет дополняется SEO, проверкой читаемости и marketplace-ready ассетами.",
   },
 ];
 
-export const sellerReasons = [
-  "Одна фотография превращается в серию продающих карточек без дизайнера.",
-  "Маркетплейс-форматы и языки учитываются до генерации, а не после.",
-  "Продавец получает не просто картинку, а связку: визуал, SEO, анализ и экономику.",
-  "Система снижает время запуска товара с дней до минут.",
+export const ecosystemCards = [
+  {
+    title: "AI Card Studio",
+    text: "Превращает фото товара в серию карточек с премиальной подачей и ясной структурой.",
+    accent: "Visual",
+  },
+  {
+    title: "Marketplace Brain",
+    text: "Учитывает формат, язык, конкуренцию, ожидания покупателя и правила площадки.",
+    accent: "Logic",
+  },
+  {
+    title: "Launch OS",
+    text: "Собирает визуал, SEO, аудит и рекомендации в один поток запуска товара.",
+    accent: "Ops",
+  },
 ];
 
-export const technologies = [
-  "Vision analysis",
-  "Image generation",
-  "Prompt orchestration",
-  "Marketplace profiles",
-  "SEO copy engine",
-  "OCR quality checks",
-  "Pricing intelligence",
-  "Generation cost analytics",
+export const results = [
+  {
+    marketplace: "Uzum",
+    author: "Дилшод, электроника",
+    quote:
+      "Загрузили обычное фото наушников и получили серию, которую не стыдно ставить в топ выдачи. Карточка стала выглядеть как бренд.",
+    metric: "+38% CTR",
+    image: "/works/top1.jpg",
+  },
+  {
+    marketplace: "Wildberries",
+    author: "Марина, одежда",
+    quote:
+      "Раньше дизайнер собирал карточки два дня. Сейчас тестируем несколько визуальных гипотез за вечер и быстрее выводим SKU.",
+    metric: "5× быстрее",
+    image: "/works/work3.jpg",
+  },
+  {
+    marketplace: "Ozon",
+    author: "Алексей, товары для дома",
+    quote:
+      "MarketCard AI сразу думает как продавец: где показать выгоду, где доверие, где характеристики. Это не просто картинка.",
+    metric: "+21% в корзину",
+    image: "/works/work4.jpg",
+  },
 ];
 
-export const metrics = [
-  { value: "4", label: "маркетплейса в фокусе" },
-  { value: "5", label: "типов AI-слайдов в серии" },
-  { value: "RU / UZ", label: "локализация карточек" },
-  { value: "1 OS", label: "единая система продавца" },
-];
-
-export const futurePoints = [
-  "Product lock: точное сохранение формы и деталей товара.",
-  "Batch generation для больших каталогов и команд.",
-  "AI-рекомендации по цене, нише и визуальной стратегии.",
-  "Интеграции с кабинетами маркетплейсов и автопубликация.",
-];
+export const beforeAfter = {
+  before: "/works/work1.jpg",
+  after: "/examples/2.webp",
+};

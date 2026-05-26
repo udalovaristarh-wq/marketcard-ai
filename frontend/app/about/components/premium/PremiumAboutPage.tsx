@@ -2,17 +2,13 @@
 
 import PremiumHero from "./PremiumHero";
 import {
-  CTASection,
-  EcosystemSection,
+  BeforeAfterSection,
+  EcosystemPipelineSection,
+  FinalCTASection,
   FounderSection,
-  FutureVisionSection,
-  MarketplaceIntegrationsSection,
-  MetricsSection,
-  PipelineSection,
   PremiumFooter,
-  SellerReasonsSection,
-  StorySection,
-  TechnologiesSection,
+  ResultsSection,
+  StatsSection,
 } from "./PremiumSections";
 import styles from "./premium-about.module.css";
 
@@ -21,16 +17,12 @@ export default function PremiumAboutPage() {
     <main className={styles.pageShell}>
       <PremiumHero />
       <div className={styles.contentShell}>
-        <StorySection />
-        <EcosystemSection />
-        <PipelineSection />
-        <MarketplaceIntegrationsSection />
+        <StatsSection />
+        <BeforeAfterSection />
+        <EcosystemPipelineSection />
+        <ResultsSection />
         <FounderSection />
-        <SellerReasonsSection />
-        <TechnologiesSection />
-        <MetricsSection />
-        <FutureVisionSection />
-        <CTASection />
+        <FinalCTASection />
         <PremiumFooter />
       </div>
     </main>

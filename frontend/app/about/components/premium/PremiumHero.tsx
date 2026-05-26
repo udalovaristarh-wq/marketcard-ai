@@ -3,129 +3,123 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { heroShots, metrics } from "./aboutContent";
-import { PremiumButton } from "./SectionPrimitives";
+import { heroShowcase, marketplaceLogos } from "./aboutContent";
 import styles from "./premium-about.module.css";
 
 export default function PremiumHero() {
   return (
     <section className={styles.heroSection}>
-      <div className={styles.heroVideoLayer}>
-        <video autoPlay muted loop playsInline aria-hidden="true">
+      <div className={styles.heroVideoLayer} aria-hidden="true">
+        <video autoPlay muted loop playsInline>
           <source src="/bg.mp4" type="video/mp4" />
         </video>
       </div>
-
       <div className={styles.heroGradientLayer} aria-hidden="true" />
       <div className={styles.heroGridLayer} aria-hidden="true" />
 
       <motion.header
-        initial={{ opacity: 0, x: "-50%", y: -16 }}
-        animate={{ opacity: 1, x: "-50%", y: 0 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className={styles.topbar}
+        initial={{ opacity: 0, x: "-50%", y: -18 }}
+        animate={{ opacity: 1, x: "-50%", y: 0 }}
+        transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
       >
-        <Link href="/" className={styles.brandMark} aria-label="MarketCard AI home">
+        <Link href="/" className={styles.brandMark} aria-label="MarketCard AI">
           <span>MC</span>
           <strong>MarketCard AI</strong>
         </Link>
-        <nav className="hidden items-center gap-7 text-sm font-medium text-slate-300 md:flex">
-          <a href="#ecosystem" className={styles.navLink}>
-            Ecosystem
-          </a>
-          <a href="#pipeline" className={styles.navLink}>
-            Pipeline
-          </a>
-          <a href="#integrations" className={styles.navLink}>
-            Marketplaces
-          </a>
-          <a href="#vision" className={styles.navLink}>
-            Vision
-          </a>
+        <nav className={styles.heroNav} aria-label="About navigation">
+          <a href="#compare">До/После</a>
+          <a href="#results">Результаты</a>
+          <a href="#pipeline">Pipeline</a>
         </nav>
         <Link href="/login" className={styles.loginButton}>
           Войти
         </Link>
       </motion.header>
 
-      <div className={styles.heroShotStage} aria-hidden="true">
-        {heroShots.map((src, index) => (
-          <motion.div
-            key={src}
-            className={styles.heroShot}
-            initial={{ opacity: 0, y: 42, rotate: index % 2 ? 7 : -7 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.9,
-              delay: 0.18 + index * 0.08,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            style={{
-              left: `${8 + index * 15}%`,
-              top: index % 2 ? "16%" : "58%",
-            }}
-          >
-            <Image src={src} alt="" width={260} height={340} priority={index < 2} />
-          </motion.div>
-        ))}
-      </div>
-
-      <div className={styles.heroContent}>
+      <div className={styles.heroShell}>
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className={styles.heroBadge}
+          className={styles.heroCopy}
+          initial={{ opacity: 0, y: 28, filter: "blur(10px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.82, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         >
-          AI SaaS for marketplace sellers
-        </motion.div>
+          <div className={styles.heroBadge}>AI карточки для маркетплейсов</div>
+          <h1 className={styles.heroTitle}>
+            <span>Одно фото.</span>
+            <span className={styles.gradientText}>Продающая карточка.</span>
+            <span>Тысячи продаж.</span>
+          </h1>
+          <p className={styles.heroLead}>
+            MarketCard AI превращает исходное фото товара в премиальные карточки, SEO,
+            аудит и визуальную стратегию для Uzum, Wildberries, Ozon и Yandex Market.
+          </p>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.82, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
-          className={styles.heroTitle}
-          aria-label="MarketCard AI"
-        >
-          <span className={styles.heroTitleWord}>MarketCard</span>
-          <span className={styles.heroTitleWord}>AI</span>
-        </motion.h1>
+          <div className={styles.heroActions}>
+            <motion.div whileHover={{ y: -3, scale: 1.015 }} whileTap={{ scale: 0.985 }}>
+              <Link href="/register" className={styles.primaryButton}>
+                Создать первую карточку →
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ y: -3, scale: 1.015 }} whileTap={{ scale: 0.985 }}>
+              <Link href="/pricing" className={styles.secondaryButton}>
+                Смотреть тарифы
+              </Link>
+            </motion.div>
+          </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.34, ease: [0.22, 1, 0.36, 1] }}
-          className={styles.heroSubtitle}
-        >
-          Премиальная AI-платформа, которая превращает фото товара в
-          продающие карточки, SEO, аналитику и стратегию запуска для Uzum,
-          Wildberries, Ozon и Yandex Market.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.46 }}
-          className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row"
-        >
-          <PremiumButton href="/register">Запустить платформу</PremiumButton>
-          <PremiumButton href="/pricing" variant="secondary">
-            Смотреть тарифы
-          </PremiumButton>
+          <div className={styles.heroTrustRow} aria-label="Marketplace integrations">
+            {marketplaceLogos.map((marketplace) => (
+              <div key={marketplace.name} className={styles.marketplacePill}>
+                <Image src={marketplace.image} alt={marketplace.name} width={96} height={36} />
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 22 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.58 }}
-          className={styles.heroMetrics}
+          className={styles.heroVisual}
+          initial={{ opacity: 0, x: 48, rotateX: 10 }}
+          animate={{ opacity: 1, x: 0, rotateX: 0 }}
+          transition={{ duration: 0.95, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
         >
-          {metrics.map((metric) => (
-            <div key={metric.label}>
-              <strong>{metric.value}</strong>
-              <span>{metric.label}</span>
+          <div className={styles.visualAura} aria-hidden="true" />
+          <div className={styles.generatorWindow}>
+            <div className={styles.windowChrome}>
+              <span />
+              <span />
+              <span />
+              <strong>MarketCard AI Studio</strong>
             </div>
-          ))}
+            <div className={styles.visualStack}>
+              {heroShowcase.map((src, index) => (
+                <div
+                  key={src}
+                  className={styles.showcaseCard}
+                  style={{ zIndex: heroShowcase.length - index }}
+                >
+                  <Image
+                    src={src}
+                    alt="Пример карточки MarketCard AI"
+                    width={280}
+                    height={360}
+                    priority={index === 0}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className={styles.promptPanel}>
+              <span>Prompt pipeline</span>
+              <strong>product photo → AI art direction → marketplace-ready card</strong>
+              <div className={styles.aiProgress}>
+                <i />
+              </div>
+            </div>
+          </div>
+          <div className={styles.orbitBadge}>
+            <span>25 сек</span>
+            <small>до первого результата</small>
+          </div>
         </motion.div>
       </div>
     </section>
