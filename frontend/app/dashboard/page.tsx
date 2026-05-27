@@ -3379,34 +3379,23 @@ if (!authChecked) return null
             <div className="mc-create-marketplaces">
               <span className="mc-create-section-label">Маркетплейс</span>
               <div className="mc-create-market-grid">
-                <MarketplaceButton
-                  label={marketplaceFormats.uzum.label}
-                  selected={selectedMarketplace === "uzum"}
-                  gradient={marketplaceFormats.uzum.gradient}
-                  logoSrc="/marketplaces-premium/uzum.png"
-                  onClick={() => setSelectedMarketplace("uzum")}
-                />
-                <MarketplaceButton
-                  label={marketplaceFormats.wildberries.label}
-                  selected={selectedMarketplace === "wildberries"}
-                  gradient={marketplaceFormats.wildberries.gradient}
-                  logoSrc="/marketplaces-premium/wildberries.png"
-                  onClick={() => setSelectedMarketplace("wildberries")}
-                />
-                <MarketplaceButton
-                  label={marketplaceFormats.ozon.label}
-                  selected={selectedMarketplace === "ozon"}
-                  gradient={marketplaceFormats.ozon.gradient}
-                  logoSrc="/marketplaces-premium/ozon.png"
-                  onClick={() => setSelectedMarketplace("ozon")}
-                />
-                <MarketplaceButton
-                  label={marketplaceFormats.yandex.label}
-                  selected={selectedMarketplace === "yandex"}
-                  gradient={marketplaceFormats.yandex.gradient}
-                  logoSrc="/marketplaces-premium/yandex.png"
-                  onClick={() => setSelectedMarketplace("yandex")}
-                />
+                {[
+                  { key: "uzum" as const, logo: "/marketplaces-premium/uzum.png", note: "3:4 карточка" },
+                  { key: "wildberries" as const, logo: "/marketplaces-premium/wildberries.png", note: "WB-ready" },
+                  { key: "ozon" as const, logo: "/marketplaces-premium/ozon.png", note: "Ozon feed" },
+                  { key: "yandex" as const, logo: "/marketplaces-premium/yandex.png", note: "1:1 витрина" },
+                ].map((market) => (
+                  <div className="mc-market-tile-wrap" key={market.key}>
+                    <MarketplaceButton
+                      label={marketplaceFormats[market.key].label}
+                      selected={selectedMarketplace === market.key}
+                      gradient={marketplaceFormats[market.key].gradient}
+                      logoSrc={market.logo}
+                      onClick={() => setSelectedMarketplace(market.key)}
+                    />
+                    <small>{market.note}</small>
+                  </div>
+                ))}
               </div>
             </div>
 
