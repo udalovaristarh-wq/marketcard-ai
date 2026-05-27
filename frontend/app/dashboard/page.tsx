@@ -3297,6 +3297,296 @@ if (!authChecked) return null
     )}
 
     {activePage === "generator" && (
+      <>
+        <div className="mc-create-card-layout">
+          <section className="mc-create-card-panel mc-create-card-controls">
+            <div className="mc-create-kicker">AI CARD GENERATOR</div>
+            <h2>Создать карточку товара</h2>
+            <p className="mc-create-lead">
+              Загрузи фото, добавь данные товара и выбери маркетплейс. MarketCard AI соберет премиальную карточку в стиле платформы.
+            </p>
+
+            <label
+              className={selectedFile ? "mc-upload-dropzone has-file" : "mc-upload-dropzone"}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                const file = e.dataTransfer.files?.[0] ?? null
+                if (file && file.type.startsWith("image/")) {
+                  setSelectedFile(file)
+                }
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  setSelectedFile(file)
+                }}
+              />
+
+              {previewUrl ? (
+                <div className="mc-upload-preview-wrap">
+                  <img src={previewUrl} alt="Preview" />
+                  <div>
+                    <strong>{selectedFile?.name || "Фото товара загружено"}</strong>
+                    <span>Нажми или перетащи новое фото для замены</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mc-upload-empty-state">
+                  <span className="mc-upload-icon">+</span>
+                  <strong>Загрузить фото товара</strong>
+                  <small>Перетащите фото сюда или нажмите для выбора файла</small>
+                  <em>PNG, JPG, WEBP до 10 МБ</em>
+                </div>
+              )}
+            </label>
+
+            <div className="mc-create-field mc-create-field-wide">
+              <label>{t.titleLabel}</label>
+              <input
+                type="text"
+                value={productTitle}
+                onChange={(e) => setProductTitle(e.target.value)}
+                placeholder={t.titlePlaceholder}
+              />
+            </div>
+
+            <div className="mc-create-two-fields">
+              <div className="mc-create-field">
+                <label>{t.brandLabel}</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="BRAVE"
+                />
+              </div>
+
+              <div className="mc-create-field">
+                <label>{t.categoryLabel}</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Автозапчасти"
+                />
+              </div>
+            </div>
+
+            <div className="mc-create-marketplaces">
+              <span className="mc-create-section-label">Маркетплейс</span>
+              <div className="mc-create-market-grid">
+                <MarketplaceButton
+                  label={marketplaceFormats.uzum.label}
+                  selected={selectedMarketplace === "uzum"}
+                  gradient={marketplaceFormats.uzum.gradient}
+                  logoSrc="/marketplaces-premium/uzum.png"
+                  onClick={() => setSelectedMarketplace("uzum")}
+                />
+                <MarketplaceButton
+                  label={marketplaceFormats.wildberries.label}
+                  selected={selectedMarketplace === "wildberries"}
+                  gradient={marketplaceFormats.wildberries.gradient}
+                  logoSrc="/marketplaces-premium/wildberries.png"
+                  onClick={() => setSelectedMarketplace("wildberries")}
+                />
+                <MarketplaceButton
+                  label={marketplaceFormats.ozon.label}
+                  selected={selectedMarketplace === "ozon"}
+                  gradient={marketplaceFormats.ozon.gradient}
+                  logoSrc="/marketplaces-premium/ozon.png"
+                  onClick={() => setSelectedMarketplace("ozon")}
+                />
+                <MarketplaceButton
+                  label={marketplaceFormats.yandex.label}
+                  selected={selectedMarketplace === "yandex"}
+                  gradient={marketplaceFormats.yandex.gradient}
+                  logoSrc="/marketplaces-premium/yandex.png"
+                  onClick={() => setSelectedMarketplace("yandex")}
+                />
+              </div>
+            </div>
+
+            <div className="mc-create-options-grid">
+              <div className="mc-create-option-box">
+                <span>Язык</span>
+                <div className="mc-create-chip-row">
+                  <button type="button" className={languageMode === "ru" ? "mc-create-chip is-active" : "mc-create-chip"} onClick={() => setLanguageMode("ru")}>
+                    RU
+                  </button>
+                  <button type="button" className={languageMode === "uz" ? "mc-create-chip is-active" : "mc-create-chip"} onClick={() => setLanguageMode("uz")}>
+                    UZ
+                  </button>
+                  <button type="button" className={languageMode === "both" ? "mc-create-chip is-active" : "mc-create-chip"} onClick={() => setLanguageMode("both")}>
+                    RU + UZ
+                  </button>
+                </div>
+              </div>
+
+              <div className="mc-create-option-box">
+                <span>Варианты</span>
+                <select value={variantCount} onChange={(e) => setVariantCount(Number(e.target.value))}>
+                  <option value={1}>1</option>
+                  <option value={3}>3</option>
+                  <option value={5}>5</option>
+                </select>
+              </div>
+
+              <div className="mc-create-option-box mc-create-format-box">
+                <span>Формат</span>
+                <strong>
+                  {currentFormat.width} x {currentFormat.height}
+                </strong>
+                <small>{currentFormat.label} • {currentFormat.ratio}</small>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="mc-create-generate-button"
+              onClick={handleGenerate}
+              disabled={creating}
+            >
+              <span>AI</span>
+              {creating ? "ГЕНЕРАЦИЯ..." : "СГЕНЕРИРОВАТЬ"}
+            </button>
+
+            <div className="mc-create-support-row">
+              <button type="button" onClick={handleDownloadPng} disabled={!pngReady}>
+                Скачать PNG
+              </button>
+              <a href="https://t.me/marketcardai_support_bot" target="_blank" rel="noreferrer">
+                Поддержка Telegram
+              </a>
+              {pngReady && <span>PNG готов</span>}
+            </div>
+          </section>
+
+          <section className="mc-create-card-panel mc-create-results-panel-v2">
+            <div className="mc-create-results-head">
+              <div>
+                <span>RESULTS</span>
+                <h2>Готовые варианты</h2>
+              </div>
+              <small>{generatedVariants.length || 0} создано</small>
+            </div>
+
+            {isGenerating ? (
+              <div className="mc-create-results-stage is-loading">
+                <div className="mc-spin-loader" />
+                <strong>Идет генерация карточек</strong>
+                <span>Среднее время ожидания: 3-5 минут, зависит от количества изображений.</span>
+              </div>
+            ) : generatedVariants.length === 0 ? (
+              <div className="mc-create-results-stage">
+                <div className="mc-result-ghost-grid">
+                  <i />
+                  <i />
+                </div>
+                <strong>Здесь появятся готовые карточки</strong>
+                <span>После генерации варианты будут показаны в виде премиальных карточек с быстрым доступом к PNG.</span>
+              </div>
+            ) : (
+              <div className="mc-create-results-grid">
+                {generatedVariants.map((url: string, index: number) => {
+                  const imageSrc = url.startsWith("/generated_cards") ? `/api${url}` : url
+
+                  return (
+                    <article className="mc-create-result-card" key={`${url}-${index}`}>
+                      <img src={imageSrc} alt={`variant-${index + 1}`} />
+                      <div>
+                        <p>{productTitle || "Карточка товара"}</p>
+                        <span>{brand || "Brand"} • {category || currentFormat.label}</span>
+                        <div>
+                          <em>{index === 0 ? "Бестселлер" : "Премиум"}</em>
+                          <a href={imageSrc} target="_blank" rel="noreferrer">
+                            Открыть PNG
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
+        <section className="mc-create-card-panel mc-create-correction-panel">
+          <div className="mc-correction-title">
+            <span>EDIT</span>
+            <h2>Исправить изображение</h2>
+          </div>
+
+          <div className="mc-correction-grid-v2">
+            <div className="mc-correction-controls">
+              <p>Напишите, что нужно изменить:</p>
+
+              <div className="mc-correction-variant-row">
+                {generatedVariants.length > 0 ? (
+                  generatedVariants.map((_, index) => (
+                    <button
+                      type="button"
+                      key={index}
+                      className={selectedFixIndex === index ? "is-active" : ""}
+                      onClick={() => setSelectedFixIndex(index)}
+                    >
+                      Фото {index + 1}
+                    </button>
+                  ))
+                ) : (
+                  <span>Сначала сгенерируйте карточку</span>
+                )}
+              </div>
+
+              <textarea
+                className="fix-prompt-textarea"
+                value={fixPrompt}
+                onChange={(e) => setFixPrompt(e.target.value)}
+                placeholder="Например: Сделай фон светлее, добавь тень под товар, измени текст на 'Скидка 30%'"
+              />
+
+              <div className="mc-correction-actions">
+                <button type="button" onClick={handleFixGeneratedImage} disabled={isFixingImage || generatedVariants.length === 0}>
+                  {isFixingImage ? "Исправление..." : "Применить исправление"}
+                </button>
+
+                {fixedImages[selectedFixIndex] ? (
+                  <a href={fixedImages[selectedFixIndex]} download={`fixed_image_${selectedFixIndex + 1}.png`} target="_blank" rel="noreferrer">
+                    Скачать PNG
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mc-correction-preview-v2">
+              {isFixingImage ? (
+                <div className="mc-create-results-stage is-loading">
+                  <div className="mc-spin-loader" />
+                  <strong>Исправляем изображение</strong>
+                  <span>AI применяет правки к выбранному варианту.</span>
+                </div>
+              ) : (fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]) ? (
+                <img
+                  src={fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]}
+                  alt="Предпросмотр изображения"
+                />
+              ) : (
+                <div className="mc-correction-empty">
+                  <strong>Здесь появится исправленная версия</strong>
+                  <span>Выберите вариант и опишите правку.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </>
+    )}
+
+    {false && activePage === "generator" && (
       <div
         className="mc-generator-studio-grid"
         style={{
@@ -3404,7 +3694,7 @@ if (!authChecked) return null
                     }}
                   >
                     {selectedFile
-                      ? `${t.selectedFile}: ${selectedFile.name}`
+                      ? `${t.selectedFile}: ${selectedFile?.name || ""}`
                       : t.noFile}
                   </div>
                 </div>
@@ -3804,7 +4094,7 @@ if (!authChecked) return null
     )}
 
 
-      {activePage === "generator" && (
+      {false && activePage === "generator" && (
 <div
         className="mc-fix-lab"
         style={{
