@@ -549,11 +549,13 @@ function MarketplaceButton({
   label,
   selected,
   gradient,
+  logoSrc,
   onClick,
 }: {
   label: string
   selected: boolean
   gradient: string
+  logoSrc?: string
   onClick: () => void
 }) {
   return (
@@ -581,7 +583,13 @@ function MarketplaceButton({
           : "0 10px 24px rgba(0,0,0,0.18)",
       }}
     >
-      <span className="mc-marketplace-pill-icon">{label.charAt(0)}</span>
+      <span className="mc-marketplace-pill-icon">
+        {logoSrc ? (
+          <img className="mc-marketplace-logo" src={logoSrc} alt={label} />
+        ) : (
+          label.charAt(0)
+        )}
+      </span>
       <span className="mc-marketplace-pill-label">{label}</span>
     </button>
     </>
@@ -3330,9 +3338,11 @@ if (!authChecked) return null
             {t.aiPremiumHint}
           </div>
 
-          <div style={{ display: "grid", gap: "18px" }}>
-            <div>
-              <div style={labelStyle}>{t.uploadPhoto}</div><label
+          <div className="mc-create-card-form" style={{ display: "grid", gap: "18px" }}>
+            <div className="mc-generator-upload-field">
+              <div className="mc-generator-field-caption">{t.uploadPhoto}</div>
+              <label
+                className="mc-generator-upload-zone"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault()
@@ -3401,7 +3411,7 @@ if (!authChecked) return null
               </label>
             </div>
 
-            <div>
+            <div className="mc-generator-live-preview">
               <div
                 style={{
                   width: "100%",                  borderRadius: "18px",
@@ -3435,8 +3445,8 @@ if (!authChecked) return null
               </div>
             </div>
 
-            <div>
-              <div style={labelStyle}>{t.titleLabel}</div>
+            <div className="mc-generator-floating-field mc-generator-title-field">
+              <label>{t.titleLabel}</label>
               <input
                 type="text"
                 value={productTitle}
@@ -3444,53 +3454,61 @@ if (!authChecked) return null
                 placeholder={t.titlePlaceholder}
                 style={inputStyle}
               />
-            </div><div>
-              <div style={labelStyle}>{t.brandLabel}</div>
-              <input
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                placeholder={t.brandPlaceholder}
-                style={inputStyle}
-              />
             </div>
 
-            <div>
-              <div style={labelStyle}>{t.categoryLabel}</div>
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder={t.categoryPlaceholder}
-                style={inputStyle}
-              />
+            <div className="mc-generator-two-col">
+              <div className="mc-generator-floating-field">
+                <label>{t.brandLabel}</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder={t.brandPlaceholder}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className="mc-generator-floating-field">
+                <label>{t.categoryLabel}</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder={t.categoryPlaceholder}
+                  style={inputStyle}
+                />
+              </div>
             </div>
 
-            <div>
-              <div style={labelStyle}>{t.chooseMarketplace}</div>
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <div className="mc-marketplace-selector">
+              <div className="mc-generator-field-caption">{t.chooseMarketplace}</div>
+              <div className="mc-marketplace-logo-grid" style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <MarketplaceButton
                   label={marketplaceFormats.uzum.label}
                   selected={selectedMarketplace === "uzum"}
                   gradient={marketplaceFormats.uzum.gradient}
+                  logoSrc="/marketplaces-premium/uzum.png"
                   onClick={() => setSelectedMarketplace("uzum")}
                 />
                 <MarketplaceButton
                   label={marketplaceFormats.wildberries.label}
                   selected={selectedMarketplace === "wildberries"}
                   gradient={marketplaceFormats.wildberries.gradient}
+                  logoSrc="/marketplaces-premium/wildberries.png"
                   onClick={() => setSelectedMarketplace("wildberries")}
                 />
                 <MarketplaceButton
                   label={marketplaceFormats.ozon.label}
                   selected={selectedMarketplace === "ozon"}
                   gradient={marketplaceFormats.ozon.gradient}
+                  logoSrc="/marketplaces-premium/ozon.png"
                   onClick={() => setSelectedMarketplace("ozon")}
                 />
                 <MarketplaceButton
                   label={marketplaceFormats.yandex.label}
                   selected={selectedMarketplace === "yandex"}
                   gradient={marketplaceFormats.yandex.gradient}
+                  logoSrc="/marketplaces-premium/yandex.png"
                   onClick={() => setSelectedMarketplace("yandex")}
                 />
               </div>
@@ -3570,6 +3588,7 @@ if (!authChecked) return null
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <button
+                className="mc-generate-hero-button"
                 onClick={handleGenerate}
                 disabled={creating}
                 style={primaryButtonStyle(creating)}
@@ -3578,6 +3597,7 @@ if (!authChecked) return null
               </button>
 
               <button
+                className="mc-download-soft-button"
                 onClick={handleDownloadPng}
                 disabled={!pngReady}
                 style={secondaryButtonStyle(!pngReady)}
@@ -3585,6 +3605,7 @@ if (!authChecked) return null
                 {t.downloadPng}
               </button>
             <a
+  className="mc-telegram-soft-button"
   href="https://t.me/marketcardai_support_bot"
   target="_blank"
   rel="noreferrer"
@@ -3645,6 +3666,7 @@ if (!authChecked) return null
           }}
         >
           <div
+            className="mc-results-shell"
             style={{
               padding: "20px",
               borderRadius: "24px",
@@ -3703,6 +3725,7 @@ if (!authChecked) return null
   </div>
 ) : generatedVariants.length === 0 ? (
               <div
+                className="mc-results-empty"
                 style={{
                   minHeight: "320px",
                   borderRadius: "20px",
@@ -3722,6 +3745,7 @@ if (!authChecked) return null
               </div>
             ) : (
               <div
+                className="mc-results-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -3730,6 +3754,7 @@ if (!authChecked) return null
               >
                 {generatedVariants.map((url: string, index: number) => (
                   <div
+                    className="mc-generated-card-preview"
                     key={`${url}-${index}`}
                     style={{
                       padding: "14px",
