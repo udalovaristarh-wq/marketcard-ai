@@ -1966,11 +1966,69 @@ const handleDownloadPng = async () => {
     },
   }
 
+  const platformMapItems = [
+    {
+      key: "generator" as const,
+      title: "AI карточки",
+      text: "Фото товара, маркетплейс, язык и варианты инфографики в одном studio-flow.",
+      metric: `${dashboardLeft}/${dashboardTotal || 0}`,
+      tone: "cyan",
+      onClick: () => selectDashboardPage("generator"),
+      active: activePage === "generator",
+    },
+    {
+      key: "video" as const,
+      title: "AI видео",
+      text: "Motion brief, формат ролика и preview для будущей video generation.",
+      metric: videoResultReady ? "ready" : "new",
+      tone: "pink",
+      onClick: () => selectDashboardPage("video"),
+      active: activePage === "video",
+    },
+    {
+      key: "listing" as const,
+      title: "SEO карточки",
+      text: "Название, описание, свойства и локализация под площадки.",
+      metric: listingReady ? "done" : "copy",
+      tone: "violet",
+      onClick: () => selectDashboardPage("listing"),
+      active: activePage === "listing",
+    },
+    {
+      key: "economy" as const,
+      title: "Экономика",
+      text: "Маржа, ROI, точка безубыточности и сценарии цены.",
+      metric: "ROI",
+      tone: "emerald",
+      onClick: () => selectDashboardPage("economy"),
+      active: activePage === "economy",
+    },
+    {
+      key: "audit" as const,
+      title: "Аудит",
+      text: "Проверка карточки перед запуском и визуальная диагностика.",
+      metric: String(profile?.audit_credits ?? 0),
+      tone: "amber",
+      onClick: () => selectDashboardPage("audit"),
+      active: activePage === "audit",
+    },
+    {
+      key: "intelligence" as const,
+      title: "Аналитика",
+      text: "Сигналы товара, конкуренты, спрос и продуктовые гипотезы.",
+      metric: "BI",
+      tone: "blue",
+      onClick: () => selectDashboardPage("intelligence"),
+      active: activePage === "intelligence",
+    },
+  ]
+
 if (!authChecked) return null 
   return (
     <>
       <main
         className="mc-dashboard-shell"
+        data-page={activePage}
         style={{
           columnGap: isMobile ? "0" : "28px",
     minHeight: "100vh",
@@ -3083,8 +3141,23 @@ if (!authChecked) return null
       </div>
     </div>
 
-    <div className="mc-dashboard-workspace">
-    <div className="mc-dashboard-section-hero">
+    <div className="mc-dashboard-platform-map" aria-label="Карта платформы">
+      {platformMapItems.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={item.onClick}
+          className={item.active ? `mc-dashboard-platform-card is-active tone-${item.tone}` : `mc-dashboard-platform-card tone-${item.tone}`}
+        >
+          <span>{item.metric}</span>
+          <strong>{item.title}</strong>
+          <small>{item.text}</small>
+        </button>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-workspace" data-page={activePage}>
+    <div className="mc-dashboard-section-hero" data-section={activePage}>
       <div>
         <span>{dashboardSectionMeta[activePage].badge}</span>
         <h2>{dashboardSectionMeta[activePage].title}</h2>
@@ -3195,6 +3268,7 @@ if (!authChecked) return null
 
     {activePage === "generator" && (
       <div
+        className="mc-generator-studio-grid"
         style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr" : "440px 1fr",
@@ -3203,6 +3277,7 @@ if (!authChecked) return null
         }}
       >
         <div
+          className="mc-generator-control-panel"
           style={{
             padding: "28px",
             borderRadius: "24px",
@@ -3541,6 +3616,7 @@ if (!authChecked) return null
         </div>
 
         <div
+          className="mc-generator-results-panel"
           style={{
             display: "grid",
             gap: "20px",
@@ -3683,11 +3759,12 @@ if (!authChecked) return null
 
       {activePage === "generator" && (
 <div
+        className="mc-fix-lab"
         style={{
-          marginTop: isMobile ? "20px" : "-1005px",
-          marginBottom: isMobile ? "24px" : "520px",
-          marginLeft: isMobile ? "0" : "464px",
-          width: isMobile ? "100%" : "calc(100% - 464px)",
+          marginTop: "24px",
+          marginBottom: "0",
+          marginLeft: "0",
+          width: "100%",
           padding: "20px",
           borderRadius: "24px",
           background: "rgba(255,255,255,0.06)",
@@ -3892,7 +3969,7 @@ if (!authChecked) return null
 
 
 {activePage === "listing" && (
-  <div style={{ maxWidth: "1180px", padding: "28px", borderRadius: "24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 18px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(14px)" }}>
+  <div className="mc-listing-suite" style={{ maxWidth: "1180px", padding: "28px", borderRadius: "24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 18px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(14px)" }}>
     <div style={{ fontSize: "34px", fontWeight: 900, marginBottom: "18px" }}>
       SEO / Описание товара
 
@@ -4015,6 +4092,7 @@ if (listingLang === "uz" && translatedListing) {
 
 {activePage === "economy" && (
       <div
+        className="mc-economy-suite"
         style={{
           maxWidth: "980px",
           padding: "28px",
