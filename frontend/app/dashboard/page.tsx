@@ -560,6 +560,8 @@ function MarketplaceButton({
     <>
       
     <button
+      className={selected ? "mc-marketplace-pill is-selected" : "mc-marketplace-pill"}
+      data-marketplace={label.toLowerCase().replace(/\s+/g, "-")}
       onClick={onClick}
       style={{
         minWidth: "150px",
@@ -579,7 +581,8 @@ function MarketplaceButton({
           : "0 10px 24px rgba(0,0,0,0.18)",
       }}
     >
-      {label}
+      <span className="mc-marketplace-pill-icon">{label.charAt(0)}</span>
+      <span className="mc-marketplace-pill-label">{label}</span>
     </button>
     </>
   )
@@ -2096,7 +2099,9 @@ if (!authChecked) return null
   }}
 >
   <div className="mc-dashboard-brand">
-    <div className="mc-dashboard-brand-mark">MC</div>
+    <div className="mc-dashboard-brand-mark">
+      <img src="/logo.jpg" alt="MarketCard AI" />
+    </div>
     <div>
       <strong>MarketCard</strong>
       <span>AI</span>
