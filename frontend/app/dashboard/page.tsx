@@ -2856,6 +2856,23 @@ if (!authChecked) return null
       ))}
     </div>
 
+    <div className="mc-dashboard-quick-title">Быстрый старт</div>
+
+    <div className="mc-dashboard-platform-map mc-dashboard-platform-map-primary" aria-label="Карта платформы">
+      {platformMapItems.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={item.onClick}
+          className={item.active ? `mc-dashboard-platform-card is-active tone-${item.tone}` : `mc-dashboard-platform-card tone-${item.tone}`}
+        >
+          <span>{item.metric}</span>
+          <strong>{item.title}</strong>
+          <small>{item.text}</small>
+        </button>
+      ))}
+    </div>
+
     <div className="mc-dashboard-quick-tips">
       {dashboardTips.map((tip) => (
         <button
@@ -3141,7 +3158,7 @@ if (!authChecked) return null
       </div>
     </div>
 
-    <div className="mc-dashboard-platform-map" aria-label="Карта платформы">
+    <div className="mc-dashboard-platform-map mc-dashboard-platform-map-secondary" aria-label="Карта платформы">
       {platformMapItems.map((item) => (
         <button
           key={item.key}
