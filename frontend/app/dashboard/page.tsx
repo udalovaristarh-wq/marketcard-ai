@@ -1,5 +1,14 @@
 "use client"
 
+import "./dashboard-premium.css";
+import "./effects/index.css";
+import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
+import CardAuditPanel from "@/app/components/CardAuditPanel"
+import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
+import React, { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import type { CSSProperties } from "react";
+import DashboardOnboarding from "../components/DashboardOnboarding"
 
 const buyAudit = async (pkg: string) => {
   try {
@@ -33,16 +42,6 @@ const buyAudit = async (pkg: string) => {
   }
 }
 ;
-import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
-import CardAuditPanel from "@/app/components/CardAuditPanel"
-import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
-import "./effects/index.css";
-import "./dashboard-premium.css";
-
-import React, { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import type { CSSProperties } from "react";
-import DashboardOnboarding from "../components/DashboardOnboarding"
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
