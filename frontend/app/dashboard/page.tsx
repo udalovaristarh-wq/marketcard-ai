@@ -46,7 +46,18 @@ import DashboardOnboarding from "../components/DashboardOnboarding"
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
-type DashboardPageKey = "generator" | "video" | "economy" | "listing" | "ikpu" | "audit" | "intelligence" | "intelligence"
+type DashboardPageKey =
+  | "generator"
+  | "video"
+  | "economy"
+  | "listing"
+  | "ikpu"
+  | "audit"
+  | "intelligence"
+  | "purchase"
+  | "didox"
+  | "deficit"
+  | "instructions"
 type LanguageMode = "ru" | "uz" | "both"
 
 type ProfileResponse = {
@@ -996,6 +1007,15 @@ export default function DashboardPage() {
   const [otherCosts, setOtherCosts] = useState("2000")
   const [desiredProfit, setDesiredProfit] = useState("10000")
   const [competitorPrice, setCompetitorPrice] = useState("0")
+  const [sellingPrice, setSellingPrice] = useState("79000")
+  const [adCostPercent, setAdCostPercent] = useState("8")
+  const [returnRatePercent, setReturnRatePercent] = useState("5")
+  const [returnCost, setReturnCost] = useState("4000")
+  const [taxPercent, setTaxPercent] = useState("4")
+  const [paymentFeePercent, setPaymentFeePercent] = useState("1.5")
+  const [storagePerUnit, setStoragePerUnit] = useState("1200")
+  const [monthlyFixedCosts, setMonthlyFixedCosts] = useState("500000")
+  const [plannedUnits, setPlannedUnits] = useState("100")
 
   const [activePage, setActivePage] =
     useState<DashboardPageKey>("generator")
@@ -1017,6 +1037,8 @@ export default function DashboardPage() {
   const [videoMarketplace, setVideoMarketplace] = useState<MarketplaceKey>("uzum")
   const [isVideoGenerating, setIsVideoGenerating] = useState(false)
   const [videoResultReady, setVideoResultReady] = useState(false)
+  const [videoAssetUrl, setVideoAssetUrl] = useState("")
+  const [videoAssetType, setVideoAssetType] = useState<"video" | "gif" | "">("")
   const [listingData, setlistingData] = useState<ListingResponse | null>(null)
   const [listingLang, setListingLang] = useState<"ru" | "uz">("ru")
   const [translatedListing, setTranslatedListing] = useState<any | null>(null)
@@ -1054,56 +1076,22 @@ useEffect(() => {
   }, [userEmail])
 
   const searchIkpu = async () => {
-  if (!ikpuQuery) return
+    const query = ikpuQuery.trim()
+    if (!query) return
 
-  setIkpuLoading(true)
+    setIkpuLoading(true)
 
-  try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
-    const res = await fetch(
-      `https://tasnif.soliq.uz/api/cl-api/classifier/search?search=${encodeURIComponent(ikpuQuery)}`
-    )
-
-    console.log("GEN 3 STATUS", res.status)
-    const data = await res.json()
-      if (selectedPayment === "payme" && data?.payme_url) {
-        localStorage.setItem("marketcard_pending_tariff_purchase", "1")
-        window.location.href = data.payme_url
-        return
-      }
-
-      if (selectedPayment === "click" && data?.click_url) {
-        window.location.href = data.click_url
-        return
-      }
-
-      if (selectedPayment === "click") {
-        alert("Click ссылка не получена")
-        return
-      }
-
-      if (selectedPayment === "visa") {
-        alert("Visa пока недоступна. Выберите Payme или Click.")
-        return
-      }
-
-
-    let items: any[] = []
-
-    if (Array.isArray(data)) {
-      items = data
-    } else if (data?.data) {
-      items = data.data
+    try {
+      const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}&limit=12`)
+      const data = await res.json()
+      setIkpuResults(Array.isArray(data?.items) ? data.items : [])
+    } catch (e) {
+      console.log("IKPU error:", e)
+      setIkpuResults([])
+    } finally {
+      setIkpuLoading(false)
     }
-
-    setIkpuResults(items.slice(0, 10))
-  } catch (e) {
-    console.log("IKPU error:", e)
-    setIkpuResults([])
   }
-
-  setIkpuLoading(false)
-}
 
 const listingCharacteristics = listingView?.characteristics
   ? Array.isArray(listingView.characteristics)
@@ -1353,7 +1341,27 @@ const handleLogout = () => {
     localStorage.removeItem("user_email")
     router.push("/login")
   }
-  const searchIkpuAuto = async (query: string) => {
+
+  const handleSwitchAccount = () => {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("user_email")
+    router.push("/login")
+  }
+
+  const handleAccountDeleteRequest = () => {
+    const confirmed = window.confirm(
+      "Удаление аккаунта необратимо. Открыть поддержку, чтобы подтвердить удаление MarketCard AI аккаунта?"
+    )
+
+    if (!confirmed) return
+
+    window.open(
+      "https://t.me/marketcardai_support_bot",
+      "_blank",
+      "noopener,noreferrer"
+    )
+  }
+const searchIkpuAuto = async (query: string) => {
   if (!query.trim()) {
     setIkpuResults([])
     return
@@ -1362,10 +1370,31 @@ const handleLogout = () => {
   setIkpuLoading(true)
 
   try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
- // const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
- // const data = await res.json()
-    setIkpuResults([])
+    const productPayload =
+      productTitle.trim() || category.trim() || brand.trim()
+        ? {
+            title: productTitle.trim() || query,
+            brand: brand.trim(),
+            category: category.trim(),
+            description: query,
+          }
+        : null
+
+    const res = productPayload
+      ? await fetch("/api/ikpu/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productPayload),
+        })
+      : await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}&limit=8`)
+    const data = await res.json().catch(() => null)
+
+    if (!res.ok || !data?.success) {
+      setIkpuResults([])
+      return
+    }
+
+    setIkpuResults(Array.isArray(data.items) ? data.items.slice(0, 8) : [])
   } catch (e) {
     console.log("IKPU AUTO ERROR:", e)
     setIkpuResults([])
@@ -1375,10 +1404,6 @@ const handleLogout = () => {
 }
   const handleActivateTariff = async () => {
   console.log("ACTIVATE 1 START", { userEmail, selectedTariff })
-    const ikpuSearchText = `${productTitle} ${category}`.trim()
-setIkpuQuery(ikpuSearchText)
-
-const ikpuPromise = Promise.resolve()
   const emailToUse = userEmail || profile?.email
   if (!emailToUse) {
     console.log("ACTIVATE STOP: no email at all")
@@ -1470,7 +1495,7 @@ const ikpuPromise = Promise.resolve()
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = Promise.resolve()
+const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     setIsGenerating(true)
   try {
     setCreating(true)
@@ -1671,6 +1696,15 @@ const handleDownloadPng = async () => {
     const otherNum = toNumber(otherCosts)
     const desiredProfitNum = toNumber(desiredProfit)
     const competitorNum = toNumber(competitorPrice)
+    const sellingPriceNum = toNumber(sellingPrice)
+    const adCostPercentNum = toNumber(adCostPercent)
+    const returnRateNum = toNumber(returnRatePercent)
+    const returnCostNum = toNumber(returnCost)
+    const taxPercentNum = toNumber(taxPercent)
+    const paymentFeePercentNum = toNumber(paymentFeePercent)
+    const storageNum = toNumber(storagePerUnit)
+    const monthlyFixedNum = toNumber(monthlyFixedCosts)
+    const plannedUnitsNum = Math.max(1, toNumber(plannedUnits))
 
     const purchaseCostUzs = purchaseUsdNum * usdRateNum
     const totalCost =
@@ -1679,27 +1713,57 @@ const handleDownloadPng = async () => {
       localNum +
       marketingNum +
       packagingNum +
-      otherNum
+      otherNum +
+      storageNum
 
-    const commissionFactor = 1 - commissionNum / 100
+    const variableRate = (commissionNum + adCostPercentNum + taxPercentNum + paymentFeePercentNum) / 100
+    const commissionFactor = 1 - variableRate
     const safeFactor = commissionFactor > 0 ? commissionFactor : 0.01
+    const returnReserve = (purchaseCostUzs + returnCostNum) * (returnRateNum / 100)
+    const fixedPerUnit = monthlyFixedNum / plannedUnitsNum
+    const trueUnitCost = totalCost + returnReserve + fixedPerUnit
 
-    const breakEven = roundMoney(totalCost / safeFactor)
-    const aggressive = roundMoney((totalCost + desiredProfitNum * 0.55) / safeFactor)
-    const optimal = roundMoney((totalCost + desiredProfitNum) / safeFactor)
-    const premium = roundMoney((totalCost + desiredProfitNum * 1.8) / safeFactor)
+    const breakEven = roundMoney(trueUnitCost / safeFactor)
+    const aggressive = roundMoney((trueUnitCost + desiredProfitNum * 0.55) / safeFactor)
+    const optimal = roundMoney((trueUnitCost + desiredProfitNum) / safeFactor)
+    const premium = roundMoney((trueUnitCost + desiredProfitNum * 1.8) / safeFactor)
 
-    const profitAtPrice = (price: number) => price * safeFactor - totalCost
+    const profitAtPrice = (price: number) => price * safeFactor - trueUnitCost
     const marginAtPrice = (price: number) =>
       price > 0 ? (profitAtPrice(price) / price) * 100 : 0
     const roiAtPrice = (price: number) =>
-      totalCost > 0 ? (profitAtPrice(price) / totalCost) * 100 : 0
+      trueUnitCost > 0 ? (profitAtPrice(price) / trueUnitCost) * 100 : 0
+    const contributionProfit = roundMoney(profitAtPrice(sellingPriceNum))
+    const contributionMargin = marginAtPrice(sellingPriceNum)
+    const roi = roiAtPrice(sellingPriceNum)
+    const breakEvenUnits =
+      contributionProfit > 0 ? Math.ceil(monthlyFixedNum / contributionProfit) : 0
+    const breakEvenRevenue = breakEvenUnits * sellingPriceNum
+    const maxAcos =
+      sellingPriceNum > 0
+        ? Math.max(0, ((sellingPriceNum - trueUnitCost + sellingPriceNum * (adCostPercentNum / 100)) / sellingPriceNum) * 100)
+        : 0
+    const profitPlan = contributionProfit * plannedUnitsNum
+    const safetyGap = sellingPriceNum - breakEven
 
     return {
       competitorNum,
       purchaseCostUzs,
       totalCost,
+      trueUnitCost,
+      returnReserve,
+      fixedPerUnit,
+      variableRate,
       breakEven,
+      sellingPriceNum,
+      contributionProfit,
+      contributionMargin,
+      roi,
+      breakEvenUnits,
+      breakEvenRevenue,
+      maxAcos,
+      profitPlan,
+      safetyGap,
       aggressive,
       optimal,
       premium,
@@ -1727,12 +1791,24 @@ const handleDownloadPng = async () => {
     otherCosts,
     desiredProfit,
     competitorPrice,
+    sellingPrice,
+    adCostPercent,
+    returnRatePercent,
+    returnCost,
+    taxPercent,
+    paymentFeePercent,
+    storagePerUnit,
+    monthlyFixedCosts,
+    plannedUnits,
   ])
 
   
   useEffect(() => {
     const root = document.documentElement
+    const body = document.body
     root.classList.add("dashboard-cursor-glow")
+    root.classList.add("mc-dashboard-no-page-scroll")
+    body.classList.add("mc-dashboard-no-page-scroll")
 
     const handleMove = (e: MouseEvent) => {
       const main = document.querySelector("main")
@@ -1755,6 +1831,8 @@ const handleDownloadPng = async () => {
       window.removeEventListener("mousemove", handleMove)
       window.removeEventListener("mouseout", handleLeave)
       root.classList.remove("dashboard-cursor-glow")
+      root.classList.remove("mc-dashboard-no-page-scroll")
+      body.classList.remove("mc-dashboard-no-page-scroll")
       root.style.removeProperty("--mc-x")
       root.style.removeProperty("--mc-y")
       root.style.removeProperty("--mc-opacity")
@@ -1831,14 +1909,120 @@ const handleDownloadPng = async () => {
     closeDashboardMenu()
   }
 
-  const handleVideoGenerate = () => {
+  const handleVideoGenerate = async () => {
+    if (!selectedFile) {
+      alert("Сначала загрузите фото товара для AI-видео.")
+      return
+    }
+
+    const scenario =
+      videoPrompt.trim() ||
+      "Красивый 360° оборот товара, премиальная подсветка, динамичные переходы, крупные преимущества и финальный оффер для маркетплейса."
+
     setIsVideoGenerating(true)
     setVideoResultReady(false)
-    window.setTimeout(() => {
-      setIsVideoGenerating(false)
+    setVideoAssetUrl("")
+    setVideoAssetType("")
+
+    if (!videoPrompt.trim()) {
+      setVideoPrompt(scenario)
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("product_title", productTitle || selectedFile.name || "MarketCard product")
+      formData.append("marketplace", videoMarketplace)
+      formData.append("scenario", scenario)
+      formData.append("style", videoStyle)
+      formData.append("image", selectedFile)
+
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/video/generate", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.detail || "Не удалось создать видео")
+      }
+
+      const assetUrl =
+        typeof data.video_url === "string" && data.video_url.startsWith("/generated_videos")
+          ? `/api${data.video_url}`
+          : data.video_url
+
+      setVideoAssetUrl(assetUrl || "")
+      setVideoAssetType(data.asset_type === "gif" ? "gif" : "video")
       setVideoResultReady(true)
-    }, 1800)
+    } catch (error) {
+      console.error("VIDEO GENERATE ERROR", error)
+      alert(error instanceof Error ? error.message : "Ошибка генерации видео")
+    } finally {
+      setIsVideoGenerating(false)
+    }
   }
+
+  const videoMarketplaces = [
+    {
+      key: "uzum" as const,
+      label: "UZUM",
+      format: "9:16",
+      caption: "Stories / Reels",
+      logo: "/marketplaces-premium/uzum.png",
+    },
+    {
+      key: "wildberries" as const,
+      label: "Wildberries",
+      format: "9:16",
+      caption: "vertical promo",
+      logo: "/marketplaces-premium/wildberries.png",
+    },
+    {
+      key: "ozon" as const,
+      label: "OZON",
+      format: "1:1",
+      caption: "square feed",
+      logo: "/marketplaces-premium/ozon.png",
+    },
+    {
+      key: "yandex" as const,
+      label: "Yandex Market",
+      format: "16:9",
+      caption: "wide showcase",
+      logo: "/marketplaces-premium/yandex.png",
+    },
+  ]
+
+  const activeVideoMarketplace =
+    videoMarketplaces.find((item) => item.key === videoMarketplace) ||
+    videoMarketplaces[0]
+
+  const videoStyles = [
+    { key: "cinematic", label: "Cinematic" },
+    { key: "luxury", label: "Luxury" },
+    { key: "dynamic", label: "Dynamic" },
+    { key: "studio", label: "Studio" },
+  ]
+
+  const videoPipeline = [
+    {
+      title: "Browser preview",
+      text: "Мгновенный render brief в кабинете",
+      url: "https://www.canva.com/ai-video-generator/",
+    },
+    {
+      title: "Free AI queue",
+      text: "Быстрый переход к open image-to-video сервисам",
+      url: "https://huggingface.co/spaces?search=image%20to%20video",
+    },
+    {
+      title: "MP export",
+      text: "Форматы Uzum, WB, Ozon, Yandex",
+      url: "https://www.capcut.com/tools/ai-video-generator",
+    },
+  ]
 
   const openSourcingLinks = () => {
     const sites = [
@@ -1922,6 +2106,39 @@ const handleDownloadPng = async () => {
     }
   }
 
+  const openDeficitProductsAllMarketplaces = async () => {
+    const niche = window.prompt("Введите нишу для анализа дефицита товаров")
+    if (!niche?.trim()) return
+
+    const marketplace =
+      window.prompt("Маркетплейс: uzum, wildberries, ozon, yandex", "uzum") || "uzum"
+
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/deficit-products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          query: niche.trim(),
+          limit: 100,
+          marketplace,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || "Ошибка анализа")
+
+      const fileUrl = data.download_url?.startsWith("/")
+        ? `/api${data.download_url}`
+        : data.download_url
+      if (fileUrl) window.open(fileUrl, "_blank")
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Ошибка анализа")
+    }
+  }
+
   const mainDashboardNav = [
     { key: "generator" as const, label: "Создать карточку", meta: "AI", icon: "AI", onClick: () => selectDashboardPage("generator") },
     { key: "video" as const, label: "AI видео", meta: "NEW", icon: "VI", onClick: () => selectDashboardPage("video") },
@@ -1937,6 +2154,15 @@ const handleDownloadPng = async () => {
     { label: "Закуп товара", meta: "B2B", icon: "BZ", onClick: openSourcingLinks },
     { label: "DIDOX / ЭДО", meta: "DOC", icon: "DX", onClick: () => window.open("https://didox.uz", "_blank") },
     { label: "Дефицит Uzum", meta: "XLS", icon: "DF", onClick: openDeficitProducts },
+  ]
+
+  const premiumToolDashboardNav = [
+    { label: "ABC анализ", meta: "URL", icon: "AB", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
+    { label: "ИКПУ", meta: ikpuResults.length ? String(ikpuResults.length) : "AUTO", icon: "IK", onClick: () => selectDashboardPage("ikpu") },
+    { label: "Закуп товара", meta: "B2B", icon: "BZ", onClick: () => selectDashboardPage("purchase") },
+    { label: "DIDOX / ЭДО", meta: "DOC", icon: "DX", onClick: () => selectDashboardPage("didox") },
+    { label: "Дефицит товаров", meta: "4 MP", icon: "DF", onClick: () => selectDashboardPage("deficit") },
+    { label: "Инструкции", meta: "LIVE", icon: "IN", onClick: () => selectDashboardPage("instructions") },
   ]
 
   const dashboardSectionMeta: Record<DashboardPageKey, { title: string; subtitle: string; badge: string }> = {
@@ -1972,8 +2198,28 @@ const handleDownloadPng = async () => {
     },
     ikpu: {
       title: "ИКПУ",
-      subtitle: "Быстрый переход к классификатору и рабочим инструментам продавца.",
-      badge: "Tasnif",
+      subtitle: "Автоподбор кода через Soliq parser, локальный кеш и ранжирование по товару.",
+      badge: "Soliq parser",
+    },
+    purchase: {
+      title: "Закуп товара",
+      subtitle: "Площадки Китая, фабрики, карго Узбекистана и быстрые ссылки для закупа.",
+      badge: "Sourcing hub",
+    },
+    didox: {
+      title: "DIDOX / ЭДО",
+      subtitle: "Подготовка к интеграции документов, счетов и электронного документооборота.",
+      badge: "Documents",
+    },
+    deficit: {
+      title: "Дефицит товаров",
+      subtitle: "Сигналы дефицита по Uzum, Wildberries, Ozon и Yandex Market.",
+      badge: "Market gaps",
+    },
+    instructions: {
+      title: "Инструкции маркетплейсов",
+      subtitle: "Живой центр правил и чеклистов по требованиям площадок.",
+      badge: "Live rules",
     },
   }
 
@@ -2134,7 +2380,7 @@ if (!authChecked) return null
 
   <nav className="mc-dashboard-nav mc-dashboard-nav-tools" aria-label="Инструменты">
     <div className="mc-dashboard-nav-label">Инструменты</div>
-    {toolDashboardNav.map((item) => (
+    {premiumToolDashboardNav.map((item) => (
       <button
         key={item.label}
         type="button"
@@ -2479,7 +2725,7 @@ if (!authChecked) return null
 
       <div
         onClick={async () => {
-          const formResult = await new Promise<{ niche: string; limit: number } | null>((resolve) => {
+          const formResult = await new Promise<{ niche: string; limit: number; marketplace: string } | null>((resolve) => {
             const modal = document.createElement("div");
             modal.style.position = "fixed";
             modal.style.inset = "0";
@@ -2494,6 +2740,12 @@ if (!authChecked) return null
                 <div style="font-size:26px;font-weight:900;margin-bottom:8px">Дефицит товаров Uzum</div>
                 <div style="font-size:15px;color:rgba(255,255,255,.72);line-height:1.5;margin-bottom:20px">Введите нишу. Анализ автоматически спишет 20 аудитов и соберёт максимум доступных товаров.</div>
                 <input id="deficitNicheInput" placeholder="Например: наушники, коврики, зарядки" style="width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);outline:none;border-radius:16px;padding:15px 16px;background:rgba(255,255,255,.08);color:white;font-size:16px;margin-bottom:16px" />
+                <select id="deficitMarketplaceInput" style="width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);outline:none;border-radius:16px;padding:15px 16px;background:#0f172a;color:white;font-size:16px;margin-bottom:16px">
+                  <option value="uzum">Uzum</option>
+                  <option value="wildberries">Wildberries</option>
+                  <option value="ozon">Ozon</option>
+                  <option value="yandex">Yandex Market</option>
+                </select>
                 
                 <div style="display:flex;gap:12px;flex-wrap:wrap">
                   <button id="startDeficitAnalysis" style="flex:1;min-width:220px;border:0;border-radius:18px;padding:16px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-weight:900;cursor:pointer;font-size:16px">🚀 Начать анализ</button>
@@ -2511,7 +2763,9 @@ if (!authChecked) return null
 
             modal.querySelector("#startDeficitAnalysis")?.addEventListener("click", () => {
               const input = modal.querySelector("#deficitNicheInput") as HTMLInputElement | null;
+              const marketplaceInput = modal.querySelector("#deficitMarketplaceInput") as HTMLSelectElement | null;
               const niche = (input?.value || "").trim();
+              const marketplace = marketplaceInput?.value || "uzum";
               const limit = 100;
 
               if (!niche) {
@@ -2531,12 +2785,12 @@ if (!authChecked) return null
                   </style>
                   <div style="font-size:26px;font-weight:900;margin-bottom:10px">Подождите</div>
                   <div style="font-size:16px;color:rgba(255,255,255,.76);line-height:1.6">
-                    Собираем данные с Uzum и формируем Excel-отчёт.<br/>
+                    Собираем данные с выбранного маркетплейса и формируем Excel-отчёт.<br/>
                     Это может занять немного времени.
                   </div>`;
                 
               }
-              resolve({ niche, limit });
+              resolve({ niche, limit, marketplace });
             });
           });
 
@@ -2550,19 +2804,7 @@ if (!authChecked) return null
               "Content-Type": "application/json",
               ...(token ? { Authorization: `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({
-              query: formResult.niche,
-              limit: formResult.limit,
-              marketplace: "uzum"
-            })
-          })
-          fetch("/api/deficit-products", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({ query: formResult.niche, limit: formResult.limit, marketplace: "uzum" })
+            body: JSON.stringify({ query: formResult.niche, limit: formResult.limit, marketplace: formResult.marketplace })
           })
             .then(async (r) => {
               const data = await r.json();
@@ -2570,7 +2812,7 @@ if (!authChecked) return null
 
               const fileUrl = data.download_url?.startsWith("/")
                 ? data.download_url
-                : `/api ${data.download_url}`;
+                : `/api${data.download_url}`;
 
               document.querySelectorAll("div").forEach((el) => {
                 if (el.textContent?.includes("Собираем данные с Uzum")) el.remove();
@@ -2823,35 +3065,51 @@ if (!authChecked) return null
       padding: "28px",
     }}
   >
-    <div className="mc-dashboard-command">
-      <div className="mc-dashboard-command-copy">
-        <div className="mc-dashboard-kicker">MarketCard AI workspace</div>
-        <h1>Добро пожаловать, {dashboardName}</h1>
-        <p>
-          Управляйте генерациями, аудитами и SEO-логикой карточек в одном премиальном AI-кабинете.
-        </p>
+    <div className="mc-dashboard-command mc-seller-cabinet">
+      <div className="mc-dashboard-command-copy mc-seller-identity">
+        <div className="mc-seller-avatar">{dashboardInitial}</div>
+        <div className="mc-seller-meta">
+          <div className="mc-dashboard-kicker">MarketCard AI seller cabinet</div>
+          <h1>Личный кабинет продавца</h1>
+          <p>
+            {dashboardName}, управляйте генерациями, тарифом, аудитами, AI-видео и экспортами для маркетплейсов в одном premium workspace.
+          </p>
+        </div>
       </div>
 
-      <div className="mc-dashboard-command-actions">
-        <label className="mc-dashboard-search">
-          <span>Поиск</span>
-          <input type="text" placeholder="Карточки, шаблоны, маркетплейсы..." readOnly />
-        </label>
-
-        <button
-          className="mc-dashboard-primary-action"
-          type="button"
-          onClick={() => setActivePage("generator")}
-        >
-          Новая карточка
-        </button>
-
-        <div className="mc-dashboard-user-chip" aria-label="Аккаунт">
-          <span>{dashboardInitial}</span>
+      <div className="mc-seller-cabinet-panel">
+        <div className="mc-seller-metrics">
           <div>
-            <strong>{profile?.tariff_name || "Start"}</strong>
-            <small>{profile?.tariff_active ? "активен" : "нужно активировать"}</small>
+            <span>Email</span>
+            <strong>{accountEmailLabel}</strong>
           </div>
+          <div>
+            <span>Тариф</span>
+            <strong>{profile?.tariff_name || "Start"}</strong>
+          </div>
+          <div>
+            <span>Генерации</span>
+            <strong>{dashboardLeft}/{dashboardTotal || 0}</strong>
+          </div>
+          <div>
+            <span>Аудиты</span>
+            <strong>{profile?.audit_credits ?? 0}</strong>
+          </div>
+        </div>
+
+        <div className="mc-seller-actions">
+          <button type="button" onClick={() => setShowTariffModal(true)}>
+            Тарифы
+          </button>
+          <button type="button" onClick={handleSwitchAccount}>
+            Сменить аккаунт
+          </button>
+          <button type="button" onClick={handleLogout}>
+            Выйти
+          </button>
+          <button type="button" className="is-danger" onClick={handleAccountDeleteRequest}>
+            Удалить аккаунт
+          </button>
         </div>
       </div>
     </div>
@@ -3200,98 +3458,202 @@ if (!authChecked) return null
     </div>
 
     {activePage === "video" && (
-      <div className="mc-video-studio">
-        <div className="mc-video-panel">
-          <div className="mc-panel-eyebrow">AI video pipeline</div>
-          <h3>Промо-видео товара</h3>
-          <p>
-            Задайте сценарий, площадку и формат. Этот блок готов для подключения backend video generation,
-            а сейчас даёт продавцу рабочий видео-brief и preview-состояния.
-          </p>
-
-          <label className="mc-field">
-            <span>Сценарий ролика</span>
-            <textarea
-              value={videoPrompt}
-              onChange={(e) => setVideoPrompt(e.target.value)}
-              placeholder="Например: показать флакон Lacoste, подсветить аромат, финальный кадр с оффером..."
-            />
-          </label>
-
-          <div className="mc-video-controls">
-            <label className="mc-field">
-              <span>Стиль</span>
-              <select value={videoStyle} onChange={(e) => setVideoStyle(e.target.value)}>
-                <option value="cinematic">Cinematic premium</option>
-                <option value="marketplace">Marketplace motion</option>
-                <option value="clean">Clean studio</option>
-                <option value="neon">Neon AI</option>
-              </select>
-            </label>
-
-            <label className="mc-field">
-              <span>Формат</span>
-              <select value={videoAspect} onChange={(e) => setVideoAspect(e.target.value)}>
-                <option value="9:16">9:16 Shorts</option>
-                <option value="1:1">1:1 Card</option>
-                <option value="16:9">16:9 Wide</option>
-              </select>
-            </label>
-
-            <label className="mc-field">
-              <span>Площадка</span>
-              <select
-                value={videoMarketplace}
-                onChange={(e) => setVideoMarketplace(e.target.value as MarketplaceKey)}
-              >
-                <option value="uzum">Uzum</option>
-                <option value="wildberries">Wildberries</option>
-                <option value="ozon">Ozon</option>
-                <option value="yandex">Yandex Market</option>
-              </select>
-            </label>
+      <div className="mc-video-generator-v2">
+        <div className="mc-video-v2-head">
+          <div className="mc-video-v2-brand">
+            <div className="mc-video-v2-icon">VI</div>
+            <div>
+              <h1>AI VIDEO</h1>
+              <p>Генератор промо-роликов под 4 маркетплейса</p>
+            </div>
           </div>
-
-          <button
-            type="button"
-            className="mc-video-generate"
-            onClick={handleVideoGenerate}
-            disabled={isVideoGenerating}
-          >
-            {isVideoGenerating ? "Генерация видео..." : "Собрать видео-концепт"}
-          </button>
+          <div className="mc-video-online-badge">
+            <i />
+            МОДЕЛЬ ОНЛАЙН
+          </div>
         </div>
 
-        <div className="mc-video-preview">
-          <div className={`mc-video-frame mc-video-frame-${videoAspect.replace(":", "-")}`}>
-            <div className="mc-video-noise" />
-            <div className="mc-video-product">
-              <span>{videoMarketplace.toUpperCase()}</span>
-              <strong>{productTitle || "Premium product"}</strong>
-            </div>
-            <div className="mc-video-timeline">
-              <i />
-              <i />
-              <i />
-            </div>
-            {isVideoGenerating && <div className="mc-video-processing">AI motion render</div>}
-            {videoResultReady && <div className="mc-video-ready">Видео-концепт готов</div>}
+        <div className="mc-video-v2-grid">
+          <div className="mc-video-v2-column">
+            <section className="mc-video-v2-panel">
+              <label className="mc-video-v2-label">Фото товара</label>
+              <label
+                className={previewUrl ? "mc-video-upload-zone has-image" : "mc-video-upload-zone"}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const file = e.dataTransfer.files?.[0] ?? null
+                  if (file && file.type.startsWith("image/")) {
+                    setSelectedFile(file)
+                  }
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null
+                    setSelectedFile(file)
+                  }}
+                />
+
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Фото товара для видео" />
+                ) : (
+                  <div className="mc-video-upload-empty">
+                    <span className="mc-video-upload-mark">UP</span>
+                    <strong>Загрузите фото товара</strong>
+                    <small>PNG, JPG, WEBP до 10MB</small>
+                  </div>
+                )}
+              </label>
+              <p className="mc-video-v2-help">
+                ИИ использует фото как hero-object и собирает motion brief под выбранную площадку.
+              </p>
+            </section>
+
+            <section className="mc-video-v2-panel">
+              <div className="mc-video-section-row">
+                <label className="mc-video-v2-label">Сценарий ролика</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVideoPrompt(
+                      "Красивый 360° оборот товара, премиальная подсветка, динамичные переходы, крупные преимущества и финальный оффер для маркетплейса."
+                    )
+                  }
+                >
+                  AI подсказка
+                </button>
+              </div>
+              <textarea
+                value={videoPrompt}
+                onChange={(e) => setVideoPrompt(e.target.value)}
+                placeholder="Покажите товар с разных ракурсов, добавьте свечение, динамичные переходы и финальный оффер..."
+                className="mc-video-scenario"
+              />
+            </section>
+
+            <section className="mc-video-v2-panel">
+              <label className="mc-video-v2-label">Стиль</label>
+              <div className="mc-video-style-grid">
+                {videoStyles.map((style) => (
+                  <button
+                    key={style.key}
+                    type="button"
+                    className={videoStyle === style.key ? "mc-video-style-btn is-active" : "mc-video-style-btn"}
+                    onClick={() => setVideoStyle(style.key)}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="mc-video-v2-panel mc-video-free-panel">
+              <div className="mc-video-section-row">
+                <label className="mc-video-v2-label">Free video pipeline</label>
+                <span>готово к API</span>
+              </div>
+              <div className="mc-video-provider-grid">
+                {videoPipeline.map((item) => (
+                  <div className="mc-video-provider-card" key={item.title}>
+                    <strong>{item.title}</strong>
+                    <small>{item.text}</small>
+                    <button type="button" onClick={() => window.open(item.url, "_blank", "noopener,noreferrer")}>
+                      Открыть сервис
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
 
-          <div className="mc-video-shotlist">
-            <div>
-              <strong>01</strong>
-              <span>Hero product reveal</span>
+          <section className="mc-video-v2-preview-panel">
+            <div className="mc-video-preview-top">
+              <h3>Превью видео</h3>
+              <div className="mc-video-selected-platform">
+                <img src={activeVideoMarketplace.logo} alt={activeVideoMarketplace.label} />
+                <span>{activeVideoMarketplace.label}</span>
+              </div>
             </div>
-            <div>
-              <strong>02</strong>
-              <span>Benefit motion badges</span>
+
+            <div className={`mc-video-live-frame mc-video-live-${videoAspect.replace(":", "-")}`}>
+              {previewUrl && (
+                <div
+                  className="mc-video-bg"
+                  style={{ backgroundImage: `url(${previewUrl})` }}
+                />
+              )}
+
+              <div className="mc-video-preview-product">
+                {videoAssetUrl && videoAssetType === "video" ? (
+                  <video src={videoAssetUrl} autoPlay loop muted playsInline controls />
+                ) : videoAssetUrl ? (
+                  <img src={videoAssetUrl} alt="Готовый AI video motion preview" />
+                ) : previewUrl ? (
+                  <img src={previewUrl} alt="Видео preview товара" />
+                ) : (
+                  <span>MC</span>
+                )}
+                <strong>{productTitle || "Premium product"}</strong>
+                <small>{activeVideoMarketplace.caption}</small>
+              </div>
+
+              <div className="mc-video-frame-gradient" />
+              <div className="mc-video-frame-track">
+                <i />
+                <i />
+                <i />
+              </div>
+
+              {isVideoGenerating && (
+                <div className="mc-video-render-state is-processing">
+                  <span />
+                  ГЕНЕРАЦИЯ...
+                </div>
+              )}
+              {videoResultReady && (
+                <div className="mc-video-render-state is-ready">
+                  Видео поставлено в очередь
+                </div>
+              )}
             </div>
-            <div>
-              <strong>03</strong>
-              <span>Marketplace CTA frame</span>
+
+            <div className="mc-video-market-panel">
+              <label className="mc-video-v2-label">Маркетплейс</label>
+              <div className="mc-video-market-grid">
+                {videoMarketplaces.map((market) => (
+                  <button
+                    key={market.key}
+                    type="button"
+                    className={videoMarketplace === market.key ? "mc-video-market-card is-active" : "mc-video-market-card"}
+                    onClick={() => {
+                      setVideoMarketplace(market.key)
+                      setVideoAspect(market.format)
+                    }}
+                  >
+                    <img className="mc-video-market-logo" src={market.logo} alt={market.label} />
+                    <strong>{market.label}</strong>
+                    <small>{market.format}</small>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+
+            <div className="mc-video-generate-footer">
+              <button
+                type="button"
+                className="mc-video-v2-generate"
+                onClick={handleVideoGenerate}
+                disabled={isVideoGenerating}
+              >
+                <span>{isVideoGenerating ? "..." : "AI"}</span>
+                {isVideoGenerating ? "СОЗДАЁМ ВИДЕО..." : "СОЗДАТЬ ВИДЕО ПО ФОТО"}
+              </button>
+              <p>~25 сек • 4K brief • адаптивно под Uzum, Wildberries, Ozon и Yandex Market</p>
+            </div>
+          </section>
         </div>
       </div>
     )}
@@ -4403,6 +4765,175 @@ if (listingLang === "uz" && translatedListing) {
 </div>
 )}
 
+{activePage === "ikpu" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>SOLIQ / TASNIF</span>
+      <h2>Автоподбор ИКПУ</h2>
+      <p>
+        Введите название товара или используйте данные последней генерации. Backend ищет в локальном кеше,
+        затем дергает Soliq parser, сохраняет найденные коды и ранжирует варианты.
+      </p>
+    </div>
+
+    <div className="mc-tool-search">
+      <input
+        value={ikpuQuery}
+        onChange={(event) => setIkpuQuery(event.target.value)}
+        placeholder="Например: насос ГУР Cobalt, беспроводные наушники, аромат для дома"
+      />
+      <button type="button" onClick={searchIkpu} disabled={ikpuLoading}>
+        {ikpuLoading ? "Поиск..." : "Найти ИКПУ"}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const query = `${productTitle} ${brand} ${category}`.trim()
+          setIkpuQuery(query)
+          void searchIkpuAuto(query)
+        }}
+      >
+        Подобрать по карточке
+      </button>
+    </div>
+
+    <div className="mc-ikpu-results">
+      {ikpuResults.length ? (
+        ikpuResults.map((item: any, index: number) => (
+          <div className="mc-ikpu-row" key={`${item.code || index}-${index}`}>
+            <div>
+              <span>#{index + 1} / {item.source || "parser"}</span>
+              <strong>{item.code || "Код не найден"}</strong>
+              <p>{item.name}</p>
+            </div>
+            <button type="button" onClick={() => navigator.clipboard.writeText(item.code || "")}>
+              Скопировать
+            </button>
+          </div>
+        ))
+      ) : (
+        <div className="mc-tool-empty">
+          <strong>ИКПУ появится здесь</strong>
+          <p>После генерации карточки раздел подсветится и покажет подходящие коды автоматически.</p>
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
+{activePage === "purchase" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>SOURCING</span>
+      <h2>Закуп товара</h2>
+      <p>Площадки для закупа, фабрики, карго и быстрый расчет входной цены. Сюда позже подключаются API поставщиков и карго.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["1688", "Китайский опт и фабрики", "https://www.1688.com", "CN"],
+        ["Alibaba", "Международные поставщики", "https://www.alibaba.com", "AL"],
+        ["Taobao", "Тренды и розничный Китай", "https://world.taobao.com", "TB"],
+        ["Made-in-China", "Фабрики и производство", "https://www.made-in-china.com", "MC"],
+        ["Global Sources", "B2B поставщики", "https://www.globalsources.com", "GS"],
+        ["DHgate", "Мелкий опт", "https://www.dhgate.com", "DH"],
+      ].map(([title, text, url, logo]) => (
+        <button className="mc-tool-card" key={title} type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}>
+          <span className="mc-market-logo-badge">{logo}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </button>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={openSourcingLinks}>Открыть все источники</button>
+      <button type="button" onClick={() => selectDashboardPage("economy")}>Посчитать входную цену</button>
+    </div>
+  </div>
+)}
+
+{activePage === "didox" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>DIDOX / ЭДО</span>
+      <h2>Документы продавца</h2>
+      <p>Раздел готов под API DIDOX: счета, акты, накладные, статусы подписи и привязка документов к товарам.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["Счета", "Создание и контроль счетов по заказам", "Готово к API"],
+        ["Акты", "Шаблоны актов и статусы подписания", "DIDOX"],
+        ["Накладные", "Документы поставок и закупа", "ЭДО"],
+        ["Проверка", "Контроль ИНН, компании и статуса", "KYC"],
+      ].map(([title, text, tag]) => (
+        <div className="mc-tool-card" key={title}>
+          <span className="mc-market-logo-badge">{tag.slice(0, 2)}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <small>{tag}</small>
+        </div>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={() => window.open("https://didox.uz", "_blank", "noopener,noreferrer")}>Открыть DIDOX</button>
+      <button type="button" onClick={() => alert("Добавьте DIDOX_CLIENT_ID и DIDOX_CLIENT_SECRET в backend/.env")}>Проверить API ключи</button>
+    </div>
+  </div>
+)}
+
+{activePage === "deficit" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>4 MARKETPLACES</span>
+      <h2>Дефицит товаров</h2>
+      <p>Поиск ниш, где спрос есть, а карточки слабые или товаров мало. Поддержка Uzum, Wildberries, Ozon и Yandex Market.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["Uzum", "Локальный спрос и дефицит категорий", "UZ"],
+        ["Wildberries", "Слабые карточки и высокий спрос", "WB"],
+        ["Ozon", "Пробелы ассортимента и цены", "OZ"],
+        ["Yandex Market", "Категории и товарные разрывы", "YA"],
+      ].map(([title, text, logo]) => (
+        <div className="mc-tool-card" key={title}>
+          <span className="mc-market-logo-badge">{logo}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <small><i className="mc-status-dot" /> parser ready</small>
+        </div>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={openDeficitProductsAllMarketplaces}>Собрать дефицит по 4 площадкам</button>
+      <button type="button" onClick={openDeficitProducts}>Быстрый Uzum отчет</button>
+    </div>
+  </div>
+)}
+
+{activePage === "instructions" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>LIVE RULES</span>
+      <h2>Инструкции маркетплейсов</h2>
+      <p>Центр правил для продавцов: требования к изображениям, SEO, запрещенные слова, документы и форматы.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["Uzum", "Фото, характеристики, ИКПУ и локальные требования", "UZ"],
+        ["Wildberries", "Инфографика, SEO, размеры и контент-риск", "WB"],
+        ["Ozon", "Медиа, описание, rich-content и модерация", "OZ"],
+        ["Yandex Market", "Фиды, изображения, документы и категории", "YA"],
+      ].map(([title, text, logo]) => (
+        <div className="mc-tool-card" key={title}>
+          <span className="mc-market-logo-badge">{logo}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <small>обновление через parser/cron</small>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 {activePage === "audit" && (
   <>
   <CardAuditPanel />
@@ -4417,243 +4948,193 @@ if (listingLang === "uz" && translatedListing) {
 )}
 
 {activePage === "economy" && (
-      <div
-        className="mc-economy-suite"
-        style={{
-          maxWidth: "980px",
-          padding: "28px",
-          borderRadius: "24px",
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
-          backdropFilter: "blur(14px)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "34px",
-            fontWeight: 900,
-            marginBottom: "6px",
-          }}
-        >
-          {t.unitTitle}
+      <div className="mc-economy-command">
+        <div className="mc-economy-hero">
+          <div>
+            <span className="mc-economy-kicker">Profit cockpit</span>
+            <h2>Юнит-экономика продавца</h2>
+            <p>
+              Считай реальную прибыль после закупки, комиссий, рекламы, налогов,
+              логистики, возвратов и фиксированных расходов. Не валовая маржа,
+              а честный contribution margin.
+            </p>
+          </div>
+          <div className={unit.contributionProfit > 0 ? "mc-economy-health is-good" : "mc-economy-health is-risk"}>
+            <span>{unit.contributionProfit > 0 ? "PROFIT" : "RISK"}</span>
+            <strong>{formatMoney(unit.contributionProfit, lang)} сум</strong>
+            <small>прибыль с 1 продажи</small>
+          </div>
         </div>
 
-        <div
-          style={{
-            fontSize: "15px",
-            color: "#cbd5e1",
-            marginBottom: "18px",
-            fontWeight: 700,
-          }}
-        >
-          {t.unitSubtitle}
+        <div className="mc-economy-metrics">
+          {[
+            ["Цена продажи", `${formatMoney(unit.sellingPriceNum, lang)} сум`, "текущая цена"],
+            ["Чистая маржа", `${unit.contributionMargin.toFixed(1)}%`, "после всех переменных расходов"],
+            ["ROI", `${unit.roi.toFixed(1)}%`, "прибыль / true cost"],
+            ["Break-even", `${formatMoney(unit.breakEven, lang)} сум`, "минимальная цена"],
+            ["Max ACOS", `${unit.maxAcos.toFixed(1)}%`, "порог рекламы"],
+            ["План прибыли", `${formatMoney(unit.profitPlan, lang)} сум`, `${plannedUnits} шт.`],
+          ].map(([label, value, note]) => (
+            <div className="mc-economy-metric" key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+              <small>{note}</small>
+            </div>
+          ))}
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "12px",
-          }}
-        >
-          <div>
-            <div style={labelStyle}>{t.purchaseUsd}</div>
-            <input
-              value={purchaseUsd}
-              onChange={(e) => setPurchaseUsd(e.target.value)}
-              style={inputStyle}
-            />
+        <div className="mc-economy-grid">
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>01</span>
+              <div>
+                <h3>Вводные по товару</h3>
+                <p>Закупка, курс, логистика, упаковка и склад.</p>
+              </div>
+            </div>
+            <div className="mc-economy-input-grid">
+              {[
+                ["Закупка, $", purchaseUsd, setPurchaseUsd],
+                ["Курс USD", usdRate, setUsdRate],
+                ["Логистика МП", fulfillmentLogistics, setFulfillmentLogistics],
+                ["Локальная логистика", localLogistics, setLocalLogistics],
+                ["Упаковка", packaging, setPackaging],
+                ["Хранение / шт.", storagePerUnit, setStoragePerUnit],
+                ["Прочие расходы", otherCosts, setOtherCosts],
+                ["План продаж, шт.", plannedUnits, setPlannedUnits],
+              ].map(([label, value, setter]) => (
+                <label className="mc-economy-field" key={String(label)}>
+                  <span>{String(label)}</span>
+                  <input value={String(value)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} />
+                </label>
+              ))}
+            </div>
           </div>
 
-          <div>
-            <div style={labelStyle}>{t.usdRate}</div>
-            <input
-              value={usdRate}
-              onChange={(e) => setUsdRate(e.target.value)}
-              style={inputStyle}
-            />
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>02</span>
+              <div>
+                <h3>Маркетплейс и риск</h3>
+                <p>Комиссии, реклама, возвраты, налоги и платежи.</p>
+              </div>
+            </div>
+            <div className="mc-economy-input-grid">
+              {[
+                ["Цена продажи", sellingPrice, setSellingPrice],
+                ["Цена конкурентов", competitorPrice, setCompetitorPrice],
+                ["Комиссия МП, %", commissionPercent, setCommissionPercent],
+                ["Реклама / ACOS, %", adCostPercent, setAdCostPercent],
+                ["Налог, %", taxPercent, setTaxPercent],
+                ["Эквайринг, %", paymentFeePercent, setPaymentFeePercent],
+                ["Возвраты, %", returnRatePercent, setReturnRatePercent],
+                ["Стоимость возврата", returnCost, setReturnCost],
+                ["Фикс. расходы / мес", monthlyFixedCosts, setMonthlyFixedCosts],
+                ["Желаемая прибыль / шт.", desiredProfit, setDesiredProfit],
+              ].map(([label, value, setter]) => (
+                <label className="mc-economy-field" key={String(label)}>
+                  <span>{String(label)}</span>
+                  <input value={String(value)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} />
+                </label>
+              ))}
+            </div>
           </div>
-
-          <div>
-            <div style={labelStyle}>{t.commissionPercent}</div>
-            <input
-              value={commissionPercent}
-              onChange={(e) => setCommissionPercent(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.fulfillmentLogistics}</div>
-            <input
-              value={fulfillmentLogistics}
-              onChange={(e) => setFulfillmentLogistics(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.localLogistics}</div>
-            <input
-              value={localLogistics}
-              onChange={(e) => setLocalLogistics(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.marketing}</div>
-            <input
-              value={marketing}
-              onChange={(e) => setMarketing(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.packaging}</div>
-            <input
-              value={packaging}
-              onChange={(e) => setPackaging(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.otherCosts}</div>
-            <input
-              value={otherCosts}
-              onChange={(e) => setOtherCosts(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.desiredProfit}</div>
-            <input
-              value={desiredProfit}
-              onChange={(e) => setDesiredProfit(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.competitorPrice}</div>
-            <input
-              value={competitorPrice}
-              onChange={(e) => setCompetitorPrice(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-        </div><div
-          style={{
-            marginTop: "18px",
-            display: "grid",
-            gap: "12px",
-          }}
-        >
-          <SummaryLine
-            label={t.totalCost}
-            value={`${formatMoney(unit.totalCost, lang)} ${t.sum}`}
-          />
-          <SummaryLine
-            label={t.breakEvenPrice}
-            value={`${formatMoney(unit.breakEven, lang)} ${t.sum}`}
-          />
-          <SummaryLine
-            label={t.marketBenchmark}
-            value={
-              unit.competitorNum > 0
-                ? `${formatMoney(unit.competitorNum, lang)} ${t.sum}`
-                : t.noBenchmark
-            }
-            hint={t.competitorHint}
-          />
         </div>
 
-        <div
-          style={{
-            marginTop: "18px",
-            display: "grid",
-            gap: "12px",
-          }}
-        >
-          <ScenarioCard
-            title={t.aggressivePrice}
-            hint={t.aggressiveHint}
-            demand={t.demandHigh}
-            price={`${formatMoney(unit.aggressive, lang)} ${t.sum}`}
-            profit={`${formatMoney(unit.aggressiveProfit, lang)} ${t.sum}`}
-            gradient="linear-gradient(135deg,#22c55e,#16a34a)"
-            profitLabel={t.expectedNetProfit}
-            marginPercent={unit.aggressiveMargin}
-            roiPercent={unit.aggressiveROI}
-            statusText={getStatusText(unit.aggressiveStatus, dict.ru)}
-            statusGradient={getStatusColor(unit.aggressiveStatus)}
-            marginLabel={t.netMarginPercent}
-            roiLabel={t.roi}
-          />
+        <div className="mc-economy-breakdown">
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>03</span>
+              <div>
+                <h3>Структура себестоимости</h3>
+                <p>True cost на одну продажу.</p>
+              </div>
+            </div>
+            {[
+              ["Закупка в сумах", unit.purchaseCostUzs],
+              ["Операционные расходы", unit.totalCost - unit.purchaseCostUzs],
+              ["Резерв на возвраты", unit.returnReserve],
+              ["Фиксированные на 1 шт.", unit.fixedPerUnit],
+              ["Итого true cost", unit.trueUnitCost],
+            ].map(([label, value]) => (
+              <SummaryLine key={String(label)} label={String(label)} value={`${formatMoney(Number(value), lang)} сум`} />
+            ))}
+          </div>
 
-          <ScenarioCard
-            title={t.optimalPrice}
-            hint={t.optimalHint}
-            demand={t.demandMedium}
-            price={`${formatMoney(unit.optimal, lang)} ${t.sum}`}
-            profit={`${formatMoney(unit.optimalProfit, lang)} ${t.sum}`}
-            gradient="linear-gradient(135deg,#06b6d4,#2563eb)"
-            profitLabel={t.expectedNetProfit}
-            marginPercent={unit.optimalMargin}
-            roiPercent={unit.optimalROI}
-            statusText={getStatusText(unit.optimalStatus, dict.ru)}
-            statusGradient={getStatusColor(unit.optimalStatus)}
-            marginLabel={t.netMarginPercent}
-            roiLabel={t.roi}
-          />
-
-          <ScenarioCard
-            title={t.premiumPrice}
-            hint={t.premiumHint}
-            demand={t.demandLow}
-            price={`${formatMoney(unit.premium, lang)} ${t.sum}`}
-            profit={`${formatMoney(unit.premiumProfit, lang)} ${t.sum}`}
-            gradient="linear-gradient(135deg,#f59e0b,#f97316)"
-            profitLabel={t.expectedNetProfit}
-            marginPercent={unit.premiumMargin}
-            roiPercent={unit.premiumROI}
-            statusText={getStatusText(unit.premiumStatus, dict.ru)}
-            statusGradient={getStatusColor(unit.premiumStatus)}
-            marginLabel={t.netMarginPercent}
-            roiLabel={t.roi}
-          />
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>04</span>
+              <div>
+                <h3>Сценарии цены</h3>
+                <p>Быстро выбери стратегию запуска.</p>
+              </div>
+            </div>
+            <div className="mc-economy-scenarios">
+              <ScenarioCard
+                title={t.aggressivePrice}
+                hint={t.aggressiveHint}
+                demand={t.demandHigh}
+                price={`${formatMoney(unit.aggressive, lang)} ${t.sum}`}
+                profit={`${formatMoney(unit.aggressiveProfit, lang)} ${t.sum}`}
+                gradient="linear-gradient(135deg,#22c55e,#16a34a)"
+                profitLabel={t.expectedNetProfit}
+                marginPercent={unit.aggressiveMargin}
+                roiPercent={unit.aggressiveROI}
+                statusText={getStatusText(unit.aggressiveStatus, dict.ru)}
+                statusGradient={getStatusColor(unit.aggressiveStatus)}
+                marginLabel={t.netMarginPercent}
+                roiLabel={t.roi}
+              />
+              <ScenarioCard
+                title={t.optimalPrice}
+                hint={t.optimalHint}
+                demand={t.demandMedium}
+                price={`${formatMoney(unit.optimal, lang)} ${t.sum}`}
+                profit={`${formatMoney(unit.optimalProfit, lang)} ${t.sum}`}
+                gradient="linear-gradient(135deg,#06b6d4,#2563eb)"
+                profitLabel={t.expectedNetProfit}
+                marginPercent={unit.optimalMargin}
+                roiPercent={unit.optimalROI}
+                statusText={getStatusText(unit.optimalStatus, dict.ru)}
+                statusGradient={getStatusColor(unit.optimalStatus)}
+                marginLabel={t.netMarginPercent}
+                roiLabel={t.roi}
+              />
+              <ScenarioCard
+                title={t.premiumPrice}
+                hint={t.premiumHint}
+                demand={t.demandLow}
+                price={`${formatMoney(unit.premium, lang)} ${t.sum}`}
+                profit={`${formatMoney(unit.premiumProfit, lang)} ${t.sum}`}
+                gradient="linear-gradient(135deg,#f59e0b,#f97316)"
+                profitLabel={t.expectedNetProfit}
+                marginPercent={unit.premiumMargin}
+                roiPercent={unit.premiumROI}
+                statusText={getStatusText(unit.premiumStatus, dict.ru)}
+                statusGradient={getStatusColor(unit.premiumStatus)}
+                marginLabel={t.netMarginPercent}
+                roiLabel={t.roi}
+              />
+            </div>
+          </div>
         </div>
 
-        <div
-          style={{
-            marginTop: "18px",
-            padding: "16px",
-            borderRadius: "18px",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 900,
-              fontSize: "15px",
-              marginBottom: "8px",
-            }}
-          >
-            {t.recommendation}
+        <div className="mc-economy-advice">
+          <div>
+            <strong>Рекомендация MarketCard AI</strong>
+            <p>
+              {unit.safetyGap >= 0
+                ? `Цена выше break-even на ${formatMoney(unit.safetyGap, lang)} сум. Можно тестировать рекламу до ACOS ${unit.maxAcos.toFixed(1)}%.`
+                : `Цена ниже break-even на ${formatMoney(Math.abs(unit.safetyGap), lang)} сум. Подними цену, снизь комиссию/логистику или уменьши рекламный ACOS.`}
+            </p>
           </div>
-          <div
-            style={{
-              color: "#cbd5e1",
-              fontSize: "14px",
-              lineHeight: 1.6,
-            }}
-          >
-            {t.recommendationText}
+          <div>
+            <strong>Break-even объем</strong>
+            <p>
+              {unit.breakEvenUnits > 0
+                ? `${unit.breakEvenUnits} продаж, оборот ${formatMoney(unit.breakEvenRevenue, lang)} сум для покрытия фиксированных расходов.`
+                : "При текущей цене contribution margin отрицательная, точка безубыточности недостижима."}
+            </p>
           </div>
         </div>
       </div>
