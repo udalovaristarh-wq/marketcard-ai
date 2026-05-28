@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import os
 
 import jwt
 from fastapi import Depends, HTTPException
@@ -9,7 +10,9 @@ from sqlmodel import Session
 from app.db import get_session
 from app.models import User
 
-SECRET_KEY = "super-secret-key"
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    SECRET_KEY = "dev-only-change-me"
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { ArrowLeft, Check, Eye, EyeOff, Lock, Mail, Sparkles, User } from "@/components/icons";
 
@@ -26,15 +26,90 @@ type ApiErrorItem = {
   msg?: string;
 };
 
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
+          prompt: () => void;
+        };
+      };
+    };
+  }
+}
+
 export default function RegisterPage() {
   const router = useRouter();
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const API_BASE = "/api";
+  const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || typeof window === "undefined") return;
+    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) return;
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, [GOOGLE_CLIENT_ID]);
+
+  const finishAuth = (token: string, emailLabel: string) => {
+    localStorage.setItem("access_token", token);
+    localStorage.setItem("user_email", emailLabel);
+    router.push("/dashboard");
+  };
+
+  const handleGoogleRegister = async () => {
+    if (!agreed) {
+      alert("Для регистрации нужно принять условия оферты.");
+      return;
+    }
+    if (!GOOGLE_CLIENT_ID) {
+      alert("Google регистрация не настроена. Добавьте NEXT_PUBLIC_GOOGLE_CLIENT_ID и GOOGLE_CLIENT_ID.");
+      return;
+    }
+
+    const runPrompt = () => {
+      window.google?.accounts?.id?.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (response) => {
+          if (!response.credential) {
+            alert("Google не вернул токен регистрации");
+            return;
+          }
+          const res = await fetch(`${API_BASE}/auth/google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_token: response.credential, offer_accepted: agreed }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data?.access_token) {
+            alert(typeof data?.detail === "string" ? data.detail : "Ошибка Google регистрации");
+            return;
+          }
+          finishAuth(data.access_token, "google-user");
+        },
+      });
+      window.google?.accounts?.id?.prompt();
+    };
+
+    if (window.google?.accounts?.id) {
+      runPrompt();
+      return;
+    }
+
+    setTimeout(runPrompt, 700);
+  };
 
   const validatePassword = (value: string) => {
     const hasMinLength = value.length >= 8;
@@ -61,8 +136,8 @@ export default function RegisterPage() {
   const strength = passwordStrength();
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      alert("Заполните обязательные поля");
+    if (!name || !password || (authMethod === "email" ? !email : !phone)) {
+      alert(authMethod === "email" ? "Заполните имя, email и пароль" : "Заполните имя, телефон и пароль");
       return;
     }
 
@@ -79,18 +154,27 @@ export default function RegisterPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/auth/register`, {
+      const res = await fetch(`${API_BASE}/auth/${authMethod === "phone" ? "phone/register" : "register"}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          full_name: name,
-          email,
-          password,
-          offer_accepted: agreed,
-          offer_accept_lang: "ru",
-        }),
+        body: JSON.stringify(
+          authMethod === "phone"
+            ? {
+                full_name: name,
+                phone,
+                password,
+                offer_accepted: agreed,
+              }
+            : {
+                full_name: name,
+                email,
+                password,
+                offer_accepted: agreed,
+                offer_accept_lang: "ru",
+              }
+        ),
       });
 
       const data = await res.json().catch(() => null);
@@ -111,6 +195,11 @@ export default function RegisterPage() {
         }
 
         alert(message);
+        return;
+      }
+
+      if (data?.access_token) {
+        finishAuth(data.access_token, authMethod === "phone" ? phone : email);
         return;
       }
 
@@ -224,6 +313,8 @@ export default function RegisterPage() {
               </div>
 
               <form className="space-y-5" onSubmit={onSubmit}>
+                <AuthSwitch value={authMethod} onChange={setAuthMethod} />
+
                 <AuthInput
                   label="Имя"
                   icon={<User className="h-5 w-5" />}
@@ -233,14 +324,25 @@ export default function RegisterPage() {
                   onChange={setName}
                 />
 
-                <AuthInput
-                  label="Email"
-                  icon={<Mail className="h-5 w-5" />}
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={setEmail}
-                />
+                {authMethod === "email" ? (
+                  <AuthInput
+                    label="Email"
+                    icon={<Mail className="h-5 w-5" />}
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={setEmail}
+                  />
+                ) : (
+                  <AuthInput
+                    label="Телефон"
+                    icon={<span className="text-sm font-black">+998</span>}
+                    type="tel"
+                    placeholder="+998 90 123 45 67"
+                    value={phone}
+                    onChange={setPhone}
+                  />
+                )}
 
                 <AuthInput
                   label="Пароль"
@@ -306,7 +408,7 @@ export default function RegisterPage() {
               </form>
 
               <Divider />
-              <SocialButtons />
+              <SocialButtons onGoogle={handleGoogleRegister} />
 
               <p className="text-center text-white/[0.56]">
                 Уже есть аккаунт?{" "}
@@ -418,6 +520,36 @@ function AuthInput({
   );
 }
 
+function AuthSwitch({
+  value,
+  onChange,
+}: {
+  value: "email" | "phone";
+  onChange: (value: "email" | "phone") => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-black/25 p-1">
+      {[
+        ["email", "Email"],
+        ["phone", "Телефон"],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key as "email" | "phone")}
+          className={`h-11 rounded-xl text-sm font-black transition ${
+            value === key
+              ? "bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-black shadow-[0_0_24px_rgba(56,189,248,0.24)]"
+              : "text-white/55 hover:bg-white/[0.06] hover:text-white"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Divider() {
   return (
     <div className="relative my-8">
@@ -431,10 +563,14 @@ function Divider() {
   );
 }
 
-function SocialButtons() {
+function SocialButtons({ onGoogle }: { onGoogle: () => void }) {
   return (
     <div className="mb-8 grid grid-cols-2 gap-4">
-      <button type="button" className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-white transition hover:bg-white/[0.08]">
+      <button
+        type="button"
+        onClick={onGoogle}
+        className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-white transition hover:bg-white/[0.08]"
+      >
         <GoogleIcon />
         Google
       </button>

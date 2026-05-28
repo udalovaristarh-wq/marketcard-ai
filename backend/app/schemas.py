@@ -8,15 +8,38 @@ class UserRegister(BaseModel):
     full_name: str
     offer_accepted: bool = False
     offer_accept_lang: Optional[str] = None
-    offer_accepted: bool
-    offer_accept_lang: str
-    offer_accepted: bool
-    offer_accept_lang: Optional[str] = None
 
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+    offer_accepted: bool = True
+
+
+class PhoneRegisterRequest(BaseModel):
+    phone: str
+    password: str
+    full_name: str = ""
+    offer_accepted: bool = True
+
+
+class PhoneLoginRequest(BaseModel):
+    phone: str
+    password: str
+
+
+class PhoneForgotPasswordRequest(BaseModel):
+    phone: str
+
+
+class PhoneResetPasswordRequest(BaseModel):
+    phone: str
+    code: str
+    new_password: str
 
 
 class TokenResponse(BaseModel):

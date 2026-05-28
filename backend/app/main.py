@@ -9,6 +9,7 @@ from app.routers.payments import router as payments_router
 from app.routers.click import router as click_router
 
 from pathlib import Path
+import os
 
 from fastapi import FastAPI
 from app.routers.analysis import router as analysis_router
@@ -29,6 +30,7 @@ from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.full_generate import router as full_generate_router
 from app.routes.demo_generate import router as demo_generate_router
 from app.routes.product_photo_analyze import router as product_photo_analyze_router
+from app.routes.video_generate import GENERATED_VIDEO_DIR, router as video_generate_router
 from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.queue_generate import router as queue_generate_router
 from app.routes.fix_generated_image import router as fix_generated_image_router
@@ -42,7 +44,7 @@ from app.routers.admin_analytics import router as admin_analytics_router
 
 app = FastAPI(
     title="MarketCard AI",
-    debug=True,
+    debug=os.getenv("APP_DEBUG", "0") == "1",
     root_path="/api",
 )
 app.include_router(card_audit.router)
@@ -79,6 +81,12 @@ app.mount(
     name="generated_reports",
 )
 
+app.mount(
+    "/generated_videos",
+    StaticFiles(directory=str(GENERATED_VIDEO_DIR)),
+    name="generated_videos",
+)
+
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(payments_router)
 app.include_router(click_router)
@@ -88,6 +96,7 @@ app.include_router(listing_generate_router, prefix="/listing", tags=["listing"])
 app.include_router(full_generate_router, prefix="", tags=["full_generate"])
 app.include_router(demo_generate_router, prefix="", tags=["demo_generate"])
 app.include_router(product_photo_analyze_router)
+app.include_router(video_generate_router)
 app.include_router(queue_generate_router)
 app.include_router(queue_generate_router)
 from app.routes.fix_generated_image import router as fix_generated_image_router

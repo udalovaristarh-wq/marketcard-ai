@@ -1,13 +1,14 @@
 from app.models.generationexpense import GenerationExpense
 from app.models.finance_income import TariffIncome
 
+import os
+
 from sqlmodel import SQLModel, Session, create_engine
 from app import models
 
-# 🔥 PostgreSQL подключение
-DATABASE_URL = "postgresql://marketcard_user:12345678@127.0.0.1:5432/marketcard"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./database.db")
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=os.getenv("SQL_ECHO", "0") == "1")
 
 
 def create_db_and_tables():

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Sparkles, Zap } from "@/components/icons";
 
@@ -15,35 +15,116 @@ const marketplaces = [
   { name: "Яндекс Маркет", color: "from-amber-300 to-orange-500", icon: "Я" },
 ];
 
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
+          prompt: () => void;
+        };
+      };
+    };
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
+  const [forgotMethod, setForgotMethod] = useState<"email" | "phone">("email");
   const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotPhone, setForgotPhone] = useState("");
+  const [phoneResetSent, setPhoneResetSent] = useState(false);
+  const [phoneResetCode, setPhoneResetCode] = useState("");
+  const [phoneResetPassword, setPhoneResetPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const API_BASE = "/api";
+  const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || typeof window === "undefined") return;
+    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) return;
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, [GOOGLE_CLIENT_ID]);
+
+  const finishAuth = (token: string, emailLabel: string) => {
+    localStorage.setItem("access_token", token);
+    localStorage.setItem("user_email", emailLabel);
+    router.push("/dashboard");
+  };
+
+  const handleGoogleLogin = async () => {
+    if (!GOOGLE_CLIENT_ID) {
+      alert("Google вход не настроен. Добавьте NEXT_PUBLIC_GOOGLE_CLIENT_ID и GOOGLE_CLIENT_ID.");
+      return;
+    }
+
+    const runPrompt = () => {
+      window.google?.accounts?.id?.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (response) => {
+          if (!response.credential) {
+            alert("Google не вернул токен входа");
+            return;
+          }
+
+          const res = await fetch(`${API_BASE}/auth/google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_token: response.credential, offer_accepted: true }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok || !data?.access_token) {
+            alert(typeof data?.detail === "string" ? data.detail : "Ошибка Google входа");
+            return;
+          }
+          finishAuth(data.access_token, "google-user");
+        },
+      });
+      window.google?.accounts?.id?.prompt();
+    };
+
+    if (window.google?.accounts?.id) {
+      runPrompt();
+      return;
+    }
+
+    setTimeout(runPrompt, 700);
+  };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      alert("Заполните email и пароль");
+    if ((!email && authMethod === "email") || (!phone && authMethod === "phone") || !password) {
+      alert(authMethod === "email" ? "Заполните email и пароль" : "Введите телефон и пароль");
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/auth/login`, {
+      const res = await fetch(`${API_BASE}/auth/${authMethod === "phone" ? "phone/login" : "login"}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        body: JSON.stringify(
+          authMethod === "phone"
+            ? { phone, password }
+            : {
+                email,
+                password,
+              }
+        ),
       });
 
       const data = await res.json().catch(() => null);
@@ -59,9 +140,7 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("user_email", email);
-      router.push("/dashboard");
+      finishAuth(data.access_token, authMethod === "phone" ? phone : email);
     } catch (error) {
       console.error(error);
       alert("Ошибка соединения с сервером");
@@ -71,7 +150,16 @@ export default function LoginPage() {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotEmail) {
+    if (forgotMethod === "phone") {
+      if (!forgotPhone) {
+        alert("Введите номер телефона");
+        return;
+      }
+      if (phoneResetSent && (!phoneResetCode || !phoneResetPassword)) {
+        alert("Введите SMS-код и новый пароль");
+        return;
+      }
+    } else if (!forgotEmail) {
       alert("Введите email");
       return;
     }
@@ -79,15 +167,28 @@ export default function LoginPage() {
     try {
       setForgotLoading(true);
 
-      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      const res = await fetch(
+        `${API_BASE}/auth/${
+          forgotMethod === "phone"
+            ? phoneResetSent
+              ? "phone/reset-password"
+              : "phone/forgot-password"
+            : "forgot-password"
+        }`,
+        {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: forgotEmail,
-        }),
-      });
+          body: JSON.stringify(
+            forgotMethod === "phone"
+              ? phoneResetSent
+                ? { phone: forgotPhone, code: phoneResetCode, new_password: phoneResetPassword }
+                : { phone: forgotPhone }
+              : { email: forgotEmail }
+          ),
+        }
+      );
 
       const data = await res.json().catch(() => null);
 
@@ -102,9 +203,19 @@ export default function LoginPage() {
         return;
       }
 
-      alert("Если такая почта существует, письмо для сброса пароля отправлено");
+      if (forgotMethod === "phone" && !phoneResetSent) {
+        alert("Если телефон найден, SMS-код отправлен");
+        setPhoneResetSent(true);
+        return;
+      }
+
+      alert(forgotMethod === "phone" ? "Пароль обновлен. Теперь можно войти." : "Если такая почта существует, письмо для сброса пароля отправлено");
       setForgotMode(false);
       setForgotEmail("");
+      setForgotPhone("");
+      setPhoneResetSent(false);
+      setPhoneResetCode("");
+      setPhoneResetPassword("");
     } catch (error) {
       console.error(error);
       alert("Ошибка соединения с сервером");
@@ -212,16 +323,60 @@ export default function LoginPage() {
 
               <form className="space-y-5" onSubmit={onSubmit}>
                 {forgotMode ? (
-                  <AuthInput
-                    label="Email"
-                    icon={<Mail className="h-5 w-5" />}
-                    type="email"
-                    placeholder="your@email.com"
-                    value={forgotEmail}
-                    onChange={setForgotEmail}
-                  />
+                  <>
+                    <AuthSwitch
+                      value={forgotMethod}
+                      onChange={(value) => {
+                        setForgotMethod(value);
+                        setPhoneResetSent(false);
+                      }}
+                    />
+                    {forgotMethod === "email" ? (
+                      <AuthInput
+                        label="Email"
+                        icon={<Mail className="h-5 w-5" />}
+                        type="email"
+                        placeholder="your@email.com"
+                        value={forgotEmail}
+                        onChange={setForgotEmail}
+                      />
+                    ) : (
+                      <>
+                        <AuthInput
+                          label="Телефон"
+                          icon={<span className="text-sm font-black">+998</span>}
+                          type="tel"
+                          placeholder="+998 90 123 45 67"
+                          value={forgotPhone}
+                          onChange={setForgotPhone}
+                        />
+                        {phoneResetSent ? (
+                          <>
+                            <AuthInput
+                              label="SMS-код"
+                              icon={<Zap className="h-5 w-5" />}
+                              type="text"
+                              placeholder="000000"
+                              value={phoneResetCode}
+                              onChange={setPhoneResetCode}
+                            />
+                            <AuthInput
+                              label="Новый пароль"
+                              icon={<Lock className="h-5 w-5" />}
+                              type="password"
+                              placeholder="Новый пароль"
+                              value={phoneResetPassword}
+                              onChange={setPhoneResetPassword}
+                            />
+                          </>
+                        ) : null}
+                      </>
+                    )}
+                  </>
                 ) : (
                   <>
+                    <AuthSwitch value={authMethod} onChange={setAuthMethod} />
+                    {authMethod === "email" ? (
                     <AuthInput
                       label="Email"
                       icon={<Mail className="h-5 w-5" />}
@@ -230,6 +385,16 @@ export default function LoginPage() {
                       value={email}
                       onChange={setEmail}
                     />
+                    ) : (
+                      <AuthInput
+                        label="Телефон"
+                        icon={<span className="text-sm font-black">+998</span>}
+                        type="tel"
+                        placeholder="+998 90 123 45 67"
+                        value={phone}
+                        onChange={setPhone}
+                      />
+                    )}
 
                     <AuthInput
                       label="Пароль"
@@ -255,7 +420,10 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => {
                           setForgotMode(true);
+                          setForgotMethod(authMethod);
                           setForgotEmail(email);
+                          setForgotPhone(phone);
+                          setPhoneResetSent(false);
                         }}
                         className="text-sm font-semibold text-cyan-200 transition hover:text-white"
                       >
@@ -286,7 +454,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   <Divider />
-                  <SocialButtons />
+                  <SocialButtons onGoogle={handleGoogleLogin} />
                   <p className="text-center text-white/[0.56]">
                     Нет аккаунта?{" "}
                     <Link href="/register" className="font-bold text-cyan-200 transition hover:text-white">
@@ -399,6 +567,36 @@ function AuthInput({
   );
 }
 
+function AuthSwitch({
+  value,
+  onChange,
+}: {
+  value: "email" | "phone";
+  onChange: (value: "email" | "phone") => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-black/25 p-1">
+      {[
+        ["email", "Email"],
+        ["phone", "Телефон"],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key as "email" | "phone")}
+          className={`h-11 rounded-xl text-sm font-black transition ${
+            value === key
+              ? "bg-gradient-to-r from-cyan-300 to-fuchsia-400 text-black shadow-[0_0_24px_rgba(56,189,248,0.24)]"
+              : "text-white/55 hover:bg-white/[0.06] hover:text-white"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Divider() {
   return (
     <div className="relative my-8">
@@ -412,10 +610,14 @@ function Divider() {
   );
 }
 
-function SocialButtons() {
+function SocialButtons({ onGoogle }: { onGoogle: () => void }) {
   return (
     <div className="mb-8 grid grid-cols-2 gap-4">
-      <button type="button" className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-white transition hover:bg-white/[0.08]">
+      <button
+        type="button"
+        onClick={onGoogle}
+        className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-white transition hover:bg-white/[0.08]"
+      >
         <GoogleIcon />
         Google
       </button>
