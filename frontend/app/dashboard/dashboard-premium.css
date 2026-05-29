@@ -5767,6 +5767,81 @@ body.mc-dashboard-no-page-scroll {
   box-shadow: 0 0 16px rgba(52, 211, 153, 0.76);
 }
 
+.mc-create-ikpu-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid rgba(103, 232, 249, 0.24);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 0 0, rgba(34, 211, 238, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035));
+  box-shadow: 0 22px 55px rgba(34, 211, 238, 0.12);
+}
+
+.mc-create-ikpu-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #22d3ee, #a855f7, #ec4899);
+  color: #020617;
+  font-size: 15px;
+  font-weight: 950;
+  box-shadow: 0 0 30px rgba(34, 211, 238, 0.42);
+}
+
+.mc-create-ikpu-main {
+  min-width: 0;
+}
+
+.mc-create-ikpu-main span {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(103, 232, 249, 0.86);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mc-create-ikpu-main strong {
+  display: block;
+  color: #fff;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.mc-create-ikpu-main p {
+  margin: 7px 0 0;
+  color: rgba(226, 232, 240, 0.68);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mc-create-ikpu-strip button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 0 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mc-create-ikpu-strip button:hover {
+  transform: translateY(-1px);
+  background: rgba(103, 232, 249, 0.14);
+}
+
 @media (max-width: 1320px) {
   .mc-seller-cabinet,
   .mc-video-v2-grid {
@@ -5832,6 +5907,15 @@ body.mc-dashboard-no-page-scroll {
   .mc-ikpu-row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .mc-create-ikpu-strip {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .mc-create-ikpu-strip button {
+    width: 100%;
   }
 
   .mc-video-live-9-16,

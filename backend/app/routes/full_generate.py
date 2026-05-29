@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import shutil
 from io import BytesIO
 from PIL import Image
@@ -17,6 +18,7 @@ from app.db import engine
 from app.models import User
 from app.models.generationexpense import GenerationExpense
 from app.models.generationjob import GenerationJob
+from app.services.ikpu_service import suggest_ikpu_for_product
 
 router = APIRouter(tags=["AI Full Generate"])
 
@@ -25,6 +27,11 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 
 COOLDOWN_SECONDS = 180
+OWNER_EMAILS = {
+    item.strip().lower()
+    for item in os.getenv("MARKETCARD_OWNER_EMAILS", "udalovaristarh@gmail.com").split(",")
+    if item.strip()
+}
 
 def normalize_variant_count(tariff_name: str | None, variant_count: int) -> int:
     tariff = (tariff_name or "").strip()
@@ -107,6 +114,7 @@ async def full_generate_endpoint(
             raise HTTPException(status_code=400, detail="Uploaded image has no filename")
 
         clean_email = email.strip().lower()
+        owner_free_mode = clean_email in OWNER_EMAILS
 
         suffix = Path(image.filename).suffix.lower() or ".png"
         temp_filename = f"{uuid.uuid4().hex}{suffix}"
@@ -123,12 +131,22 @@ async def full_generate_endpoint(
             if not user:
                 raise HTTPException(status_code=404, detail="Пользователь не найден")
 
+            if owner_free_mode:
+                user.tariff_name = "Premium"
+                user.tariff_active = True
+                user.tariff_generations_total = max(
+                    int(user.tariff_generations_total or 0),
+                    int(user.tariff_generations_used or 0) + max(int(variant_count), 5),
+                )
+                session.add(user)
+
             remaining = user.tariff_generations_total - user.tariff_generations_used
             if remaining <= 0:
                 raise HTTPException(status_code=403, detail="Лимит генераций исчерпан")
 
             variant_count = normalize_variant_count(user.tariff_name, int(variant_count))
-            ensure_cooldown(session, int(user.id))
+            if not owner_free_mode:
+                ensure_cooldown(session, int(user.id))
 
             payload = {
                 "product_title": product_title,
@@ -141,6 +159,7 @@ async def full_generate_endpoint(
                 "variant_count": variant_count,
                 "extra_features": extra_features,
                 "product_image": str(image_path),
+                "owner_free_mode": owner_free_mode,
             }
 
             job = GenerationJob(
@@ -179,12 +198,28 @@ async def full_generate_endpoint(
                 if job.status == "done":
                     result = json.loads(job.result_json) if job.result_json else {}
 
+                    try:
+                        result["ikpu"] = suggest_ikpu_for_product(
+                            title=product_title,
+                            brand=brand,
+                            category=category,
+                            description=extra_features,
+                            limit=8,
+                        )
+                    except Exception as ikpu_error:
+                        result["ikpu"] = {
+                            "success": False,
+                            "error": str(ikpu_error),
+                            "items": [],
+                            "best": None,
+                        }
+
                     if result.get("success"):
                         user = session.exec(
                             select(User).where(func.lower(User.email) == clean_email)
                         ).first()
 
-                        if user:
+                        if user and not owner_free_mode:
                             user.tariff_generations_used += variant_count
                             session.add(user)
 
@@ -207,7 +242,8 @@ async def full_generate_endpoint(
                             session.add(expense)
                             session.commit()
 
-                    result["cooldown_seconds"] = COOLDOWN_SECONDS
+                    result["owner_free_mode"] = owner_free_mode
+                    result["cooldown_seconds"] = 0 if owner_free_mode else COOLDOWN_SECONDS
                     return result
         raise HTTPException(
             status_code=504,

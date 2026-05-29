@@ -1643,9 +1643,15 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
       setListingReady(true)
     }
     if (profile?.email) {
-  await loadProfile()
-}
-  await ikpuPromise
+      await loadProfile()
+    }
+    await ikpuPromise
+    const generationIkpuItems = Array.isArray(data?.ikpu?.items) ? data.ikpu.items : []
+    if (generationIkpuItems.length > 0) {
+      setIkpuResults(generationIkpuItems.slice(0, 8))
+    } else if (data?.ikpu?.best) {
+      setIkpuResults([data.ikpu.best])
+    }
   } catch (err) {
     console.log("GEN ERROR", err)
     console.error(err)
@@ -3931,6 +3937,28 @@ if (!authChecked) return null
               </div>
               <small>{generatedVariants.length || 0} создано</small>
             </div>
+
+            {(ikpuLoading || ikpuResults.length > 0) && (
+              <div className="mc-create-ikpu-strip">
+                <div className="mc-create-ikpu-orb">IK</div>
+                <div className="mc-create-ikpu-main">
+                  <span>IKPU / SOLIQ</span>
+                  <strong>
+                    {ikpuLoading
+                      ? "Ищем правильный код..."
+                      : ikpuResults[0]?.code || "Код нужно уточнить"}
+                  </strong>
+                  <p>
+                    {ikpuLoading
+                      ? "Система автоматически сверяет товар с классификатором Soliq."
+                      : ikpuResults[0]?.name || "Откройте раздел ИКПУ для дополнительного поиска."}
+                  </p>
+                </div>
+                <button type="button" onClick={() => selectDashboardPage("ikpu")}>
+                  Проверить
+                </button>
+              </div>
+            )}
 
             {isGenerating ? (
               <div className="mc-create-results-stage is-loading">
