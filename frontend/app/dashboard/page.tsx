@@ -5,6 +5,7 @@ import "./effects/index.css";
 import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
 import CardAuditPanel from "@/app/components/CardAuditPanel"
 import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
+import SupportWidget from "../components/support-widget/SupportWidget"
 import React, { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { CSSProperties } from "react";
@@ -129,6 +130,16 @@ limits?: {
   short_max?: number
   full_max?: number
 }
+}
+
+type ProductPhotoAnalysisResponse = {
+  success?: boolean
+  title?: string
+  brand?: string
+  category?: string
+  characteristics?: string[]
+  short_description?: string
+  confidence?: number
 }
 
 const dict = {
@@ -978,8 +989,11 @@ export default function DashboardPage() {
   const [productTitle, setProductTitle] = useState("")
   const [brand, setBrand] = useState("")
   const [category, setCategory] = useState("")
+  const [productCharacteristics, setProductCharacteristics] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState("")
+  const [photoAnalyzing, setPhotoAnalyzing] = useState(false)
+  const [photoAnalyzeError, setPhotoAnalyzeError] = useState("")
   const [ikpuQuery, setIkpuQuery] = useState("")
   const [ikpuResults, setIkpuResults] = useState<any[]>([])
   const [ikpuLoading, setIkpuLoading] = useState(false)
@@ -1298,6 +1312,8 @@ const res = await fetch(
   useEffect(() => {
     if (!selectedFile) {
       setPreviewUrl("")
+      setPhotoAnalyzeError("")
+      setPhotoAnalyzing(false)
       return
     }
 
@@ -1305,6 +1321,62 @@ const res = await fetch(
     setPreviewUrl(objectUrl)
 
     return () => URL.revokeObjectURL(objectUrl)
+  }, [selectedFile])
+
+  useEffect(() => {
+    if (!selectedFile) return
+
+    let cancelled = false
+
+    const analyzePhoto = async () => {
+      try {
+        setPhotoAnalyzing(true)
+        setPhotoAnalyzeError("")
+
+        const formData = new FormData()
+        formData.append("image", selectedFile)
+
+        const res = await fetch("/api/analyze-product-photo", {
+          method: "POST",
+          body: formData,
+        })
+        const data: ProductPhotoAnalysisResponse | null = await res.json().catch(() => null)
+
+        if (cancelled) return
+
+        if (!res.ok || !data?.success) {
+          throw new Error((data as any)?.detail || "Не удалось распознать фото")
+        }
+
+        if (data.title?.trim()) setProductTitle(data.title.trim())
+        if (data.category?.trim()) setCategory(data.category.trim())
+        if (data.brand?.trim()) {
+          setBrand((current) => (current.trim() ? current : data.brand!.trim()))
+        }
+
+        const characteristics = Array.isArray(data.characteristics)
+          ? data.characteristics.filter(Boolean)
+          : []
+        if (characteristics.length > 0) {
+          setProductCharacteristics(characteristics.join("\n"))
+        } else if (data.short_description?.trim()) {
+          setProductCharacteristics(data.short_description.trim())
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("PHOTO ANALYZE ERROR:", error)
+          setPhotoAnalyzeError("AI не смог распознать фото. Можно заполнить поля вручную.")
+        }
+      } finally {
+        if (!cancelled) setPhotoAnalyzing(false)
+      }
+    }
+
+    analyzePhoto()
+
+    return () => {
+      cancelled = true
+    }
   }, [selectedFile])
 
   
@@ -1383,7 +1455,7 @@ const searchIkpuAuto = async (query: string) => {
             title: productTitle.trim() || query,
             brand: brand.trim(),
             category: category.trim(),
-            description: query,
+            description: `${query} ${productCharacteristics}`.trim(),
           }
         : null
 
@@ -1499,7 +1571,7 @@ const searchIkpuAuto = async (query: string) => {
   }
 
   console.log("GEN 0 PROFILE", profile)
-    const ikpuSearchText = `${productTitle} ${category}`.trim()
+    const ikpuSearchText = `${productTitle} ${category} ${productCharacteristics}`.trim()
 setIkpuQuery(ikpuSearchText)
 
 const ikpuPromise = searchIkpuAuto(ikpuSearchText)
@@ -1525,6 +1597,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     formData.append("marketplace", selectedMarketplace)
     formData.append("language_mode", languageMode)
     formData.append("variant_count", String(variantCount))
+    formData.append("extra_features", productCharacteristics)
 
     if (selectedFile) {
       formData.append("image", selectedFile)
@@ -3713,6 +3786,24 @@ if (!authChecked) return null
               )}
             </label>
 
+            <div className={photoAnalyzing ? "mc-photo-ai-status is-loading" : "mc-photo-ai-status"}>
+              <span>AI</span>
+              <div>
+                <strong>
+                  {photoAnalyzing
+                    ? "Распознаю товар по фото..."
+                    : photoAnalyzeError
+                      ? "Фото можно заполнить вручную"
+                      : selectedFile
+                        ? "Название и характеристики заполняются автоматически"
+                        : "Загрузите фото, и AI сам определит товар"}
+                </strong>
+                <small>
+                  {photoAnalyzeError || "Вам останется проверить результат и вписать бренд товара."}
+                </small>
+              </div>
+            </div>
+
             <div className="mc-create-field mc-create-field-wide">
               <label>{t.titleLabel}</label>
               <input
@@ -3743,6 +3834,15 @@ if (!authChecked) return null
                   placeholder="Автозапчасти"
                 />
               </div>
+            </div>
+
+            <div className="mc-create-field mc-create-field-wide mc-create-characteristics-field">
+              <label>Характеристики</label>
+              <textarea
+                value={productCharacteristics}
+                onChange={(e) => setProductCharacteristics(e.target.value)}
+                placeholder="AI заполнит: назначение, тип товара, визуальные преимущества, комплектацию..."
+              />
             </div>
 
             <div className="mc-create-marketplaces">
@@ -5478,6 +5578,8 @@ if (listingLang === "uz" && translatedListing) {
 
 </div>
 )}
+
+  <SupportWidget />
 
   </>
 )}

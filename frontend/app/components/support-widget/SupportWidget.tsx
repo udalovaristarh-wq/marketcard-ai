@@ -112,6 +112,16 @@ export default function SupportWidget() {
         />
       </button>
 
+      {!open && (
+        <button
+          type="button"
+          className="support-greeting-bubble"
+          onClick={() => setOpen(true)}
+        >
+          Здравствуйте! Чем могу помочь?
+        </button>
+      )}
+
       
       {open && (
         <div
