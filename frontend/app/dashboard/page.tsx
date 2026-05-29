@@ -1226,6 +1226,14 @@ const res = await fetch(
       if (!res.ok) {
   const errorData = await res.json().catch(() => null)
 
+  if (res.status === 401 || errorData?.detail === "Profile access denied") {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("user_email")
+    setProfile(null)
+    router.push("/login")
+    return
+  }
+
   if (res.status === 403) {
     const message = errorData?.detail || "Ваш аккаунт заблокирован"
 
