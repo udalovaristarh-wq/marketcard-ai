@@ -85,11 +85,19 @@ async def queue_full_generate(
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
-    print("QUEUE EMAIL RAW =", repr(email))
     with Session(engine) as session:
+        queued_count = check_queue_limit(session)
+        if queued_count is not None and int(queued_count) >= QUEUE_LIMIT:
+            raise HTTPException(
+                status_code=429,
+                detail="Очередь генерации переполнена. Попробуйте позже.",
+            )
+
         user = session.exec(select(User).where(func.lower(User.email) == email.lower().strip())).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
+        variant_count = normalize_variant_count(user.tariff_name, int(variant_count))
 
         payload = {
             "product_title": product_title,

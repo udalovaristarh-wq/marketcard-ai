@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Optional
-from sqlmodel import SQLModel, Field
+
+from sqlmodel import Field, SQLModel
 
 
 class UserError(SQLModel, table=True):
@@ -13,4 +15,4 @@ class UserError(SQLModel, table=True):
     solution: Optional[str] = None
     is_resolved: bool = False
 
-    created_at: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)

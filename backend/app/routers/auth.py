@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlmodel import Session, select
@@ -41,11 +42,11 @@ AUDIT_CREDITS_BY_TARIFF = {
 }
 
 
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_USER = "marketcardai@gmail.com"
-SMTP_PASSWORD = "tqogmqncvuwzfqkx"
-FRONTEND_URL = "https://marketcard.uz"
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://marketcard.uz").rstrip("/")
 
 
 def send_reset_email(to_email: str, reset_link: str):
@@ -72,6 +73,51 @@ def send_reset_email(to_email: str, reset_link: str):
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
         server.sendmail(SMTP_USER, to_email, msg.as_string())
+
+
+def _normalize_email(email: str | None) -> str:
+    return (email or "").strip().lower()
+
+
+def _profile_payload(user: User) -> dict:
+    tariff_name = getattr(user, "tariff_name", None)
+    tariff_active = bool(getattr(user, "tariff_active", False))
+    tariff_used = int(getattr(user, "tariff_generations_used", 0) or 0)
+    tariff_total = int(getattr(user, "tariff_generations_total", 0) or 0)
+
+    if tariff_active and tariff_name in TARIFFS and tariff_total <= 0:
+        tariff_total = TARIFFS[tariff_name]
+
+    stored_left = getattr(user, "tariff_generations_left", None)
+    computed_left = max(tariff_total - tariff_used, 0)
+    if stored_left is None:
+        tariff_left = computed_left
+    else:
+        tariff_left = int(stored_left or 0)
+        if tariff_active and computed_left > tariff_left:
+            tariff_left = computed_left
+
+    audit_credits = int(getattr(user, "audit_credits", 0) or 0)
+    if tariff_active and tariff_name in AUDIT_CREDITS_BY_TARIFF and audit_credits <= 0:
+        audit_credits = AUDIT_CREDITS_BY_TARIFF[tariff_name]
+
+    offer_accepted_at = getattr(user, "offer_accepted_at", None)
+    if hasattr(offer_accepted_at, "isoformat"):
+        offer_accepted_at = offer_accepted_at.isoformat()
+
+    return {
+        "email": user.email,
+        "full_name": user.full_name,
+        "tariff_name": tariff_name,
+        "tariff_active": tariff_active,
+        "tariff_generations_total": tariff_total,
+        "tariff_generations_used": tariff_used,
+        "tariff_generations_left": tariff_left,
+        "audit_credits": audit_credits,
+        "offer_accepted": bool(getattr(user, "offer_accepted", False)),
+        "offer_accepted_at": offer_accepted_at,
+        "offer_accept_lang": getattr(user, "offer_accept_lang", None),
+    }
 
 
 @router.post("/register", response_model=TokenResponse)
@@ -108,23 +154,37 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
 
 @router.get("/me", response_model=ProfileResponse)
 def get_profile(
+    email: str | None = Query(default=None),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     user = current_user
+    requested_email = _normalize_email(email)
+    current_email = _normalize_email(current_user.email)
 
-    return {
-        "email": user.email,
-        "full_name": user.full_name,
-        "tariff_name": user.tariff_name,
-        "tariff_active": user.tariff_active,
-        "tariff_generations_total": user.tariff_generations_total,
-        "tariff_generations_used": user.tariff_generations_used,
-        "audit_credits": user.audit_credits or 0,
-        "tariff_generations_left": max(
-            user.tariff_generations_total - user.tariff_generations_used, 0
-        ),
-    }
+    if requested_email and requested_email != current_email:
+        if not getattr(current_user, "is_admin", False):
+            raise HTTPException(status_code=403, detail="Profile access denied")
+
+        requested_user = session.exec(
+            select(User).where(User.email == requested_email)
+        ).first()
+        if not requested_user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user = requested_user
+
+    return _profile_payload(user)
+
+
+@router.get("/profile", response_model=ProfileResponse)
+def get_profile_alias(
+    email: str | None = Query(default=None),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    return get_profile(email=email, current_user=current_user, session=session)
+
 
 @router.post("/activate-tariff")
 def activate_tariff(
@@ -132,11 +192,9 @@ def activate_tariff(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = current_user
 
-    if user.email not in ADMIN_EMAILS:
+    if user.email not in ADMIN_EMAILS and not getattr(user, "is_admin", False):
         raise HTTPException(status_code=403, detail="Оплата обязательна")
 
     if data.tariff_name not in TARIFFS:
@@ -145,6 +203,8 @@ def activate_tariff(
     user.tariff_active = True
     user.tariff_generations_total = TARIFFS[data.tariff_name]
     user.tariff_generations_used = 0
+    user.tariff_generations_left = TARIFFS[data.tariff_name]
+    user.audit_credits = AUDIT_CREDITS_BY_TARIFF.get(data.tariff_name, 0)
 
     session.add(user)
     session.commit()
@@ -162,16 +222,9 @@ def activate_tariff(
     session.add(income)
     session.commit()
 
-    return {
-        "message": "Tariff activated",
-        "tariff_name": user.tariff_name,
-        "tariff_generations_total": user.tariff_generations_total,
-        "tariff_generations_used": user.tariff_generations_used,
-        "audit_credits": user.audit_credits or 0,
-        "tariff_generations_left": max(
-            user.tariff_generations_total - user.tariff_generations_used, 0
-        ),
-    }
+    payload = _profile_payload(user)
+    payload["message"] = "Tariff activated"
+    return payload
 
 @router.post("/forgot-password")
 def forgot_password(
@@ -279,9 +332,7 @@ def accept_offer(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    user = session.exec(select(User).where(User.email == email)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = current_user
 
     client_ip = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
@@ -316,4 +367,3 @@ def accept_offer(
     session.refresh(user)
 
     return {"success": True, "message": "Offer accepted"}
-

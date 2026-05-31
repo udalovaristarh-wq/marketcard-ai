@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -9,7 +10,7 @@ from sqlmodel import Session
 from app.db import get_session
 from app.models import User
 
-SECRET_KEY = "super-secret-key"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(

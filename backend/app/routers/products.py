@@ -7,8 +7,9 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 from app.db import get_session
-from app.models import Product
+from app.models import Product, User
 from app.schemas import ProductCreate
+from app.security import get_current_user
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -115,9 +116,13 @@ def build_seo_description(product: Product) -> str:
 
 
 @router.post("/")
-def create_product(data: ProductCreate, session: Session = Depends(get_session)):
+def create_product(
+    data: ProductCreate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     product = Product(
-        user_id=1,
+        user_id=current_user.id,
         title=data.title,
         brand=data.brand,
         category=data.category,
@@ -134,17 +139,28 @@ def create_product(data: ProductCreate, session: Session = Depends(get_session))
 
 
 @router.get("/")
-def list_products(session: Session = Depends(get_session)):
-    products = session.exec(select(Product)).all()
+def list_products(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    products = session.exec(
+        select(Product).where(Product.user_id == current_user.id)
+    ).all()
     return products
 
 
 @router.post("/{product_id}/generate")
-def generate_product_card(product_id: int, session: Session = Depends(get_session)):
+def generate_product_card(
+    product_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     product = session.get(Product, product_id)
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    if product.user_id != current_user.id and not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Access denied")
     title = product.title or "Без названия"
     category = product.category or "category"
     marketplace = product.marketplace or "marketplace"
@@ -165,11 +181,17 @@ def generate_product_card(product_id: int, session: Session = Depends(get_sessio
 
 
 @router.get("/{product_id}/preview")
-def get_product_preview(product_id: int, session: Session = Depends(get_session)):
+def get_product_preview(
+    product_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     product = session.get(Product, product_id)
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    if product.user_id != current_user.id and not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Access denied")
 
     return {
         "id": product.id,
@@ -190,6 +212,7 @@ def get_product_preview(product_id: int, session: Session = Depends(get_session)
 async def import_products_csv(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     content = await file.read()
     text = content.decode("utf-8")
@@ -199,7 +222,7 @@ async def import_products_csv(
 
     for row in reader:
         product = Product(
-            user_id=1,
+            user_id=current_user.id,
             title=row.get("title"),
             brand=row.get("brand"),
             category=row.get("category") or "Без категории",

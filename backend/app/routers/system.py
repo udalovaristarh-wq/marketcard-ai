@@ -18,7 +18,7 @@ def _cleanup_online() -> None:
 
 @router.get("/stats")
 def get_system_stats():
-    cpu = psutil.cpu_percent(interval=0.5)
+    cpu = psutil.cpu_percent(interval=None)
     memory = psutil.virtual_memory().percent
     disk = psutil.disk_usage("/").percent
 

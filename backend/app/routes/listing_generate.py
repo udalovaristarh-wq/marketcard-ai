@@ -1,29 +1,33 @@
-from fastapi import APIRouter, Form
-from app.services.ai_pipeline.seo_generator import generate_listing
+from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlmodel import Session
-from app.models import User
+
 from app.db import engine
+from app.models import User
+from app.security import get_current_user
+from app.services.ai_pipeline.seo_generator import generate_listing
 
 router = APIRouter(prefix="/listing", tags=["listing"])
 
 
 @router.post("/generate")
-async def generate_listing(
+async def generate_listing_endpoint(
     title: str = Form(...),
     brand: str = Form(...),
     category: str = Form(...),
     marketplace: str = Form(...),
+    current_user: User = Depends(get_current_user),
 ):
-    user_id = 1  # временно для теста
-
     with Session(engine) as session:
-        user = session.get(User, user_id)
+        user = session.get(User, current_user.id)
 
         if not user:
-            return {"success": False, "error": "Пользователь не найден"}
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
 
-        if user.tariff_generations_total - user.tariff_generations_used <= 0:
-            return {"success": False, "error": "Лимит генераций исчерпан"}
+        generations_left = (user.tariff_generations_total or 0) - (
+            user.tariff_generations_used or 0
+        )
+        if generations_left <= 0:
+            raise HTTPException(status_code=403, detail="Лимит генераций исчерпан")
 
         result = generate_listing(
             title=title,
@@ -32,7 +36,11 @@ async def generate_listing(
             marketplace=marketplace,
         )
 
-        user.tariff_generations_used += 1
+        user.tariff_generations_used = (user.tariff_generations_used or 0) + 1
+        user.tariff_generations_left = max(
+            0,
+            (user.tariff_generations_total or 0) - user.tariff_generations_used,
+        )
         session.add(user)
         session.commit()
 

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { setAccessToken } from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -50,8 +51,7 @@ export default function LoginPage() {
         return
       }
 
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem("user_email", email)
+      setAccessToken(data.access_token, email)
       router.push("/dashboard")
     } catch (error) {
       console.error(error)

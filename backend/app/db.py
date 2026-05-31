@@ -1,20 +1,37 @@
-from app.models.generationexpense import GenerationExpense
-from app.models.finance_income import TariffIncome
+import os
 
-from sqlmodel import SQLModel, Session, create_engine
-from app import models
+from sqlmodel import Session, SQLModel, create_engine
 
-# 🔥 PostgreSQL подключение
-DATABASE_URL = "postgresql://marketcard_user:12345678@127.0.0.1:5432/marketcard"
+from app import models  # noqa: F401 — register models for metadata
 
-engine = create_engine(DATABASE_URL, echo=True)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://marketcard_user:12345678@127.0.0.1:5432/marketcard",
+)
+
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        echo=os.getenv("SQL_ECHO", "").lower() in ("1", "true", "yes"),
+    )
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        echo=os.getenv("SQL_ECHO", "").lower() in ("1", "true", "yes"),
+    )
 
 
 def create_db_and_tables():
-    from app.models.user import User
-    from app.models.product import Product
-    from app.models.ikpu import IKPU
-    from app.models.user_error import UserError
+    from app.models.generationexpense import GenerationExpense  # noqa: F401
+    from app.models.generationjob import GenerationJob  # noqa: F401
+    from app.models.ikpu import IKPU  # noqa: F401
+    from app.models.offer_acceptance_log import OfferAcceptanceLog  # noqa: F401
+    from app.models.payment_order import PaymentOrder  # noqa: F401
+    from app.models.product import Product  # noqa: F401
+    from app.models.user import User  # noqa: F401
+    from app.models.user_error import UserError  # noqa: F401
+    from app.models.finance_income import TariffIncome  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
 

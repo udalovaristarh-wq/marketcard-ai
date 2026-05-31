@@ -10,8 +10,16 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/users")
-def get_users(session: Session = Depends(get_session)):
-    users = session.exec(select(User).order_by(User.id.desc())).all()
+def get_users(
+    session: Session = Depends(get_session),
+    limit: int = 200,
+    offset: int = 0,
+):
+    limit = max(1, min(limit, 500))
+    offset = max(0, offset)
+    users = session.exec(
+        select(User).order_by(User.id.desc()).offset(offset).limit(limit)
+    ).all()
 
     return [
         {
@@ -232,7 +240,7 @@ def get_admin_stats(session: Session = Depends(get_session)):
     used_generations = sum(u.tariff_generations_used or 0 for u in users)
     without_tariff = len([u for u in users if not u.tariff_name])
 
-    cpu = psutil.cpu_percent(interval=0.5)
+    cpu = psutil.cpu_percent(interval=None)
     memory = psutil.virtual_memory().percent
     disk = psutil.disk_usage('/').percent
 

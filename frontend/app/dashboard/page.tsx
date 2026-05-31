@@ -968,7 +968,7 @@ export default function DashboardPage() {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedPayment, setSelectedPayment] =
-    useState<"payme" | "click" | "visa" | null>(null)
+    useState<"payme" | "click" | null>(null)
 
   const [createdProduct, setCreatedProduct] = useState<ProductResponse | null>(null)
   const [pngReady, setPngReady] = useState(false)
@@ -1029,7 +1029,7 @@ useEffect(() => {
     }
 
     ping()
-    const interval = setInterval(ping, 30000)
+    const interval = setInterval(ping, 120000)
 
     return () => clearInterval(interval)
   }, [userEmail])
@@ -1062,12 +1062,6 @@ useEffect(() => {
         alert("Click ссылка не получена")
         return
       }
-
-      if (selectedPayment === "visa") {
-        alert("Visa пока недоступна. Выберите Payme или Click.")
-        return
-      }
-
 
     let items: any[] = []
 
@@ -1401,11 +1395,6 @@ const ikpuPromise = Promise.resolve()
         return
       }
 
-      if (selectedPayment === "visa") {
-        alert("Visa пока недоступна. Выберите Payme или Click.")
-        return
-      }
-
     console.log("ACTIVATE 6 RESPONSE DATA", data)
 
       if (!res.ok) {
@@ -1447,7 +1436,6 @@ const ikpuPromise = Promise.resolve()
     return
   }
 
-  console.log("GEN 0 PROFILE", profile)
     const ikpuSearchText = `${productTitle} ${category}`.trim()
 setIkpuQuery(ikpuSearchText)
 
@@ -1462,7 +1450,6 @@ const ikpuPromise = Promise.resolve()
 
     const formData = new FormData()
     if (!profile?.email) {
-      console.log("GEN STOP: NO EMAIL", profile)
       alert("Email пользователя не найден")
       return
     }
@@ -3952,34 +3939,6 @@ if (listingLang === "uz" && translatedListing) {
             }}
           />
         </button>
-        
-        <button
-  onClick={() => setSelectedPayment("visa")}
-  style={{
-    padding: "22px",
-    borderRadius: "22px",
-    border:
-      selectedPayment === "visa"
-        ? "2px solid rgba(255,255,255,0.95)"
-        : "1px solid rgba(255,255,255,0.12)",
-    background:
-      selectedPayment === "visa"
-        ? "rgba(255,255,255,0.12)"
-        : "rgba(255,255,255,0.05)",
-    cursor: "pointer",
-  }}
->
-  <div
-    style={{
-      fontSize: "38px",
-      fontWeight: 900,
-      color: "white",
-      textAlign: "center",
-    }}
-  >
-    VISA
-  </div>
-</button>
 
         <button
           onClick={() => setSelectedPayment("click")}
