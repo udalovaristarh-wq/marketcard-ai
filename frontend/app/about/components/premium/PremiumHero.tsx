@@ -9,11 +9,7 @@ import styles from "./premium-about.module.css";
 export default function PremiumHero() {
   return (
     <section className={styles.heroSection}>
-      <div className={styles.heroVideoLayer} aria-hidden="true">
-        <video autoPlay muted loop playsInline>
-          <source src="/bg.mp4" type="video/mp4" />
-        </video>
-      </div>
+      <div className={styles.heroMeshLayer} aria-hidden="true" />
       <div className={styles.heroGradientLayer} aria-hidden="true" />
       <div className={styles.heroGridLayer} aria-hidden="true" />
 
@@ -27,10 +23,12 @@ export default function PremiumHero() {
           <span>MC</span>
           <strong>MarketCard AI</strong>
         </Link>
-        <nav className={styles.heroNav} aria-label="About navigation">
+        <nav className={styles.heroNav} aria-label="Навигация">
+          <Link href="/">Главная</Link>
+          <a href="#mission">Миссия</a>
           <a href="#compare">До/После</a>
-          <a href="#results">Результаты</a>
-          <a href="#pipeline">Pipeline</a>
+          <a href="#results">Кейсы</a>
+          <Link href="/pricing">Тарифы</Link>
         </nav>
         <Link href="/login" className={styles.loginButton}>
           Войти
@@ -44,34 +42,41 @@ export default function PremiumHero() {
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.82, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className={styles.heroBadge}>AI карточки для маркетплейсов</div>
+          <div className={styles.heroBadge}>О MarketCard AI</div>
           <h1 className={styles.heroTitle}>
             <span>Одно фото.</span>
             <span className={styles.gradientText}>Продающая карточка.</span>
             <span>Тысячи продаж.</span>
           </h1>
           <p className={styles.heroLead}>
-            MarketCard AI превращает исходное фото товара в премиальные карточки, SEO,
-            аудит и визуальную стратегию для Uzum, Wildberries, Ozon и Yandex Market.
+            Мы строим AI-платформу для продавцов маркетплейсов: от исходного фото до
+            премиальных карточек, SEO-текстов, аудита и стратегии запуска на Uzum,
+            Wildberries, Ozon и Yandex Market.
           </p>
 
           <div className={styles.heroActions}>
             <motion.div whileHover={{ y: -3, scale: 1.015 }} whileTap={{ scale: 0.985 }}>
               <Link href="/register" className={styles.primaryButton}>
-                Создать первую карточку →
+                Начать бесплатно →
               </Link>
             </motion.div>
             <motion.div whileHover={{ y: -3, scale: 1.015 }} whileTap={{ scale: 0.985 }}>
               <Link href="/pricing" className={styles.secondaryButton}>
-                Смотреть тарифы
+                Тарифы
               </Link>
             </motion.div>
           </div>
 
-          <div className={styles.heroTrustRow} aria-label="Marketplace integrations">
+          <div className={styles.heroTrustRow} aria-label="Маркетплейсы">
             {marketplaceLogos.map((marketplace) => (
               <div key={marketplace.name} className={styles.marketplacePill}>
-                <Image src={marketplace.image} alt={marketplace.name} width={96} height={36} />
+                <Image
+                  src={marketplace.image}
+                  alt={marketplace.name}
+                  width={96}
+                  height={36}
+                  unoptimized
+                />
               </div>
             ))}
           </div>
@@ -104,13 +109,14 @@ export default function PremiumHero() {
                     width={280}
                     height={360}
                     priority={index === 0}
+                    unoptimized
                   />
                 </div>
               ))}
             </div>
             <div className={styles.promptPanel}>
-              <span>Prompt pipeline</span>
-              <strong>product photo → AI art direction → marketplace-ready card</strong>
+              <span>AI Pipeline</span>
+              <strong>фото товара → art direction → карточка для маркетплейса</strong>
               <div className={styles.aiProgress}>
                 <i />
               </div>

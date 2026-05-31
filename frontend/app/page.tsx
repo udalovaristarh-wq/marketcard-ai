@@ -115,7 +115,8 @@ export default function Home() {
             <a href="#how" className="hover:text-cyan-400 transition">Как работает</a>
             <a href="#examples" className="hover:text-cyan-400 transition">Примеры</a>
             <a href="#reviews" className="hover:text-cyan-400 transition">Отзывы</a>
-            <button onClick={() => setPricingOpen(true)} className="hover:text-cyan-400 transition">Тарифы</button>
+            <button type="button" onClick={() => router.push("/about")} className="hover:text-cyan-400 transition">О нас</button>
+            <button type="button" onClick={() => setPricingOpen(true)} className="hover:text-cyan-400 transition">Тарифы</button>
           </div>
 
           <div className="flex gap-4">
@@ -230,6 +231,11 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="bg-zinc-950 py-16 text-center border-t border-white/10">
+        <div className="flex justify-center gap-8 mb-6 text-gray-400">
+          <button type="button" onClick={() => router.push("/about")} className="hover:text-cyan-400 transition">О нас</button>
+          <button type="button" onClick={() => router.push("/pricing")} className="hover:text-cyan-400 transition">Тарифы</button>
+          <button type="button" onClick={() => router.push("/login")} className="hover:text-cyan-400 transition">Войти</button>
+        </div>
         <p>© 2026 MarketCard AI • Все права защищены</p>
       </footer>
 

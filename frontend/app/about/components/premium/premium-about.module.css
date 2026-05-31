@@ -24,7 +24,7 @@
   padding: 112px 24px 92px;
 }
 
-.heroVideoLayer,
+.heroMeshLayer,
 .heroGradientLayer,
 .heroGridLayer {
   position: absolute;
@@ -32,16 +32,22 @@
   pointer-events: none;
 }
 
-.heroVideoLayer {
+.heroMeshLayer {
   z-index: -4;
-  opacity: 0.34;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.35), transparent 42%),
+    radial-gradient(circle at 80% 18%, rgba(168, 85, 247, 0.32), transparent 40%),
+    radial-gradient(circle at 60% 80%, rgba(244, 63, 94, 0.22), transparent 45%);
+  animation: meshDrift 18s ease-in-out infinite alternate;
 }
 
-.heroVideoLayer video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: saturate(1.2) contrast(1.08) brightness(0.58);
+@keyframes meshDrift {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate(-2%, 2%);
+  }
 }
 
 .heroGradientLayer {
@@ -452,6 +458,132 @@
 .sectionShell {
   position: relative;
   padding: 88px 0;
+}
+
+.sectionHeader {
+  margin-bottom: 48px;
+  max-width: 48rem;
+}
+
+.sectionHeaderCenter {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.sectionTitle {
+  margin-top: 16px;
+  color: #ffffff;
+  font-size: clamp(32px, 4.5vw, 56px);
+  font-weight: 870;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.sectionText {
+  margin-top: 20px;
+  color: rgba(203, 213, 225, 0.82);
+  font-size: clamp(16px, 1.6vw, 19px);
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.missionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.missionCard,
+.featureCard,
+.contactCard {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04)),
+    rgba(8, 13, 32, 0.66);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+}
+
+.missionCard {
+  padding: 28px;
+}
+
+.missionIcon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(139, 92, 246, 0.2));
+  font-size: 26px;
+}
+
+.missionCard h3,
+.featureCard h3 {
+  margin-top: 18px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.missionCard p,
+.featureCard p {
+  margin-top: 10px;
+  color: rgba(203, 213, 225, 0.78);
+  line-height: 1.65;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.featureCard {
+  position: relative;
+  min-height: 200px;
+  overflow: hidden;
+  padding: 26px;
+}
+
+.featureCard span {
+  color: #f0abfc;
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.contactCard {
+  display: grid;
+  gap: 10px;
+  padding: 28px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.contactCard:hover {
+  border-color: rgba(34, 211, 238, 0.45);
+  box-shadow: 0 28px 80px rgba(34, 211, 238, 0.12);
+}
+
+.contactCard strong {
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.contactCard span {
+  color: rgba(203, 213, 225, 0.76);
+  line-height: 1.55;
 }
 
 .glassPanel,
@@ -937,7 +1069,10 @@
   }
 
   .statsGrid,
-  .resultsGrid {
+  .resultsGrid,
+  .missionGrid,
+  .featuresGrid,
+  .contactGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1014,7 +1149,10 @@
   }
 
   .statsGrid,
-  .resultsGrid {
+  .resultsGrid,
+  .missionGrid,
+  .featuresGrid,
+  .contactGrid {
     grid-template-columns: 1fr;
   }
 

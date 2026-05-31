@@ -6,7 +6,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   beforeAfter,
+  contacts,
   ecosystemCards,
+  features,
+  missionPoints,
   pipelineSteps,
   results,
   stats,
@@ -14,11 +17,59 @@ import {
 import { Reveal, SectionHeader, SectionShell } from "./SectionPrimitives";
 import styles from "./premium-about.module.css";
 
+export function MissionSection() {
+  return (
+    <SectionShell id="mission">
+      <SectionHeader
+        eyebrow="Миссия"
+        title="Мы убираем барьер между «есть товар» и «он продаётся на маркетплейсе»."
+        text="MarketCard AI создан для продавцов, которым нужна скорость: быстрее собрать карточку, быстрее проверить гипотезу, быстрее выйти в продажи — без команды дизайнеров и копирайтеров."
+        align="center"
+      />
+      <div className={styles.missionGrid}>
+        {missionPoints.map((point, index) => (
+          <Reveal key={point.title} delay={index * 0.06}>
+            <motion.div whileHover={{ y: -6 }} className={styles.missionCard}>
+              <span className={styles.missionIcon}>{point.icon}</span>
+              <h3>{point.title}</h3>
+              <p>{point.text}</p>
+            </motion.div>
+          </Reveal>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+export function FeaturesSection() {
+  return (
+    <SectionShell id="features">
+      <SectionHeader
+        eyebrow="Возможности"
+        title="Всё, что нужно продавцу — в одном workspace."
+        text="Генерация, SEO, аудит, аналитика ниши и массовые операции. Не набор разрозненных инструментов, а единый поток запуска SKU."
+        align="center"
+      />
+      <div className={styles.featuresGrid}>
+        {features.map((feature, index) => (
+          <Reveal key={feature.title} delay={index * 0.04}>
+            <motion.div whileHover={{ y: -6 }} className={styles.featureCard}>
+              <span>{feature.tag}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.text}</p>
+            </motion.div>
+          </Reveal>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
 export function StatsSection() {
   return (
     <SectionShell>
       <SectionHeader
-        eyebrow="Operating numbers"
+        eyebrow="Цифры"
         title="Цифры, которые продавец чувствует в запуске."
         text="MarketCard AI создан не для красивой презентации, а для скорости: быстрее собрать карточку, быстрее проверить гипотезу, быстрее выйти в продажи."
         align="center"
@@ -49,7 +100,7 @@ export function BeforeAfterSection() {
     <SectionShell id="compare">
       <div className={styles.compareLayout}>
         <SectionHeader
-          eyebrow="Before / After"
+          eyebrow="До / После"
           title="Из обычного фото в карточку, которая выглядит как работа сильной команды."
           text="Свайпер показывает идею продукта: продавец приносит исходник, MarketCard AI собирает визуальную подачу, смысловые акценты и marketplace-формат."
         />
@@ -62,6 +113,7 @@ export function BeforeAfterSection() {
               fill
               sizes="(max-width: 768px) 100vw, 680px"
               className={styles.compareImage}
+              unoptimized
             />
             <div
               className={styles.compareAfter}
@@ -73,6 +125,7 @@ export function BeforeAfterSection() {
                 fill
                 sizes="(max-width: 768px) 100vw, 680px"
                 className={styles.compareImage}
+                unoptimized
               />
             </div>
             <div className={styles.compareLabels}>
@@ -102,7 +155,7 @@ export function EcosystemPipelineSection() {
   return (
     <SectionShell id="pipeline">
       <SectionHeader
-        eyebrow="Ecosystem / Pipeline"
+        eyebrow="Как это работает"
         title="От product intake до SEO-аудита в одном AI-потоке."
         text="MarketCard AI работает как операционная система запуска товара: понимает продукт, рынок, визуальную стратегию, генерацию и качество финального ассета."
         align="center"
@@ -148,7 +201,7 @@ export function ResultsSection() {
   return (
     <SectionShell id="results">
       <SectionHeader
-        eyebrow="Reviews / Real results"
+        eyebrow="Отзывы"
         title="Продавцы используют MarketCard AI, когда скорость стала преимуществом."
         text="Карточки, тексты и визуальные гипотезы перестают быть узким местом. Команда быстрее тестирует офферы и запускает SKU."
       />
@@ -162,6 +215,7 @@ export function ResultsSection() {
                   alt={`Кейс ${result.marketplace}`}
                   fill
                   sizes="(max-width: 768px) 100vw, 360px"
+                  unoptimized
                 />
                 <span>{result.marketplace}</span>
               </div>
@@ -187,7 +241,7 @@ export function FounderSection() {
       <Reveal>
         <div className={styles.founderPanel}>
           <div>
-            <div className={styles.eyebrow}>Founder</div>
+            <div className={styles.eyebrow}>Основатель</div>
             <h2>Основатель: Удалов Аристарх Александрович</h2>
             <p className={styles.founderLead}>Разработано командой MarketCard AI</p>
             <p>
@@ -213,7 +267,7 @@ export function FinalCTASection() {
       <Reveal>
         <div className={styles.ctaPanel}>
           <div className={styles.ctaGlow} aria-hidden="true" />
-          <div className={styles.eyebrow}>Launch faster</div>
+          <div className={styles.eyebrow}>Старт</div>
           <h2>Готов запускать товары быстрее конкурентов?</h2>
           <p>
             Загрузите фото товара и получите первую AI-карточку, которую можно тестировать
@@ -228,16 +282,47 @@ export function FinalCTASection() {
   );
 }
 
+export function ContactSection() {
+  return (
+    <SectionShell id="contact">
+      <SectionHeader
+        eyebrow="Контакты"
+        title="Свяжитесь с командой MarketCard AI"
+        text="Поддержка, партнёрство и вопросы по тарифам — мы на связи в Telegram, Instagram и по email."
+        align="center"
+      />
+      <div className={styles.contactGrid}>
+        {contacts.map((item, index) => (
+          <Reveal key={item.label} delay={index * 0.05}>
+            <motion.a
+              href={item.href}
+              target={item.href.startsWith("http") ? "_blank" : undefined}
+              rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+              whileHover={{ y: -6 }}
+              className={styles.contactCard}
+            >
+              <strong>{item.label}</strong>
+              <span>{item.description}</span>
+            </motion.a>
+          </Reveal>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
 export function PremiumFooter() {
   return (
     <footer className={styles.footer}>
       <div>
         <strong>MarketCard AI</strong>
-        <span>Premium AI SaaS for marketplace sellers</span>
+        <span>AI для продавцов маркетплейсов Узбекистана и СНГ</span>
       </div>
       <nav>
         <Link href="/">Главная</Link>
+        <Link href="/about">О нас</Link>
         <Link href="/pricing">Тарифы</Link>
+        <a href="#contact">Контакты</a>
         <a href="https://t.me/marketcardai_support_bot" target="_blank" rel="noreferrer">
           Telegram
         </a>

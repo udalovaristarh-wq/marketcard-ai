@@ -3,9 +3,12 @@
 import PremiumHero from "./PremiumHero";
 import {
   BeforeAfterSection,
+  ContactSection,
   EcosystemPipelineSection,
+  FeaturesSection,
   FinalCTASection,
   FounderSection,
+  MissionSection,
   PremiumFooter,
   ResultsSection,
   StatsSection,
@@ -17,11 +20,14 @@ export default function PremiumAboutPage() {
     <main className={styles.pageShell}>
       <PremiumHero />
       <div className={styles.contentShell}>
+        <MissionSection />
         <StatsSection />
+        <FeaturesSection />
         <BeforeAfterSection />
         <EcosystemPipelineSection />
         <ResultsSection />
         <FounderSection />
+        <ContactSection />
         <FinalCTASection />
         <PremiumFooter />
       </div>

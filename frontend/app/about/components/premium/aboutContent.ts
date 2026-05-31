@@ -6,73 +6,124 @@ export const marketplaceLogos = [
 ];
 
 export const heroShowcase = [
-  "/examples/1.webp",
-  "/examples/2.webp",
-  "/examples/3.webp",
-  "/examples/4.webp",
+  "/showcase/wb/1.webp",
+  "/showcase/wb/2.webp",
+  "/showcase/wb/3.webp",
+  "/showcase/wb/4.webp",
 ];
 
 export const stats = [
   {
     value: "17×",
     label: "конверсия",
-    text: "рост кликов и заявок после замены обычных фото на AI-карточки",
+    text: "рост кликов после замены обычных фото на AI-карточки",
   },
   {
     value: "25",
-    suffix: "секунд",
-    label: "до первого варианта",
-    text: "от загрузки исходного фото до готовой визуальной концепции",
+    suffix: "сек",
+    label: "до результата",
+    text: "от загрузки фото до готовой визуальной концепции",
   },
   {
     value: "12 400+",
     label: "карточек",
-    text: "сгенерировано для товарных категорий Uzum, WB, Ozon и Yandex Market",
+    text: "сгенерировано для Uzum, WB, Ozon и Yandex Market",
   },
   {
     value: "94%",
     label: "экономия",
-    text: "меньше ручной работы на дизайн, тексты, SEO и аудит карточки",
+    text: "меньше ручной работы на дизайн, тексты и SEO",
+  },
+];
+
+export const missionPoints = [
+  {
+    icon: "⚡",
+    title: "Скорость запуска",
+    text: "Продавец не ждёт дизайнера неделю — тестирует визуал и оффер в тот же день.",
+  },
+  {
+    icon: "🎯",
+    title: "Логика маркетплейса",
+    text: "AI учитывает формат площадки, язык, конкуренцию и ожидания покупателя.",
+  },
+  {
+    icon: "📈",
+    title: "Рост продаж",
+    text: "Карточка продаёт не «красотой», а структурой: выгода, доверие, характеристики.",
+  },
+];
+
+export const features = [
+  {
+    title: "AI-карточки",
+    text: "Серия слайдов: hero, преимущества, характеристики, usage и trust-блоки.",
+    tag: "Visual",
+  },
+  {
+    title: "SEO и тексты",
+    text: "Заголовки, описания и ключевые слова под правила маркетплейса.",
+    tag: "Copy",
+  },
+  {
+    title: "Аудит карточки",
+    text: "Проверка читаемости, структуры и конкурентоспособности листинга.",
+    tag: "Audit",
+  },
+  {
+    title: "Product Intelligence",
+    text: "Анализ ниши и конкурентов для точного позиционирования товара.",
+    tag: "Market",
+  },
+  {
+    title: "Массовая генерация",
+    text: "Загрузка Excel и пакетная обработка SKU для крупных каталогов.",
+    tag: "Scale",
+  },
+  {
+    title: "Все площадки",
+    text: "Uzum, Wildberries, Ozon и Yandex Market — единый рабочий процесс.",
+    tag: "MP",
   },
 ];
 
 export const pipelineSteps = [
   {
-    title: "Product intake",
-    text: "Система принимает фото, категорию, бренд, преимущества, цену и marketplace-контекст.",
+    title: "Загрузка товара",
+    text: "Фото, категория, бренд, преимущества, цена и контекст маркетплейса.",
   },
   {
-    title: "Market logic",
-    text: "AI выбирает selling angle, формат, плотность информации и правила площадки.",
+    title: "Рыночная логика",
+    text: "AI выбирает selling angle, формат и плотность информации под площадку.",
   },
   {
-    title: "AI art direction",
-    text: "Генерируется стиль: свет, композиция, акценты, визуальная иерархия и typography rules.",
+    title: "Art direction",
+    text: "Свет, композиция, акценты, типографика и визуальная иерархия.",
   },
   {
-    title: "Image generation",
-    text: "Создаются hero, benefits, specs, usage и trust-слайды для карточки товара.",
+    title: "Генерация слайдов",
+    text: "Hero, benefits, specs, usage и trust — готовая серия карточки.",
   },
   {
-    title: "SEO and audit",
-    text: "Финальный пакет дополняется SEO, проверкой читаемости и marketplace-ready ассетами.",
+    title: "SEO и аудит",
+    text: "Финальный пакет с текстами, проверкой и marketplace-ready ассетами.",
   },
 ];
 
 export const ecosystemCards = [
   {
     title: "AI Card Studio",
-    text: "Превращает фото товара в серию карточек с премиальной подачей и ясной структурой.",
+    text: "Превращает фото товара в серию карточек с премиальной подачей.",
     accent: "Visual",
   },
   {
     title: "Marketplace Brain",
-    text: "Учитывает формат, язык, конкуренцию, ожидания покупателя и правила площадки.",
+    text: "Учитывает формат, язык, конкуренцию и правила площадки.",
     accent: "Logic",
   },
   {
     title: "Launch OS",
-    text: "Собирает визуал, SEO, аудит и рекомендации в один поток запуска товара.",
+    text: "Визуал, SEO, аудит и рекомендации в одном потоке запуска SKU.",
     accent: "Ops",
   },
 ];
@@ -82,7 +133,7 @@ export const results = [
     marketplace: "Uzum",
     author: "Дилшод, электроника",
     quote:
-      "Загрузили обычное фото наушников и получили серию, которую не стыдно ставить в топ выдачи. Карточка стала выглядеть как бренд.",
+      "Загрузили фото наушников и получили серию для топа выдачи. Карточка выглядит как бренд.",
     metric: "+38% CTR",
     image: "/works/top1.jpg",
   },
@@ -90,7 +141,7 @@ export const results = [
     marketplace: "Wildberries",
     author: "Марина, одежда",
     quote:
-      "Раньше дизайнер собирал карточки два дня. Сейчас тестируем несколько визуальных гипотез за вечер и быстрее выводим SKU.",
+      "Раньше дизайнер собирал карточки два дня. Сейчас тестируем гипотезы за вечер.",
     metric: "5× быстрее",
     image: "/works/work3.jpg",
   },
@@ -98,7 +149,7 @@ export const results = [
     marketplace: "Ozon",
     author: "Алексей, товары для дома",
     quote:
-      "MarketCard AI сразу думает как продавец: где показать выгоду, где доверие, где характеристики. Это не просто картинка.",
+      "MarketCard AI думает как продавец: выгода, доверие, характеристики — не просто картинка.",
     metric: "+21% в корзину",
     image: "/works/work4.jpg",
   },
@@ -106,5 +157,23 @@ export const results = [
 
 export const beforeAfter = {
   before: "/works/work1.jpg",
-  after: "/examples/2.webp",
+  after: "/showcase/wb/2.webp",
 };
+
+export const contacts = [
+  {
+    label: "Telegram",
+    href: "https://t.me/marketcardai_support_bot",
+    description: "Поддержка и вопросы по тарифам",
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/marketcard.ai",
+    description: "Кейсы, обновления и примеры работ",
+  },
+  {
+    label: "Email",
+    href: "mailto:udalovaristarh@gmail.com",
+    description: "udalovaristarh@gmail.com",
+  },
+];

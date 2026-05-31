@@ -55,17 +55,13 @@ export function SectionHeader({
     <Reveal
       className={
         align === "center"
-          ? "mx-auto mb-12 max-w-3xl text-center"
-          : "mb-12 max-w-3xl"
+          ? `${styles.sectionHeaderCenter} ${styles.sectionHeader}`
+          : styles.sectionHeader
       }
     >
       <div className={styles.eyebrow}>{eyebrow}</div>
-      <h2 className="mt-4 text-balance text-4xl font-semibold tracking-normal text-white md:text-6xl">
-        {title}
-      </h2>
-      <p className="mt-5 text-pretty text-base leading-8 text-slate-300 md:text-lg">
-        {text}
-      </p>
+      <h2 className={styles.sectionTitle}>{title}</h2>
+      <p className={styles.sectionText}>{text}</p>
     </Reveal>
   );
 }
