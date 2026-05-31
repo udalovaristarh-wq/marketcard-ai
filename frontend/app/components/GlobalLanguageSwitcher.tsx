@@ -4,13 +4,6 @@ import { useEffect, useState } from "react"
 
 type Lang = "ru" | "uz" | "en"
 
-declare global {
-  interface Window {
-    google?: any
-    googleTranslateElementInit?: () => void
-  }
-}
-
 const labels: Record<Lang, string> = {
   ru: "RU",
   uz: "UZ",
