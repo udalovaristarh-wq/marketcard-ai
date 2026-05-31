@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlmodel import Session, select
 
 from app.db import get_session
@@ -33,6 +33,8 @@ from app.security import (
     create_reset_token,
     get_current_user,
     hash_password,
+    set_auth_cookie,
+    validate_password_strength,
     verify_password,
     verify_reset_token,
 )
@@ -40,7 +42,15 @@ from app.security import (
 
 router = APIRouter(tags=["auth"])
 
-ADMIN_EMAILS = {"udalovaristarh@gmail.com"}
+_admin_raw = os.getenv(
+    "ADMIN_EMAILS",
+    os.getenv("MARKETCARD_OWNER_EMAILS", ""),
+).strip()
+ADMIN_EMAILS = {
+    item.strip().lower()
+    for item in _admin_raw.split(",")
+    if item.strip()
+}
 TARIFFS = {
     "Start": 20,
     "Business": 60,
@@ -127,11 +137,23 @@ def _phone_email(phone: str) -> str:
     return f"phone_{digits}@phone.marketcard.local"
 
 
-def _issue_token(user: User) -> TokenResponse:
-    return TokenResponse(
-        access_token=create_access_token({"user_id": user.id}),
-        token_type="bearer",
+def _issue_token(user: User, response: Response) -> TokenResponse:
+    token = create_access_token(
+        {
+            "user_id": user.id,
+            "tv": int(getattr(user, "token_version", 0) or 0),
+        }
     )
+    set_auth_cookie(response, token)
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        email=user.email,
+    )
+
+
+def _invalidate_user_tokens(user: User) -> None:
+    user.token_version = int(getattr(user, "token_version", 0) or 0) + 1
 
 
 def _assert_user_can_login(user: User) -> None:
@@ -241,9 +263,15 @@ def verify_google_id_token(id_token: str) -> dict:
 
 
 @router.post("/register", response_model=TokenResponse)
-def register_user(data: UserRegister, session: Session = Depends(get_session)):
+def register_user(
+    data: UserRegister,
+    response: Response,
+    session: Session = Depends(get_session),
+):
     if not getattr(data, "offer_accepted", False):
         raise HTTPException(status_code=400, detail="Нужно принять условия оферты")
+
+    validate_password_strength(data.password)
 
     existing = session.exec(select(User).where(User.email == data.email)).first()
     if existing:
@@ -256,11 +284,15 @@ def register_user(data: UserRegister, session: Session = Depends(get_session)):
         full_name=data.full_name,
         terms_version=getattr(data, "offer_accept_lang", None) or "v1",
     )
-    return _issue_token(user)
+    return _issue_token(user, response)
 
 
 @router.post("/google", response_model=TokenResponse)
-def google_auth(data: GoogleAuthRequest, session: Session = Depends(get_session)):
+def google_auth(
+    data: GoogleAuthRequest,
+    response: Response,
+    session: Session = Depends(get_session),
+):
     if not data.offer_accepted:
         raise HTTPException(status_code=400, detail="Нужно принять условия оферты")
 
@@ -282,13 +314,20 @@ def google_auth(data: GoogleAuthRequest, session: Session = Depends(get_session)
     user.last_login = datetime.utcnow()
     session.add(user)
     session.commit()
-    return _issue_token(user)
+    session.refresh(user)
+    return _issue_token(user, response)
 
 
 @router.post("/phone/register", response_model=TokenResponse)
-def phone_register(data: PhoneRegisterRequest, session: Session = Depends(get_session)):
+def phone_register(
+    data: PhoneRegisterRequest,
+    response: Response,
+    session: Session = Depends(get_session),
+):
     if not data.offer_accepted:
         raise HTTPException(status_code=400, detail="Нужно принять условия оферты")
+
+    validate_password_strength(data.password)
 
     phone = _normalize_phone(data.phone)
     email = _phone_email(phone)
@@ -303,11 +342,15 @@ def phone_register(data: PhoneRegisterRequest, session: Session = Depends(get_se
         full_name=data.full_name or phone,
         terms_version="phone",
     )
-    return _issue_token(user)
+    return _issue_token(user, response)
 
 
 @router.post("/phone/login", response_model=TokenResponse)
-def phone_login(data: PhoneLoginRequest, session: Session = Depends(get_session)):
+def phone_login(
+    data: PhoneLoginRequest,
+    response: Response,
+    session: Session = Depends(get_session),
+):
     user = session.exec(select(User).where(User.email == _phone_email(data.phone))).first()
     if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=400, detail="Invalid login")
@@ -316,7 +359,8 @@ def phone_login(data: PhoneLoginRequest, session: Session = Depends(get_session)
     user.last_login = datetime.utcnow()
     session.add(user)
     session.commit()
-    return _issue_token(user)
+    session.refresh(user)
+    return _issue_token(user, response)
 
 
 @router.post("/phone/forgot-password")
@@ -361,7 +405,9 @@ def phone_reset_password(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    validate_password_strength(data.new_password)
     user.password = hash_password(data.new_password)
+    _invalidate_user_tokens(user)
     session.add(user)
     session.commit()
     PHONE_RESET_CODES.pop(phone, None)
@@ -473,7 +519,9 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    validate_password_strength(data.new_password)
     user.password = hash_password(data.new_password)
+    _invalidate_user_tokens(user)
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -482,7 +530,11 @@ def reset_password(
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, session: Session = Depends(get_session)):
+def login(
+    data: UserLogin,
+    response: Response,
+    session: Session = Depends(get_session),
+):
     user = session.exec(select(User).where(User.email == data.email)).first()
     if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=400, detail="Invalid login")
@@ -491,7 +543,8 @@ def login(data: UserLogin, session: Session = Depends(get_session)):
     user.last_login = datetime.utcnow()
     session.add(user)
     session.commit()
-    return _issue_token(user)
+    session.refresh(user)
+    return _issue_token(user, response)
 
 
 @router.post("/accept-offer")

@@ -12,7 +12,7 @@ const stats = [
     gradient: "from-cyan-500 to-cyan-400",
   },
   {
-    value: "25 сек",
+    value: "35-40 сек",
     label: "Время генерации",
     description: "от загрузки фото до готовой продающей карточки",
     icon: Clock,

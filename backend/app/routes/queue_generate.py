@@ -1,19 +1,17 @@
 from sqlalchemy import text
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form
 from sqlmodel import Session, select
-from sqlalchemy import func
 from app.db import engine
 from app.models import User
 from app.models.generationjob import GenerationJob
+from app.security import get_current_user
 
 import json
 import uuid
 from pathlib import Path
 import shutil
-from io import BytesIO
-from PIL import Image
 
 def check_queue_limit(db):
     result = db.execute(text("""
@@ -66,30 +64,38 @@ def normalize_variant_count(tariff_name: str | None, variant_count: int) -> int:
 
 @router.post("/queue/full-generate")
 async def queue_full_generate(
-    email: str = Form(...),
     product_title: str = Form(""),
     brand: str = Form(""),
     category: str = Form(""),
     marketplace: str = Form("uzum"),
     language_mode: str = Form("ru"),
     variant_count: int = Form(5),
-    image: UploadFile = File(...)
+    image: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
 ):
     if not image:
         raise HTTPException(status_code=400, detail="Image required")
 
-    suffix = Path(image.filename).suffix or ".png"
+    suffix = Path(image.filename or "").suffix.lower() or ".png"
+    if suffix not in ALLOWED_IMAGE_SUFFIXES:
+        raise HTTPException(status_code=400, detail="Неподдерживаемый формат изображения")
+
     filename = f"{uuid.uuid4().hex}{suffix}"
     image_path = TEMP_DIR / filename
 
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
-    print("QUEUE EMAIL RAW =", repr(email))
     with Session(engine) as session:
-        user = session.exec(select(User).where(func.lower(User.email) == email.lower().strip())).first()
+        queued_count = check_queue_limit(session)
+        if queued_count is not None and int(queued_count) >= QUEUE_LIMIT:
+            raise HTTPException(status_code=429, detail="Очередь генерации переполнена. Попробуйте позже.")
+
+        user = session.get(User, current_user.id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
+        variant_count = normalize_variant_count(user.tariff_name, int(variant_count))
 
         payload = {
             "product_title": product_title,
@@ -123,11 +129,17 @@ async def queue_full_generate(
 
 
 @router.get("/queue/job-status/{job_id}")
-def get_job_status(job_id: int):
+def get_job_status(
+    job_id: int,
+    current_user: User = Depends(get_current_user),
+):
     with Session(engine) as session:
         job = session.get(GenerationJob, job_id)
         if not job:
             return {"success": False, "error": "Job not found"}
+
+        if job.user_id != current_user.id and not getattr(current_user, "is_admin", False):
+            raise HTTPException(status_code=403, detail="Access denied")
 
         return {
             "success": True,

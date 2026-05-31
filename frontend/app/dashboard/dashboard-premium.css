@@ -5842,6 +5842,269 @@ body.mc-dashboard-no-page-scroll {
   background: rgba(103, 232, 249, 0.14);
 }
 
+.mc-live-progress {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 0 0, rgba(34, 211, 238, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(17, 24, 39, 0.62));
+  box-shadow: 0 24px 70px rgba(34, 211, 238, 0.12);
+}
+
+.mc-live-progress-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #22d3ee, #a855f7, #ec4899);
+  box-shadow: 0 0 34px rgba(34, 211, 238, 0.38);
+}
+
+.mc-live-progress-orbit span {
+  position: relative;
+  z-index: 2;
+  color: #020617;
+  font-size: 32px;
+  animation: mc-hourglass 1.45s ease-in-out infinite;
+}
+
+.mc-live-progress-orbit i,
+.mc-live-progress-orbit b {
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(103, 232, 249, 0.35);
+  border-radius: 30px;
+  animation: mc-orbit-spin 2.8s linear infinite;
+}
+
+.mc-live-progress-orbit b {
+  inset: -14px;
+  border-color: rgba(236, 72, 153, 0.28);
+  animation-duration: 4.2s;
+  animation-direction: reverse;
+}
+
+.mc-live-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-live-progress-top strong {
+  color: #fff;
+  font-size: clamp(18px, 2vw, 24px);
+}
+
+.mc-live-progress-top em {
+  color: #67e8f9;
+  font-style: normal;
+  font-size: 28px;
+  font-weight: 950;
+}
+
+.mc-live-progress-bar {
+  height: 12px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mc-live-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #67e8f9, #a855f7, #ec4899);
+  box-shadow: 0 0 28px rgba(103, 232, 249, 0.45);
+  transition: width 0.55s ease;
+}
+
+.mc-live-progress-copy p {
+  margin: 10px 0 0;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.mc-live-progress-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.mc-live-progress-steps small {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(226, 232, 240, 0.66);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.mc-live-progress-steps small.is-done {
+  border-color: rgba(52, 211, 153, 0.36);
+  background: rgba(52, 211, 153, 0.12);
+  color: #86efac;
+}
+
+.mc-sales-advisor-grid,
+.mc-market-publish-grid,
+.mc-warehouse-grid,
+.mc-invoice-board,
+.mc-publish-pipeline {
+  display: grid;
+  gap: 16px;
+}
+
+.mc-sales-advisor-grid,
+.mc-market-publish-grid,
+.mc-invoice-board {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mc-sales-advisor-card,
+.mc-market-publish-card,
+.mc-invoice-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(15, 23, 42, 0.72);
+  padding: 22px;
+  box-shadow: 0 22px 62px rgba(0, 0, 0, 0.28);
+}
+
+.mc-sales-advisor-card span,
+.mc-market-publish-card small,
+.mc-invoice-card span {
+  display: inline-flex;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  background: rgba(103, 232, 249, 0.12);
+  color: #67e8f9;
+  padding: 7px 11px;
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.mc-sales-advisor-card strong,
+.mc-market-publish-card strong,
+.mc-invoice-card strong {
+  display: block;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1.12;
+}
+
+.mc-sales-advisor-card p,
+.mc-market-publish-card p,
+.mc-invoice-card p,
+.mc-warehouse-row p {
+  color: rgba(226, 232, 240, 0.68);
+  line-height: 1.5;
+}
+
+.mc-sales-advisor-card button,
+.mc-market-publish-card button,
+.mc-invoice-card button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #67e8f9, #a855f7);
+  color: #020617;
+  padding: 0 16px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.mc-market-publish-card img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 10px;
+}
+
+.mc-publish-pipeline {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 18px;
+}
+
+.mc-publish-pipeline div,
+.mc-warehouse-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 18px;
+}
+
+.mc-publish-pipeline span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #22d3ee, #a855f7);
+  color: #020617;
+  font-weight: 950;
+}
+
+.mc-publish-pipeline strong,
+.mc-warehouse-row strong {
+  color: #fff;
+}
+
+.mc-warehouse-grid {
+  grid-template-columns: 1fr;
+}
+
+.mc-warehouse-row span,
+.mc-warehouse-row em {
+  min-width: 90px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  padding: 10px 12px;
+  text-align: center;
+  font-style: normal;
+  font-weight: 900;
+}
+
+@keyframes mc-hourglass {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.06);
+  }
+}
+
+@keyframes mc-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 1320px) {
   .mc-seller-cabinet,
   .mc-video-v2-grid {
@@ -5870,7 +6133,11 @@ body.mc-dashboard-no-page-scroll {
   .mc-economy-grid,
   .mc-economy-breakdown,
   .mc-economy-advice,
-  .mc-tool-grid {
+  .mc-tool-grid,
+  .mc-sales-advisor-grid,
+  .mc-market-publish-grid,
+  .mc-invoice-board,
+  .mc-publish-pipeline {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -5900,8 +6167,21 @@ body.mc-dashboard-no-page-scroll {
   .mc-economy-breakdown,
   .mc-economy-advice,
   .mc-economy-input-grid,
-  .mc-tool-grid {
+  .mc-tool-grid,
+  .mc-sales-advisor-grid,
+  .mc-market-publish-grid,
+  .mc-invoice-board,
+  .mc-publish-pipeline {
     grid-template-columns: 1fr;
+  }
+
+  .mc-live-progress {
+    grid-template-columns: 1fr;
+  }
+
+  .mc-live-progress-orbit {
+    width: 64px;
+    height: 64px;
   }
 
   .mc-ikpu-row {

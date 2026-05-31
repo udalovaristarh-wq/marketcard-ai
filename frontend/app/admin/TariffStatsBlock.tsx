@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { authFetch } from "@/lib/auth"
 
 export default function TariffStatsBlock() {
   const [data, setData] = useState<any>(null)
 
   useEffect(() => {
-    fetch("/api/admin/tariff-stats")
+    authFetch("/api/admin/tariff-stats")
       .then(res => res.json())
       .then(setData)
   }, [])

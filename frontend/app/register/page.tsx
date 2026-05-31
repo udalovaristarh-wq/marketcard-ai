@@ -1,5 +1,7 @@
 "use client";
 
+import { saveAuthSession } from "@/lib/auth";
+
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -64,8 +66,7 @@ export default function RegisterPage() {
   }, [GOOGLE_CLIENT_ID]);
 
   const finishAuth = (token: string, emailLabel: string) => {
-    localStorage.setItem("access_token", token);
-    localStorage.setItem("user_email", emailLabel);
+    saveAuthSession(token, emailLabel);
     router.push("/dashboard");
   };
 
@@ -90,6 +91,7 @@ export default function RegisterPage() {
           const res = await fetch(`${API_BASE}/auth/google`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ id_token: response.credential, offer_accepted: agreed }),
           });
           const data = await res.json().catch(() => null);
@@ -97,7 +99,7 @@ export default function RegisterPage() {
             alert(typeof data?.detail === "string" ? data.detail : "Ошибка Google регистрации");
             return;
           }
-          finishAuth(data.access_token, "google-user");
+          finishAuth(data.access_token, data.email || "google-user");
         },
       });
       window.google?.accounts?.id?.prompt();
@@ -159,6 +161,7 @@ export default function RegisterPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(
           authMethod === "phone"
             ? {
@@ -199,7 +202,7 @@ export default function RegisterPage() {
       }
 
       if (data?.access_token) {
-        finishAuth(data.access_token, authMethod === "phone" ? phone : email);
+        finishAuth(data.access_token, data.email || (authMethod === "phone" ? phone : email));
         return;
       }
 

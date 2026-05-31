@@ -147,7 +147,7 @@ export default function PremiumHero() {
             </div>
           </div>
           <div className={styles.orbitBadge}>
-            <span>25 сек</span>
+            <span>35-40 сек</span>
             <small>до первого результата</small>
           </div>
         </motion.div>

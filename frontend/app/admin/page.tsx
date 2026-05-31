@@ -63,6 +63,29 @@ export default function AdminPage() {
     try {
       setCheckingPassword(true);
       setError("");
+
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setError("Сначала войдите в аккаунт администратора");
+        return;
+      }
+
+      const res = await fetch("/api/admin/verify-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ password: adminPassword }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(typeof data?.detail === "string" ? data.detail : "Неверный пароль");
+        return;
+      }
+
       setIsVerified(true);
     } finally {
       setCheckingPassword(false);

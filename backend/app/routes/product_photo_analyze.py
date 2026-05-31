@@ -5,7 +5,11 @@ import json
 import os
 import re
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, Request
+
+from app.models.user import User
+from app.rate_limit import rate_limit
+from app.security import get_current_user
 from openai import OpenAI
 
 router = APIRouter(tags=["Product Photo Analyze"])
@@ -39,7 +43,12 @@ def _as_list(value) -> list[str]:
 
 
 @router.post("/analyze-product-photo")
-async def analyze_product_photo(image: UploadFile = File(...)):
+async def analyze_product_photo(
+    request: Request,
+    image: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    rate_limit(request, key_prefix="photo-analyze", max_calls=30, window_seconds=3600)
     try:
         image_bytes = await image.read()
         if not image_bytes:

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 
 type AuditResult = {
   raw?: string
@@ -20,6 +20,7 @@ export default function CardAuditPanel() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState("")
   const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<AuditResult | null>(null)
   const [error, setError] = useState("")
 
@@ -94,6 +95,25 @@ export default function CardAuditPanel() {
     }
   }
 
+  useEffect(() => {
+    if (!loading) {
+      if (result) {
+        setProgress(100)
+        const timer = window.setTimeout(() => setProgress(0), 1800)
+        return () => window.clearTimeout(timer)
+      }
+      setProgress(0)
+      return undefined
+    }
+
+    setProgress(8)
+    const timer = window.setInterval(() => {
+      setProgress((value) => Math.min(98, value + Math.max(1, Math.round((100 - value) * 0.12))))
+    }, 720)
+
+    return () => window.clearInterval(timer)
+  }, [loading, result])
+
   return (
     <div style={{ maxWidth: "1180px", padding: "28px", borderRadius: "24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}>
       <div style={{ fontSize: "34px", fontWeight: 900, marginBottom: "12px" }}>Оценка карточки товара</div>
@@ -107,6 +127,24 @@ export default function CardAuditPanel() {
       </button>
 
       {loading && (
+        <div style={{ marginTop: "18px", padding: "18px", borderRadius: "22px", background: "linear-gradient(135deg,rgba(34,211,238,.14),rgba(168,85,247,.12))", border: "1px solid rgba(103,232,249,.22)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", color: "#67e8f9", fontWeight: 900 }}>
+            <div style={{ width: "44px", height: "44px", borderRadius: "16px", display: "grid", placeItems: "center", background: "linear-gradient(135deg,#22d3ee,#a855f7)", color: "#020617", animation: "audit-hourglass 1.4s ease-in-out infinite" }}>⌛</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                <span>AI анализирует карточку</span>
+                <b>{Math.round(progress)}%</b>
+              </div>
+              <div style={{ height: 10, marginTop: 10, borderRadius: 999, background: "rgba(255,255,255,.1)", overflow: "hidden" }}>
+                <span style={{ display: "block", width: `${progress}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg,#67e8f9,#a855f7,#ec4899)", transition: "width .5s ease" }} />
+              </div>
+              <p style={{ margin: "10px 0 0", color: "#cbd5e1", fontSize: 13 }}>Ожидание 35-40 секунд: читаем дизайн, оффер, доверие и готовность к продажам.</p>
+            </div>
+          </div>
+          <style>{`@keyframes audit-hourglass { 0%,100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.05); } }`}</style>
+        </div>
+      )}
+      {false && loading && (
         <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "18px", color: "#67e8f9", fontWeight: 900 }}>
           <div style={{
             width: "28px",

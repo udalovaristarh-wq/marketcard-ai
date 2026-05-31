@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+
+from app.rate_limit import rate_limit
 from pydantic import BaseModel
 from openai import OpenAI
 import os
@@ -82,7 +84,8 @@ PREMIUM:
 """
 
 @router.post("/chat")
-def chat(req: ChatRequest):
+def chat(req: ChatRequest, request: Request):
+    rate_limit(request, key_prefix="support-chat", max_calls=20, window_seconds=300)
     try:
         response = client.chat.completions.create(
             model="gpt-4.1-mini",

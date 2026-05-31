@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import GlobalLanguageSwitcher from "./components/GlobalLanguageSwitcher";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -38,7 +39,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className="dark bg-background">
-      <body className="min-h-screen font-sans antialiased">{children}</body>
+      <body className="min-h-screen font-sans antialiased">
+        {children}
+        <GlobalLanguageSwitcher />
+      </body>
     </html>
   );
 }

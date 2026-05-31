@@ -4,12 +4,17 @@ from sqlalchemy import func
 from app.db import get_session
 from app.models.finance_income import TariffIncome
 from app.models.generationexpense import GenerationExpense
+from app.models.user import User
+from app.security import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin-finance"])
 
 
 @router.get("/finance-summary")
-def get_finance_summary(session: Session = Depends(get_session)):
+def get_finance_summary(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     total_income = session.exec(
         select(func.coalesce(func.sum(TariffIncome.amount_uzs), 0))
     ).one()
@@ -31,7 +36,10 @@ def get_finance_summary(session: Session = Depends(get_session)):
 
 
 @router.get("/finance-timeseries")
-def get_finance_timeseries(session: Session = Depends(get_session)):
+def get_finance_timeseries(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     income_rows = session.exec(
         select(
             func.date(TariffIncome.created_at),

@@ -1,5 +1,7 @@
 "use client";
 
+import { saveAuthSession } from "@/lib/auth";
+
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -59,8 +61,7 @@ export default function LoginPage() {
   }, [GOOGLE_CLIENT_ID]);
 
   const finishAuth = (token: string, emailLabel: string) => {
-    localStorage.setItem("access_token", token);
-    localStorage.setItem("user_email", emailLabel);
+    saveAuthSession(token, emailLabel);
     router.push("/dashboard");
   };
 
@@ -82,6 +83,7 @@ export default function LoginPage() {
           const res = await fetch(`${API_BASE}/auth/google`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ id_token: response.credential, offer_accepted: true }),
           });
           const data = await res.json().catch(() => null);
@@ -89,7 +91,7 @@ export default function LoginPage() {
             alert(typeof data?.detail === "string" ? data.detail : "Ошибка Google входа");
             return;
           }
-          finishAuth(data.access_token, "google-user");
+          finishAuth(data.access_token, data.email || "google-user");
         },
       });
       window.google?.accounts?.id?.prompt();
@@ -117,6 +119,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(
           authMethod === "phone"
             ? { phone, password }
@@ -140,7 +143,7 @@ export default function LoginPage() {
         return;
       }
 
-      finishAuth(data.access_token, authMethod === "phone" ? phone : email);
+      finishAuth(data.access_token, data.email || (authMethod === "phone" ? phone : email));
     } catch (error) {
       console.error(error);
       alert("Ошибка соединения с сервером");

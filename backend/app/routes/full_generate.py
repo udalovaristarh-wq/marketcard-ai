@@ -10,7 +10,7 @@ import uuid
 from pathlib import Path
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from sqlmodel import Session, select
 from sqlalchemy import func
 
@@ -18,6 +18,7 @@ from app.db import engine
 from app.models import User
 from app.models.generationexpense import GenerationExpense
 from app.models.generationjob import GenerationJob
+from app.security import get_current_user
 from app.services.ikpu_service import suggest_ikpu_for_product
 
 router = APIRouter(tags=["AI Full Generate"])
@@ -29,7 +30,7 @@ ALLOWED_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 COOLDOWN_SECONDS = 180
 OWNER_EMAILS = {
     item.strip().lower()
-    for item in os.getenv("MARKETCARD_OWNER_EMAILS", "udalovaristarh@gmail.com").split(",")
+    for item in os.getenv("MARKETCARD_OWNER_EMAILS", "").split(",")
     if item.strip()
 }
 
@@ -94,7 +95,6 @@ def ensure_cooldown(session: Session, user_id: int) -> None:
 
 @router.post("/full-generate")
 async def full_generate_endpoint(
-    email: str = Form(...),
     product_title: str = Form(""),
     brand: str = Form(""),
     category: str = Form(""),
@@ -105,6 +105,7 @@ async def full_generate_endpoint(
     variant_count: int = Form(5),
     extra_features: str = Form(""),
     image: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         if image is None:
@@ -113,7 +114,11 @@ async def full_generate_endpoint(
         if not image.filename:
             raise HTTPException(status_code=400, detail="Uploaded image has no filename")
 
-        clean_email = email.strip().lower()
+        suffix = Path(image.filename).suffix.lower()
+        if suffix and suffix not in ALLOWED_IMAGE_SUFFIXES:
+            raise HTTPException(status_code=400, detail="Неподдерживаемый формат изображения")
+
+        clean_email = current_user.email.strip().lower()
         owner_free_mode = clean_email in OWNER_EMAILS
 
         suffix = Path(image.filename).suffix.lower() or ".png"
@@ -124,9 +129,7 @@ async def full_generate_endpoint(
             shutil.copyfileobj(image.file, buffer)
 
         with Session(engine) as session:
-            user = session.exec(
-                select(User).where(func.lower(User.email) == clean_email)
-            ).first()
+            user = session.get(User, current_user.id)
 
             if not user:
                 raise HTTPException(status_code=404, detail="Пользователь не найден")
@@ -215,9 +218,7 @@ async def full_generate_endpoint(
                         }
 
                     if result.get("success"):
-                        user = session.exec(
-                            select(User).where(func.lower(User.email) == clean_email)
-                        ).first()
+                        user = session.get(User, current_user.id)
 
                         if user and not owner_free_mode:
                             user.tariff_generations_used += variant_count

@@ -108,7 +108,7 @@ export function HeroSection() {
                   <Zap className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-foreground">25 сек</div>
+                  <div className="text-2xl font-bold text-foreground">35-40 сек</div>
                   <div className="text-xs text-muted-foreground">до результата</div>
                 </div>
               </motion.div>

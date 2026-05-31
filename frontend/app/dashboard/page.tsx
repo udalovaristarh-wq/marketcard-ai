@@ -54,6 +54,10 @@ type DashboardPageKey =
   | "ikpu"
   | "audit"
   | "intelligence"
+  | "warehouse"
+  | "invoices"
+  | "integrations"
+  | "recommendations"
   | "purchase"
   | "didox"
   | "deficit"
@@ -844,6 +848,72 @@ function ProgressBar({
   )
 }
 
+function useSimulatedProgress(active: boolean, complete = false) {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    if (active) {
+      setProgress(6)
+      const timer = window.setInterval(() => {
+        setProgress((value) => Math.min(98, value + Math.max(1, Math.round((100 - value) * 0.11))))
+      }, 720)
+      return () => window.clearInterval(timer)
+    }
+
+    if (complete) {
+      setProgress(100)
+      const timer = window.setTimeout(() => setProgress(0), 1800)
+      return () => window.clearTimeout(timer)
+    }
+
+    setProgress(0)
+    return undefined
+  }, [active, complete])
+
+  return progress
+}
+
+function LiveGenerationProgress({
+  progress,
+  title,
+  note,
+  steps,
+}: {
+  progress: number
+  title: string
+  note: string
+  steps: string[]
+}) {
+  const safeProgress = Math.max(0, Math.min(100, Math.round(progress)))
+
+  return (
+    <div className="mc-live-progress">
+      <div className="mc-live-progress-orbit" aria-hidden="true">
+        <span>⌛</span>
+        <i />
+        <b />
+      </div>
+      <div className="mc-live-progress-copy">
+        <div className="mc-live-progress-top">
+          <strong>{title}</strong>
+          <em>{safeProgress}%</em>
+        </div>
+        <div className="mc-live-progress-bar">
+          <span style={{ width: `${safeProgress}%` }} />
+        </div>
+        <p>{note}</p>
+        <div className="mc-live-progress-steps">
+          {steps.map((step, index) => (
+            <small key={step} className={safeProgress >= (index + 1) * (100 / steps.length) ? "is-done" : ""}>
+              {step}
+            </small>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ScenarioCard({
   title,
   hint,
@@ -1052,6 +1122,10 @@ export default function DashboardPage() {
   const [videoResultReady, setVideoResultReady] = useState(false)
   const [videoAssetUrl, setVideoAssetUrl] = useState("")
   const [videoAssetType, setVideoAssetType] = useState<"video" | "gif" | "">("")
+  const imageProgress = useSimulatedProgress(creating || isGenerating, generatedVariants.length > 0)
+  const fixProgress = useSimulatedProgress(isFixingImage, Boolean(fixedImages[selectedFixIndex]))
+  const videoProgress = useSimulatedProgress(isVideoGenerating, videoResultReady)
+  const ikpuProgress = useSimulatedProgress(ikpuLoading, ikpuResults.length > 0)
   const [listingData, setlistingData] = useState<ListingResponse | null>(null)
   const [listingLang, setListingLang] = useState<"ru" | "uz">("ru")
   const [translatedListing, setTranslatedListing] = useState<any | null>(null)
@@ -1118,6 +1192,18 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   ? listingView.keywords
   : []
   const t = dict[lang]
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const nextLang = (event as CustomEvent<{ lang?: Lang }>).detail?.lang
+      if (nextLang === "ru" || nextLang === "uz" || nextLang === "en") {
+        setLang(nextLang)
+      }
+    }
+
+    window.addEventListener("marketcard:language-change", handler)
+    return () => window.removeEventListener("marketcard:language-change", handler)
+  }, [])
   const currentFormat = marketplaceFormats[selectedMarketplace]
 
   const allowedVariantOptions = (() => {
@@ -1219,11 +1305,9 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const loadProfile = async () => {
     try {
       setProfileLoading(true)
-    const token = localStorage.getItem("access_token")
-
     const email = localStorage.getItem("user_email")
 
-if (!token || !email) {
+if (!email) {
   setProfileLoading(false)
   setProfile(null)
   return
@@ -1232,9 +1316,7 @@ if (!token || !email) {
 const res = await fetch(
 `/api/auth/me?email=${encodeURIComponent(email)}`,
  {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
+  credentials: "include",
 })
 
       if (!res.ok) {
@@ -1250,18 +1332,18 @@ const res = await fetch(
 
   if (res.status === 403) {
     const message = errorData?.detail || "Ваш аккаунт заблокирован"
-
-    document.body.innerHTML = ` 
-      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;">
-        <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
-          <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
-          <div style="font-size:18px;opacity:0.9;line-height:1.5;">
-            ${message}
-          </div>
-        </div>
+    const banRoot = document.createElement("div")
+    banRoot.style.cssText = "min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;"
+    banRoot.innerHTML = `
+      <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
+        <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
       </div>
     `
-
+    const msgEl = document.createElement("div")
+    msgEl.style.cssText = "font-size:18px;opacity:0.9;line-height:1.5;"
+    msgEl.textContent = String(message)
+    banRoot.firstElementChild?.appendChild(msgEl)
+    document.body.replaceChildren(banRoot)
     throw new Error(message)
   }
 
@@ -1290,10 +1372,9 @@ const res = await fetch(
   }, [])
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
     const savedEmail = localStorage.getItem("user_email")
 
-    if (!token || !savedEmail) {
+    if (!savedEmail) {
       router.push("/login")
       return
     }
@@ -1590,7 +1671,6 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
       return
     }
 
-    formData.append("email", profile?.email)
     formData.append("product_title", productTitle)
     formData.append("brand", brand)
     formData.append("category", category)
@@ -1605,8 +1685,9 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 
     
     console.log("GEN 2 BEFORE FETCH")
-    const res = await fetch("https://marketcard.uz/api/full-generate", {
+    const res = await fetch("/api/full-generate", {
       method: "POST",
+      credentials: "include",
       body: formData,
     })
 
@@ -1624,7 +1705,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     // ✅ КАРТИНКИ
     const images = (data.slides || [])
       .filter((s: any) => s.image_url)
-      .map((s: any) => `https://marketcard.uz${s.image_url}`)
+      .map((s: any) => `/api${s.image_url}`)
 
     setGeneratedVariants(images)
     setPngReady(images.length > 0)
@@ -1685,17 +1766,17 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
 
       setIsFixingImage(true)
 
-      const imageUrl = selectedImage.replace("https://marketcard.uz", "")
+      const imageUrl = selectedImage.replace(/^https?:\/\/[^/]+/, "").replace(/^\/api/, "")
 
-      const res = await fetch("https://marketcard.uz/api/fix-generated-image", {
+      const res = await fetch("/api/fix-generated-image", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           image_url: imageUrl,
           fix_prompt: fixPrompt,
-          email: profile?.email ?? userEmail ?? "",
         }),
       })
 
@@ -1706,7 +1787,7 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
         return
       }
 
-      const finalUrl = `https://marketcard.uz${data.fixed_image_url}`
+      const finalUrl = `/api${data.fixed_image_url}`
 
       setFixedImageUrl(finalUrl)
       setFixedImages((prev) => ({
@@ -2050,6 +2131,23 @@ const handleDownloadPng = async () => {
     }
   }
 
+  const checkMarketplaceStatus = async () => {
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/marketplaces/status", {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.detail || "Не удалось проверить API")
+      const lines = Object.entries(data.marketplaces || {}).map(([name, info]: any) => {
+        return `${name}: ${info.configured ? "подключен" : `нет ключей (${info.missing_env?.join(", ")})`}`
+      })
+      alert(lines.join("\n"))
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Ошибка проверки API")
+    }
+  }
+
   const videoMarketplaces = [
     {
       key: "uzum" as const,
@@ -2232,6 +2330,8 @@ const handleDownloadPng = async () => {
     { key: "economy" as const, label: "Экономика товара", meta: "", icon: "EC", onClick: () => selectDashboardPage("economy") },
     { key: "audit" as const, label: "Оценка карточки", meta: String(profile?.audit_credits ?? 0), icon: "AU", onClick: () => selectDashboardPage("audit") },
     { key: "intelligence" as const, label: "Аналитика товара", meta: "", icon: "BI", onClick: () => selectDashboardPage("intelligence") },
+    { key: "recommendations" as const, label: "Рекомендации продаж", meta: "AI", icon: "RS", onClick: () => selectDashboardPage("recommendations") },
+    { key: "integrations" as const, label: "Интеграции МП", meta: "API", icon: "MP", onClick: () => selectDashboardPage("integrations") },
   ]
 
   const toolDashboardNav = [
@@ -2245,6 +2345,8 @@ const handleDownloadPng = async () => {
   const premiumToolDashboardNav = [
     { label: "ABC анализ", meta: "URL", icon: "AB", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
     { label: "ИКПУ", meta: ikpuResults.length ? String(ikpuResults.length) : "AUTO", icon: "IK", onClick: () => selectDashboardPage("ikpu") },
+    { label: "Мой склад", meta: "WMS", icon: "WH", onClick: () => selectDashboardPage("warehouse") },
+    { label: "Накладные", meta: "DOC", icon: "NV", onClick: () => selectDashboardPage("invoices") },
     { label: "Закуп товара", meta: "B2B", icon: "BZ", onClick: () => selectDashboardPage("purchase") },
     { label: "DIDOX / ЭДО", meta: "DOC", icon: "DX", onClick: () => selectDashboardPage("didox") },
     { label: "Дефицит товаров", meta: "4 MP", icon: "DF", onClick: () => selectDashboardPage("deficit") },
@@ -2281,6 +2383,26 @@ const handleDownloadPng = async () => {
       title: "Аналитика товара",
       subtitle: "Смотрите сигналы продукта, гипотезы, конкурентов и потенциал ниши.",
       badge: "Product intelligence",
+    },
+    warehouse: {
+      title: "Мой склад",
+      subtitle: "Остатки, оборачиваемость, заморозка денег, товары без движения и быстрые действия продавца.",
+      badge: "Warehouse OS",
+    },
+    invoices: {
+      title: "Накладные",
+      subtitle: "Создание, статусы, экспорт и будущая синхронизация накладных с DIDOX и маркетплейсами.",
+      badge: "Invoices",
+    },
+    integrations: {
+      title: "Интеграции маркетплейсов",
+      subtitle: "API-ready центр публикации карточек, видео, описаний и остатков в Uzum, Wildberries, Ozon и Yandex Market.",
+      badge: "Marketplace API",
+    },
+    recommendations: {
+      title: "Рекомендации продаж",
+      subtitle: "AI подсказывает, что делать с залежавшимся товаром, ценой, карточкой, рекламой и остатками.",
+      badge: "Sales advisor",
     },
     ikpu: {
       title: "ИКПУ",
@@ -3706,6 +3828,15 @@ if (!authChecked) return null
               )}
             </div>
 
+            {isVideoGenerating && (
+              <LiveGenerationProgress
+                progress={videoProgress}
+                title="AI собирает видео"
+                note="Ожидание 35-40 секунд: готовим motion, формат и маркетплейс-версию."
+                steps={["Фото", "Сценарий", "Motion", "Формат"]}
+              />
+            )}
+
             <div className="mc-video-market-panel">
               <label className="mc-video-v2-label">Маркетплейс</label>
               <div className="mc-video-market-grid">
@@ -3737,7 +3868,7 @@ if (!authChecked) return null
                 <span>{isVideoGenerating ? "..." : "AI"}</span>
                 {isVideoGenerating ? "СОЗДАЁМ ВИДЕО..." : "СОЗДАТЬ ВИДЕО ПО ФОТО"}
               </button>
-              <p>~25 сек • 4K brief • адаптивно под Uzum, Wildberries, Ozon и Yandex Market</p>
+              <p>35-40 сек • 4K brief • адаптивно под Uzum, Wildberries, Ozon и Yandex Market</p>
             </div>
           </section>
         </div>
@@ -3962,9 +4093,12 @@ if (!authChecked) return null
 
             {isGenerating ? (
               <div className="mc-create-results-stage is-loading">
-                <div className="mc-spin-loader" />
-                <strong>Идет генерация карточек</strong>
-                <span>Среднее время ожидания: 3-5 минут, зависит от количества изображений.</span>
+                <LiveGenerationProgress
+                  progress={imageProgress}
+                  title="AI генерирует карточки"
+                  note="Ожидание 35-40 секунд: вырезаем товар, собираем фон, тексты, формат и IKPU."
+                  steps={["Фото", "Фон", "Тексты", "IKPU"]}
+                />
               </div>
             ) : generatedVariants.length === 0 ? (
               <div className="mc-create-results-stage">
@@ -4051,9 +4185,12 @@ if (!authChecked) return null
             <div className="mc-correction-preview-v2">
               {isFixingImage ? (
                 <div className="mc-create-results-stage is-loading">
-                  <div className="mc-spin-loader" />
-                  <strong>Исправляем изображение</strong>
-                  <span>AI применяет правки к выбранному варианту.</span>
+                  <LiveGenerationProgress
+                    progress={fixProgress}
+                    title="AI применяет правки"
+                    note="Ожидание 35-40 секунд: обновляем фон, текст и композицию выбранного варианта."
+                    steps={["Правка", "Фон", "Текст", "Экспорт"]}
+                  />
                 </div>
               ) : (fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]) ? (
                 <img
@@ -4658,6 +4795,13 @@ if (!authChecked) return null
           }}
         >
           {isFixingImage ? (
+            <LiveGenerationProgress
+              progress={fixProgress}
+              title="AI исправляет изображение"
+              note="Ожидание 35-40 секунд: пересобираем фон, текст, свет и экспорт."
+              steps={["Запрос", "Композиция", "Рендер", "PNG"]}
+            />
+          ) : isFixingImage ? (
             <div
               style={{
                 display: "flex",
@@ -4900,6 +5044,125 @@ if (listingLang === "uz" && translatedListing) {
 </div>
 )}
 
+{activePage === "recommendations" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>AI SALES ADVISOR</span>
+      <h2>Рекомендации по продажам</h2>
+      <p>Система показывает, что делать с товаром: поднять карточку, снизить цену, сделать комплект, запустить промо, распродать остаток или перезаказать.</p>
+    </div>
+    <div className="mc-sales-advisor-grid">
+      {[
+        ["Товар лежит 21+ день", "Сделай скидку 7-12%, обнови первое фото, добавь бейдж выгоды и проверь SEO-запросы.", "Высокий приоритет", "red"],
+        ["Остаток высокий, просмотры есть", "Запусти A/B вариант карточки, добавь видео и усили преимущества в первых 3 секундах.", "Рост конверсии", "cyan"],
+        ["Цена выше рынка", "Проверь break-even в экономике товара. Если маржа позволяет, протестируй цену -5% на 72 часа.", "Ценовой тест", "amber"],
+        ["Возвраты растут", "Добавь честные размеры, комплектацию, материалы и фото деталей. Уменьши ожидание покупателя.", "Снижение возвратов", "emerald"],
+      ].map(([title, text, tag, tone]) => (
+        <div className={`mc-sales-advisor-card is-${tone}`} key={title}>
+          <span>{tag}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <button type="button" onClick={() => selectDashboardPage(title.includes("Цена") ? "economy" : "generator")}>
+            Выполнить действие
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{activePage === "integrations" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>MARKETPLACE API</span>
+      <h2>Интеграции маркетплейсов</h2>
+      <p>Центр публикации карточек, видео, описаний, IKPU и остатков в 4 площадки. Сейчас backend готов проверять ключи и собирать payload, а реальные API включаются через env.</p>
+    </div>
+    <div className="mc-market-publish-grid">
+      {[
+        { name: "Uzum", logo: "/marketplaces-premium/uzum.png", env: "UZUM_API_KEY + UZUM_SELLER_ID" },
+        { name: "Wildberries", logo: "/marketplaces-premium/wildberries.png", env: "WILDBERRIES_TOKEN" },
+        { name: "Ozon", logo: "/marketplaces-premium/ozon.png", env: "OZON_CLIENT_ID + OZON_API_KEY" },
+        { name: "Yandex Market", logo: "/marketplaces-premium/yandex.png", env: "YANDEX_MARKET_TOKEN + CAMPAIGN_ID" },
+      ].map((market) => (
+        <div className="mc-market-publish-card" key={market.name}>
+          <img src={market.logo} alt={market.name} />
+          <strong>{market.name}</strong>
+          <p>Автозагрузка карточки, видео, описания, цены и складских остатков.</p>
+          <small>{market.env}</small>
+          <button type="button" onClick={checkMarketplaceStatus}>Проверить подключение</button>
+        </div>
+      ))}
+    </div>
+    <div className="mc-publish-pipeline">
+      {[
+        ["01", "Контент", "PNG, видео, SEO, IKPU"],
+        ["02", "Проверка", "размеры, правила, обязательные поля"],
+        ["03", "Публикация", "создание товара через API"],
+        ["04", "Склад", "остатки и цены после публикации"],
+      ].map(([step, title, text]) => (
+        <div key={step}>
+          <span>{step}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{activePage === "warehouse" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>WAREHOUSE OS</span>
+      <h2>Мой склад</h2>
+      <p>Склад продавца: остатки, замороженные деньги, скорость продаж, рекомендации пополнения и товары, которые надо срочно двигать.</p>
+    </div>
+    <div className="mc-warehouse-grid">
+      {[
+        ["Остатки всего", "1 284 шт.", "153 SKU активны"],
+        ["Заморожено в товаре", "184 600 000 сум", "по закупочной стоимости"],
+        ["Без движения", "27 SKU", "нужна скидка или новый контент"],
+        ["Нужно заказать", "14 SKU", "риск out-of-stock в 7 дней"],
+      ].map(([label, value, note]) => (
+        <div className="mc-warehouse-row" key={label}>
+          <span>{label}</span>
+          <strong>{value}</strong>
+          <p>{note}</p>
+        </div>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={() => selectDashboardPage("purchase")}>Найти закуп товара</button>
+      <button type="button" onClick={() => selectDashboardPage("recommendations")}>Получить рекомендации</button>
+    </div>
+  </div>
+)}
+
+{activePage === "invoices" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>INVOICES</span>
+      <h2>Накладные</h2>
+      <p>Рабочая зона для накладных поставок, актов и будущей синхронизации с DIDOX/ЭДО.</p>
+    </div>
+    <div className="mc-invoice-board">
+      {[
+        ["Черновики", "4 документа", "готовы к проверке"],
+        ["На подписи", "2 документа", "ожидают контрагента"],
+        ["Проведено", "38 документов", "за текущий месяц"],
+      ].map(([title, value, note]) => (
+        <div className="mc-invoice-card" key={title}>
+          <span>{title}</span>
+          <strong>{value}</strong>
+          <p>{note}</p>
+          <button type="button" onClick={() => selectDashboardPage("didox")}>Открыть ЭДО</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 {activePage === "ikpu" && (
   <div className="mc-tool-suite">
     <div className="mc-tool-hero">
@@ -4931,6 +5194,15 @@ if (listingLang === "uz" && translatedListing) {
         Подобрать по карточке
       </button>
     </div>
+
+    {ikpuLoading && (
+      <LiveGenerationProgress
+        progress={ikpuProgress}
+        title="Soliq parser ищет IKPU"
+        note="Ожидание 35-40 секунд: сверяем название, категорию и локальный кеш."
+        steps={["Запрос", "Soliq", "Ранжирование", "Кеш"]}
+      />
+    )}
 
     <div className="mc-ikpu-results">
       {ikpuResults.length ? (

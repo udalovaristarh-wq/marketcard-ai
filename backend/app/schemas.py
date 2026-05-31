@@ -45,6 +45,7 @@ class PhoneResetPasswordRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    email: Optional[EmailStr] = None
 
 
 class TariffActivateRequest(BaseModel):

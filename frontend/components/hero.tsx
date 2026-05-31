@@ -61,7 +61,7 @@ export function Hero() {
             <br />
             <span className="gradient-text animate-gradient-x text-glow">Продающая карточка</span>
             <br />
-            за 30 секунд
+            за 35-40 секунд
           </h1>
 
           <p className="mx-auto mt-7 max-w-2xl text-base leading-8 text-white/[0.62] sm:text-lg lg:mx-0">
@@ -88,7 +88,7 @@ export function Hero() {
           <div className="mt-8 grid grid-cols-1 gap-3 text-sm text-white/[0.62] sm:grid-cols-3">
             <div className="glass rounded-2xl px-4 py-3">
               <Timer className="mb-2 h-5 w-5 text-cyan-300" />
-              <span className="font-semibold text-white">30 сек</span> до первого результата
+              <span className="font-semibold text-white">35-40 сек</span> до первого результата
             </div>
             <div className="glass rounded-2xl px-4 py-3">
               <Zap className="mb-2 h-5 w-5 text-fuchsia-300" />
@@ -109,7 +109,7 @@ export function Hero() {
         >
           <div className="absolute -right-2 top-3 z-40 hidden h-32 w-32 items-center justify-center rounded-full border border-violet-200/70 bg-violet-400/10 text-center shadow-[0_0_42px_rgba(168,85,247,0.78),inset_0_0_32px_rgba(255,255,255,0.12)] backdrop-blur-xl sm:flex">
             <div>
-              <div className="text-3xl font-light text-white">30 сек</div>
+              <div className="text-3xl font-light text-white">35-40 сек</div>
               <div className="mt-1 text-xs leading-tight text-white/70">до готовой карточки</div>
             </div>
           </div>

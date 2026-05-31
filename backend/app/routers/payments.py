@@ -1,13 +1,20 @@
+import hashlib
+import logging
+import os
 import time
 from datetime import datetime
+
+import base64
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
+
 from app.db import get_session
-from app.models.user import User
+from app.models.finance_income import TariffIncome
 from app.models.payment_order import PaymentOrder
+from app.models.user import User
 from app.security import get_current_user
-import base64
-import os
+
+logger = logging.getLogger(__name__)
 
 PAYME_MERCHANT_ID = os.getenv("PAYME_MERCHANT_ID", "").strip()
 PAYME_SECRET_KEY = os.getenv("PAYME_SECRET_KEY", "").strip()
@@ -15,6 +22,7 @@ PAYME_BASE_URL = os.getenv("PAYME_BASE_URL", "https://checkout.paycom.uz").strip
 
 CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID", "").strip()
 CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "").strip()
+CLICK_SECRET_KEY = os.getenv("CLICK_SECRET_KEY", "").strip()
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -29,6 +37,22 @@ TARIFF_LIMITS = {
     "Business": 60,
     "Premium": 200,
 }
+
+from app.services.tariff_activation import grant_tariff_benefits
+
+def _record_tariff_income(session: Session, user: User, order: PaymentOrder) -> None:
+    session.add(
+        TariffIncome(
+            user_id=user.id,
+            email=user.email,
+            tariff_name=order.tariff_name,
+            amount_uzs=int(order.amount_uzs or 0),
+            generations_total=int(user.tariff_generations_total or 0),
+            source=f"payme:{order.provider or 'payme'}",
+        )
+    )
+
+
 @router.post("/create-order")
 def create_order(
     tariff_name: str,
@@ -64,18 +88,13 @@ def create_order(
         "order_id": order.id,
         "payme_url": f"{PAYME_BASE_URL}/{payme_encoded}",
     }
+
+
 @router.post("/payme/callback")
 async def payme_callback(request: Request, session: Session = Depends(get_session)):
     data = await request.json()
     method = data.get("method")
-    params = data.get("params", {})
-    print("PAYME METHOD:", method)
-    print("PAYME PARAMS:", params)
-    print("RAW METHOD VALUE:", method)
-    method = data.get("method")
-    params = data.get("params", {})
-    method = data.get("method")
-    params = data.get("params", {})
+    params = data.get("params", {}) or {}
     request_id = data.get("id")
 
     def ok(result):
@@ -91,50 +110,31 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             },
         }
 
-    auth_header = request.headers.get("authorization", "").strip()
-    print("PAYME AUTH HEADER =", repr(auth_header))
-    expected_auth = ""
-    if PAYME_MERCHANT_ID and PAYME_SECRET_KEY:
-        token_raw = f"Paycom:{PAYME_SECRET_KEY}"
-        expected_auth = "Basic " + base64.b64encode(token_raw.encode()).decode()
-        print("PAYME EXPECTED AUTH =", repr(expected_auth))
-
-    if not expected_auth:
+    if not PAYME_MERCHANT_ID or not PAYME_SECRET_KEY:
         return err(-32400, "Payme credentials are not configured")
 
-    if False:
+    auth_header = request.headers.get("authorization", "").strip()
+    token_raw = f"Paycom:{PAYME_SECRET_KEY}"
+    expected_auth = "Basic " + base64.b64encode(token_raw.encode()).decode()
+
+    if auth_header != expected_auth:
+        logger.warning("Payme callback rejected: invalid authorization")
         return err(-32504, "Insufficient privileges")
-    # === PAYME METHODS ===
 
     def ms(dt):
         return int(dt.timestamp() * 1000) if dt else 0
 
-    def state(s):
-        s = (s or "").lower()
-        if s in ("paid", "success"):
-            return 2
-        if s in ("cancelled", "failed"):
-            return -1
-        return 1
-
-    def is_expired(order):
-        return bool(order.expires_at and order.expires_at < datetime.utcnow())
-    account = params.get("account", {})
+    account = params.get("account", {}) or {}
     order_id = account.get("order_id")
     amount = params.get("amount")
     tx_id = str(params.get("id"))
 
     if method and method.lower() == "checkperformtransaction":
-        print("CHECK 1 order_id =", order_id, "amount =", amount)
         order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
-        print("CHECK 2 order =", order)
         if not order:
-            print("CHECK 3 -> Order not found")
             return err(-31050, "Order not found")
         if int(order.amount_uzs) * 100 != int(amount):
-            print("CHECK 4 -> Incorrect amount", order.amount_uzs, amount)
             return err(-31001, "Incorrect amount")
-        print("CHECK 5 -> allow true")
         return ok({"allow": True})
 
     if method == "CreateTransaction":
@@ -161,8 +161,11 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             "transaction": tx_id,
             "state": 1,
         })
+
     if method == "PerformTransaction":
-        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        order = session.exec(
+            select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)
+        ).first()
         if not order:
             return err(-31003, "Not found")
 
@@ -170,38 +173,19 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
         if not user:
             return err(-31050, "User not found")
 
-        if order.tariff_name not in ("audit10", "audit30"):
-            user.tariff_name = order.tariff_name
-            user.tariff_active = True
-            user.tariff_generations_used = 0
+        if order.status == "paid":
+            return ok({
+                "transaction": tx_id,
+                "perform_time": ms(order.paid_at),
+                "state": 2,
+            })
 
-            if order.tariff_name == "Start":
-                user.tariff_generations_total = 20
-                user.tariff_generations_left = 20
-            elif order.tariff_name == "Business":
-                user.tariff_generations_total = 60
-                user.tariff_generations_left = 60
-            elif order.tariff_name == "Premium":
-                user.tariff_generations_total = 200
-                user.tariff_generations_left = 200
-
+        grant_tariff_benefits(user, order)
         order.status = "paid"
-
-        # начисление аудитов
-        if order.tariff_name == "audit10":
-            user.audit_credits = (user.audit_credits or 0) + 10
-        elif order.tariff_name == "audit30":
-            user.audit_credits = (user.audit_credits or 0) + 30
-        elif order.tariff_name == "Start":
-            user.audit_credits = (user.audit_credits or 0) + 10
-        elif order.tariff_name == "Business":
-            user.audit_credits = (user.audit_credits or 0) + 30
-        elif order.tariff_name == "Premium":
-            user.audit_credits = (user.audit_credits or 0) + 100
-
         if not order.paid_at:
             order.paid_at = datetime.utcnow()
 
+        _record_tariff_income(session, user, order)
         session.add(user)
         session.add(order)
         session.commit()
@@ -214,7 +198,9 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
 
     if method == "CancelTransaction":
         tx_id = params.get("id")
-        order = session.exec(select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)).first()
+        order = session.exec(
+            select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)
+        ).first()
         if not order:
             return err(-31003, "Transaction not found")
 
@@ -253,29 +239,19 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
 
     if method == "CheckTransaction":
         tx_id = params.get("id")
-        now = int(time.time() * 1000)
-        return {
-            "jsonrpc": "2.0",
-            "id": req_id,
-            "result": {
-                "create_time": now - 10000,
-                "perform_time": now - 5000,
-                "cancel_time": now,
-                "transaction": tx_id,
-                "state": -2,
-                "reason": 5
-            }
-        }
-
+        order = session.exec(
+            select(PaymentOrder).where(PaymentOrder.external_transaction_id == str(tx_id))
+        ).first()
+        if not order:
+            return err(-31003, "Transaction not found")
 
         create_dt = order.payme_create_time or order.created_at
-
         if order.status == "paid" and order.paid_at:
             return ok({
                 "create_time": ms(create_dt),
                 "perform_time": ms(order.paid_at),
                 "cancel_time": 0,
-                "transaction": tx_id,
+                "transaction": str(tx_id),
                 "state": 2,
                 "reason": None,
             })
@@ -284,10 +260,12 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             "create_time": ms(create_dt),
             "perform_time": 0,
             "cancel_time": 0,
-            "transaction": tx_id,
+            "transaction": str(tx_id),
             "state": 1,
             "reason": None,
         })
+
+    return err(-32601, "Method not found")
 
 
 @router.post("/create-audit-order")

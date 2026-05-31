@@ -13,6 +13,7 @@ import os
 
 from fastapi import FastAPI
 from app.routers.analysis import router as analysis_router
+from app.middleware_auth_static import protect_generated_assets
 from app.routers import analysis
 from app.routes.product_intelligence import router as product_intelligence_router
 from app.routers.system import router as system_router
@@ -31,6 +32,7 @@ from app.routes.full_generate import router as full_generate_router
 from app.routes.demo_generate import router as demo_generate_router
 from app.routes.product_photo_analyze import router as product_photo_analyze_router
 from app.routes.video_generate import GENERATED_VIDEO_DIR, router as video_generate_router
+from app.routes.marketplace_publish import router as marketplace_publish_router
 from app.routes.fix_generated_image import router as fix_generated_image_router
 from app.routes.queue_generate import router as queue_generate_router
 from app.routes.fix_generated_image import router as fix_generated_image_router
@@ -61,6 +63,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.middleware("http")(protect_generated_assets)
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 GENERATED_DIR = Path("/var/www/marketcard/generated_cards").resolve()
@@ -97,6 +101,7 @@ app.include_router(full_generate_router, prefix="", tags=["full_generate"])
 app.include_router(demo_generate_router, prefix="", tags=["demo_generate"])
 app.include_router(product_photo_analyze_router)
 app.include_router(video_generate_router)
+app.include_router(marketplace_publish_router)
 app.include_router(queue_generate_router)
 app.include_router(queue_generate_router)
 from app.routes.fix_generated_image import router as fix_generated_image_router
