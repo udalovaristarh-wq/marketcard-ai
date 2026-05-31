@@ -3,7 +3,11 @@ const images = [
   "/examples/4.webp", "/examples/5.webp", "/examples/6.webp"
 ];
 
-export const GallerySection = ({ title }: any) => (
+type GallerySectionProps = {
+  title: string
+}
+
+export const GallerySection = ({ title }: GallerySectionProps) => (
   <div className="gallery-section">
     <h2 className="gallery-title">{title}</h2>
     <div className="carousel-container">

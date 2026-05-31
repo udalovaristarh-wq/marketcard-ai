@@ -67,8 +67,8 @@ export default function ProductIntelligencePanel() {
 
       setResult(data)
       window.dispatchEvent(new Event("marketcard:profile-refresh"))
-    } catch (e: any) {
-      setError(getErrorText(e?.message || e || "Ошибка анализа"))
+    } catch (e: unknown) {
+      setError(getErrorText(e || "Ошибка анализа"))
     } finally {
       setLoading(false)
     }
@@ -331,10 +331,11 @@ function LivePricePulse({ buckets }: { buckets?: { range: string; count: number 
 }
 
 
-function getErrorText(value: any) {
+function getErrorText(value: unknown) {
   if (!value) return ""
   if (typeof value === "string") return value
-  if (typeof value?.detail === "string") return value.detail
+  if (value instanceof Error) return value.message
+  if (typeof value === "object" && "detail" in value && typeof value.detail === "string") return value.detail
   try {
     return JSON.stringify(value)
   } catch {

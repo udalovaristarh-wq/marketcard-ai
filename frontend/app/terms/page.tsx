@@ -60,7 +60,7 @@ Aristarkh Aleksandrovich Udalov
 
       <h2>5. No Warranty</h2>
       <p>
-        The service is provided "as is" without warranties of any kind.
+        The service is provided &quot;as is&quot; without warranties of any kind.
       </p>
 
       <h2>6. Limitation of Liability</h2>
@@ -115,9 +115,9 @@ Aristarkh Aleksandrovich Udalov
     
       <h2 style={{ marginTop: "32px" }}>7. Ограничение ответственности / Limitation of Liability</h2>
       <p>
-        Сервис MarketCard AI предоставляется по принципу "как есть" и "по мере доступности".
+        Сервис MarketCard AI предоставляется по принципу &quot;как есть&quot; и &quot;по мере доступности&quot;.
         <br />
-        MarketCard AI is provided on an "as is" and "as available" basis.
+        MarketCard AI is provided on an &quot;as is&quot; and &quot;as available&quot; basis.
       </p>
       <p>
         Мы не гарантируем бесперебойную работу сервиса, отсутствие ошибок, соответствие результатов ожиданиям пользователя,
@@ -197,7 +197,7 @@ Aristarkh Aleksandrovich Udalov
         Продолжение использования сервиса после публикации новой редакции означает согласие пользователя
         с обновлёнными условиями.
         <br />
-        Continued use of the service after publication of an updated version constitutes the user's acceptance
+        Continued use of the service after publication of an updated version constitutes the user&apos;s acceptance
         of the revised terms.
       </p>
 

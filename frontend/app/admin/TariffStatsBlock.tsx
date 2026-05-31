@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react"
 import { authFetch } from "@/lib/auth"
 
+type TariffStat = {
+  users: number
+  revenue: number
+}
+
 export default function TariffStatsBlock() {
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<Record<string, TariffStat> | null>(null)
 
   useEffect(() => {
     authFetch("/api/admin/tariff-stats")
@@ -18,7 +23,7 @@ export default function TariffStatsBlock() {
     <div style={{marginTop: 30}}>
       <h2>📊 Тарифы</h2>
 
-      {Object.entries(data).map(([name, val]: any) => (
+      {Object.entries(data).map(([name, val]) => (
         <div key={name} style={{
           border: "1px solid #333",
           padding: 15,

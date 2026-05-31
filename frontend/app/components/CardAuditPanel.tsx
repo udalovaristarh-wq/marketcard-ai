@@ -16,6 +16,10 @@ type AuditResult = {
   trust_score?: number
 }
 
+function getErrorMessage(value: unknown, fallback: string) {
+  return value instanceof Error ? value.message : fallback
+}
+
 export default function CardAuditPanel() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState("")
@@ -88,8 +92,8 @@ export default function CardAuditPanel() {
       }
 
       setResult(audit)
-    } catch (e: any) {
-      setError(e?.message || "Не удалось проанализировать карточку")
+    } catch (e: unknown) {
+      setError(getErrorMessage(e, "Не удалось проанализировать карточку"))
     } finally {
       setLoading(false)
     }

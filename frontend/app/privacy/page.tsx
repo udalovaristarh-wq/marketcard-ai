@@ -35,7 +35,7 @@ Aristarkh Aleksandrovich Udalov
       <p><strong>Last updated:</strong> 2026</p>
 
       <p>
-        This Privacy Policy describes how MarketCard AI ("we", "our", "service")
+        This Privacy Policy describes how MarketCard AI (&quot;we&quot;, &quot;our&quot;, &quot;service&quot;)
         collects, uses, and protects your information when you use our platform.
       </p>
 
@@ -137,7 +137,7 @@ Aristarkh Aleksandrovich Udalov
         Мы можем обрабатывать имя, email, технические данные использования сервиса, данные авторизации,
         историю операций внутри сервиса и контент, загруженный пользователем для генерации.
         <br />
-        We may process the user's name, email, technical usage data, authentication data,
+        We may process the user&apos;s name, email, technical usage data, authentication data,
         in-service activity history, and content uploaded by the user for generation.
       </p>
       <p>

@@ -1,8 +1,28 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import type { CSSProperties } from "react"
 
 type Lang = "ru" | "uz"
+type ConfettiStyle = CSSProperties & Record<"--x" | "--y", string>
+
+const confettiPieces = Array.from({ length: 90 }, (_, i) => i)
+const confettiColors = ["#22c55e", "#06b6d4", "#f59e0b", "#a855f7", "#f43f5e"]
+
+function getConfettiStyle(i: number): ConfettiStyle {
+  const fromLeft = i % 2 === 0
+  const xDistance = 40 + ((i * 19) % 38)
+  const yDistance = -35 + ((i * 23) % 70)
+
+  return {
+    left: fromLeft ? "-2vw" : "102vw",
+    top: `${35 + ((i * 17) % 30)}vh`,
+    background: confettiColors[i % confettiColors.length],
+    animationDelay: `${((i * 7) % 25) / 100}s`,
+    "--x": fromLeft ? `${xDistance}vw` : `${-xDistance}vw`,
+    "--y": `${yDistance}vh`,
+  }
+}
 
 const text = {
   ru: {
@@ -55,9 +75,10 @@ export default function DashboardOnboarding() {
 
   useEffect(() => {
     const hasActiveTariff = /Тариф:\s*(Start|Business|Premium)/.test(document.body.innerText)
-    if (!localStorage.getItem("marketcard_welcome_v3_seen") && !hasActiveTariff) {
-      setWelcomeOpen(true)
-    }
+    const welcomeTimer =
+      !localStorage.getItem("marketcard_welcome_v3_seen") && !hasActiveTariff
+        ? window.setTimeout(() => setWelcomeOpen(true), 0)
+        : undefined
 
     const style = document.createElement("style")
     style.innerHTML = ` 
@@ -183,6 +204,7 @@ export default function DashboardOnboarding() {
     setTimeout(() => clearInterval(paidPoll), 30000)
 
     return () => {
+      if (welcomeTimer !== undefined) window.clearTimeout(welcomeTimer)
       clearInterval(scanId)
       clearInterval(paidPoll)
       document.removeEventListener("click", handleClick)
@@ -198,18 +220,11 @@ export default function DashboardOnboarding() {
   return (
     <>
       {confetti &&
-        Array.from({ length: 90 }).map((_, i) => (
+        confettiPieces.map((i) => (
           <span
             key={i}
             className="marketcard-confetti-piece"
-            style={{
-              left: i % 2 === 0 ? "-2vw" : "102vw",
-              top: `${35 + Math.random() * 30}vh`,
-              background: ["#22c55e", "#06b6d4", "#f59e0b", "#a855f7", "#f43f5e"][i % 5],
-              animationDelay: `${Math.random() * 0.25}s`,
-              ["--x" as any]: i % 2 === 0 ? `${40 + Math.random() * 38}vw` : `${-(40 + Math.random() * 38)}vw`,
-              ["--y" as any]: `${-35 + Math.random() * 70}vh`,
-            }}
+            style={getConfettiStyle(i)}
           />
         ))}
 

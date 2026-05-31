@@ -387,7 +387,8 @@ useEffect(() => {
     return
   }
 
-  setCheckingAuth(false)
+  const timer = window.setTimeout(() => setCheckingAuth(false), 0)
+  return () => window.clearTimeout(timer)
 }, [router])
   const t = dict[lang]
 

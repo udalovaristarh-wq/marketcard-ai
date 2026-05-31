@@ -16,8 +16,7 @@ export default function GlobalLanguageSwitcher() {
   useEffect(() => {
     const saved = window.localStorage.getItem("marketcard_lang") as Lang | null
     const initial = saved && ["ru", "uz", "en"].includes(saved) ? saved : "ru"
-    setLang(initial)
-    document.documentElement.lang = initial
+    const initialLangTimer = window.setTimeout(() => setLang(initial), 0)
 
     window.googleTranslateElementInit = () => {
       if (!window.google?.translate?.TranslateElement) return
@@ -38,20 +37,25 @@ export default function GlobalLanguageSwitcher() {
       script.dataset.marketcardGoogleTranslate = "1"
       document.body.appendChild(script)
     }
+
+    return () => window.clearTimeout(initialLangTimer)
   }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem("marketcard_lang", lang)
+    document.documentElement.lang = lang
+    document.cookie = `googtrans=/ru/${lang};path=/`
+    document.cookie = `googtrans=/ru/${lang};domain=${window.location.hostname};path=/`
+    const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo")
+    if (combo) {
+      combo.value = lang
+      combo.dispatchEvent(new Event("change"))
+    }
+    window.dispatchEvent(new CustomEvent("marketcard:language-change", { detail: { lang } }))
+  }, [lang])
 
   const chooseLang = (nextLang: Lang) => {
     setLang(nextLang)
-    window.localStorage.setItem("marketcard_lang", nextLang)
-    document.documentElement.lang = nextLang
-    document.cookie = `googtrans=/ru/${nextLang};path=/`
-    document.cookie = `googtrans=/ru/${nextLang};domain=${window.location.hostname};path=/`
-    const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo")
-    if (combo) {
-      combo.value = nextLang
-      combo.dispatchEvent(new Event("change"))
-    }
-    window.dispatchEvent(new CustomEvent("marketcard:language-change", { detail: { lang: nextLang } }))
   }
 
   return (

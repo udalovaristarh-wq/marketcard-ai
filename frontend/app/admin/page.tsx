@@ -43,6 +43,24 @@ type UserErrorItem = {
   created_at?: string | null;
 };
 
+type AdminStats = {
+  users?: {
+    total?: number;
+    without_tariff?: number;
+  };
+  generations?: {
+    total?: number;
+    used?: number;
+  };
+  system?: {
+    load_percent?: number;
+  };
+};
+
+function getErrorMessage(value: unknown, fallback: string) {
+  return value instanceof Error ? value.message : fallback;
+}
+
 export default function AdminPage() {
   const cardStyle = {
     background: "#1e293b",
@@ -94,7 +112,7 @@ export default function AdminPage() {
 
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adminStats, setAdminStats] = useState<any>(null);
+  const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [isVerified, setIsVerified] = useState(false);
@@ -155,9 +173,9 @@ const [onlineWindowMinutes, setOnlineWindowMinutes] = useState(5);
       } else {
         setUsers([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("loadUsers error:", err);
-      setError(err?.message || "Ошибка загрузки пользователей");
+      setError(getErrorMessage(err, "Ошибка загрузки пользователей"));
       setUsers([]);
     } finally {
       setLoading(false);
@@ -296,8 +314,8 @@ const banUser = async (userId: number) => {
       }
 
       await loadUsers();
-    } catch (err: any) {
-      setError(err?.message || "Ошибка");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Ошибка"));
     } finally {
       setActionLoadingId(null);
     }
@@ -332,8 +350,8 @@ const banUser = async (userId: number) => {
       }
 
       await loadUsers();
-    } catch (err: any) {
-      setError(err?.message || "Ошибка");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "Ошибка"));
     } finally {
       setActionLoadingId(null);
     }
@@ -373,8 +391,8 @@ const banUser = async (userId: number) => {
       } else {
         setUserErrors([]);
       }
-    } catch (err: any) {
-      setErrorsMessage(err?.message || "Ошибка");
+    } catch (err: unknown) {
+      setErrorsMessage(getErrorMessage(err, "Ошибка"));
     } finally {
       setErrorsLoading(false);
     }
@@ -418,8 +436,8 @@ const banUser = async (userId: number) => {
           item.id === errorId ? { ...item, is_resolved: true } : item,
         ),
       );
-    } catch (err: any) {
-      setErrorsMessage(err?.message || "Ошибка");
+    } catch (err: unknown) {
+      setErrorsMessage(getErrorMessage(err, "Ошибка"));
     } finally {
       setResolvingErrorId(null);
     }

@@ -32,6 +32,10 @@ function formatUsdShort(value: number) {
   return "$" + Number(value || 0).toFixed(2);
 }
 
+function getErrorMessage(value: unknown, fallback: string) {
+  return value instanceof Error ? value.message : fallback;
+}
+
 function cardStyle(background: string): React.CSSProperties {
   return {
     borderRadius: 20,
@@ -81,8 +85,8 @@ export default function FinanceBlock() {
           setSummary(summaryData);
           setTimeseries(timeseriesData);
         }
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message || "Ошибка загрузки финансов");
+      } catch (e: unknown) {
+        if (!cancelled) setError(getErrorMessage(e, "Ошибка загрузки финансов"));
       } finally {
         if (!cancelled) setLoading(false);
       }

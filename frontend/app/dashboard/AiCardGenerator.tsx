@@ -127,8 +127,8 @@ export default function AiCardGenerator() {
           style={inputStyle}
         >
           <option value="ru">Русский</option>
-          <option value="uz">O'zbekcha</option>
-          <option value="ru_uz">Русский + O'zbekcha</option>
+          <option value="uz">{"O'zbekcha"}</option>
+          <option value="ru_uz">{"Русский + O'zbekcha"}</option>
         </select>
 
         <select

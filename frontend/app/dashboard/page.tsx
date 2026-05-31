@@ -136,8 +136,41 @@ limits?: {
 }
 }
 
+type ListingVariantResponse = ListingResponse & {
+  ru?: ListingResponse
+  uz?: ListingResponse
+  en?: ListingResponse
+}
+
+type ListingFeature = string | {
+  key?: string
+  value?: string
+}
+
+type ListingField = {
+  label: string
+  limit: number
+  value: unknown
+}
+
+type GeneratedSlide = {
+  image_url?: string
+}
+
+type IkpuResult = {
+  code?: string
+  name?: string
+  source?: string
+}
+
+type MarketplaceStatus = {
+  configured?: boolean
+  missing_env?: string[]
+}
+
 type ProductPhotoAnalysisResponse = {
   success?: boolean
+  detail?: string
   title?: string
   brand?: string
   category?: string
@@ -853,21 +886,27 @@ function useSimulatedProgress(active: boolean, complete = false) {
 
   useEffect(() => {
     if (active) {
-      setProgress(6)
+      const startTimer = window.setTimeout(() => setProgress(6), 0)
       const timer = window.setInterval(() => {
         setProgress((value) => Math.min(98, value + Math.max(1, Math.round((100 - value) * 0.11))))
       }, 720)
-      return () => window.clearInterval(timer)
+      return () => {
+        window.clearTimeout(startTimer)
+        window.clearInterval(timer)
+      }
     }
 
     if (complete) {
-      setProgress(100)
+      const doneTimer = window.setTimeout(() => setProgress(100), 0)
       const timer = window.setTimeout(() => setProgress(0), 1800)
-      return () => window.clearTimeout(timer)
+      return () => {
+        window.clearTimeout(doneTimer)
+        window.clearTimeout(timer)
+      }
     }
 
-    setProgress(0)
-    return undefined
+    const resetTimer = window.setTimeout(() => setProgress(0), 0)
+    return () => window.clearTimeout(resetTimer)
   }, [active, complete])
 
   return progress
@@ -1065,7 +1104,7 @@ export default function DashboardPage() {
   const [photoAnalyzing, setPhotoAnalyzing] = useState(false)
   const [photoAnalyzeError, setPhotoAnalyzeError] = useState("")
   const [ikpuQuery, setIkpuQuery] = useState("")
-  const [ikpuResults, setIkpuResults] = useState<any[]>([])
+  const [ikpuResults, setIkpuResults] = useState<IkpuResult[]>([])
   const [ikpuLoading, setIkpuLoading] = useState(false)
 
   const [creating, setCreating] = useState(false)
@@ -1128,13 +1167,14 @@ export default function DashboardPage() {
   const ikpuProgress = useSimulatedProgress(ikpuLoading, ikpuResults.length > 0)
   const [listingData, setlistingData] = useState<ListingResponse | null>(null)
   const [listingLang, setListingLang] = useState<"ru" | "uz">("ru")
-  const [translatedListing, setTranslatedListing] = useState<any | null>(null)
+  const [translatedListing, setTranslatedListing] = useState<Partial<ListingResponse> | null>(null)
   const [isTranslatingListing, setIsTranslatingListing] = useState(false)
   const [listingReady, setListingReady] = useState(false)
+  const listingSource = listingData as ListingVariantResponse | null
   const listingView =
-  (listingData as any)?.ru ||
-  (listingData as any)?.uz ||
-  (listingData as any)?.en ||
+  listingSource?.ru ||
+  listingSource?.uz ||
+  listingSource?.en ||
   null
 useEffect(() => {
   const checkMobile = () => {
@@ -1279,7 +1319,7 @@ const listingKeywords = Array.isArray(listingView?.keywords)
 
     render()
 
-    let timer: number | null = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       remaining -= 1
       if (remaining <= 0) {
         if (timer) window.clearInterval(timer)
@@ -1426,7 +1466,7 @@ const res = await fetch(
         if (cancelled) return
 
         if (!res.ok || !data?.success) {
-          throw new Error((data as any)?.detail || "Не удалось распознать фото")
+          throw new Error(typeof data?.detail === "string" ? data.detail : "Не удалось распознать фото")
         }
 
         if (data.title?.trim()) setProductTitle(data.title.trim())
@@ -1478,10 +1518,10 @@ const res = await fetch(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: (listingData as any).title,
-          short_description: (listingData as any).short_description,
-          full_description: (listingData as any).full_description,
-          characteristics: (listingData as any).characteristics || [],
+          title: listingData.title,
+          short_description: listingData.short_description,
+          full_description: listingData.full_description,
+          characteristics: listingData.characteristics || [],
         }),
       })
 
@@ -1703,9 +1743,9 @@ const ikpuPromise = searchIkpuAuto(ikpuSearchText)
   
 
     // ✅ КАРТИНКИ
-    const images = (data.slides || [])
-      .filter((s: any) => s.image_url)
-      .map((s: any) => `/api${s.image_url}`)
+    const images = ((data.slides || []) as GeneratedSlide[])
+      .filter((s) => s.image_url)
+      .map((s) => `/api${s.image_url}`)
 
     setGeneratedVariants(images)
     setPngReady(images.length > 0)
@@ -2139,7 +2179,7 @@ const handleDownloadPng = async () => {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.detail || "Не удалось проверить API")
-      const lines = Object.entries(data.marketplaces || {}).map(([name, info]: any) => {
+      const lines = Object.entries((data.marketplaces || {}) as Record<string, MarketplaceStatus>).map(([name, info]) => {
         return `${name}: ${info.configured ? "подключен" : `нет ключей (${info.missing_env?.join(", ")})`}`
       })
       alert(lines.join("\n"))
@@ -3228,7 +3268,7 @@ if (!authChecked) return null
     )}
 
     <div style={{ display: "grid", gap: "10px" }}>
-      {ikpuResults.map((item: any, i: number) => (
+      {ikpuResults.map((item, i) => (
         <div
           key={i}
           style={{
@@ -3248,7 +3288,7 @@ if (!authChecked) return null
           </div>
 
           <button
-            onClick={() => navigator.clipboard.writeText(item.code)}
+            onClick={() => navigator.clipboard.writeText(item.code || "")}
             style={{
               background: "#22c55e",
               border: "none",
@@ -4979,7 +5019,7 @@ if (!authChecked) return null
         {t.listingEmpty}<br />{t.listingHint}
       </div>
     ) : (() => {
-      const textValue = (v: any) => {
+      const textValue = (v: unknown) => {
         if (v === null || v === undefined) return "—"
         if (typeof v === "string") return v
         if (typeof v === "number") return String(v)
@@ -4987,7 +5027,7 @@ if (!authChecked) return null
         return JSON.stringify(v)
       }
 
-      let d: any = listingData
+      let d: ListingResponse = listingData
 if (listingLang === "uz" && translatedListing) {
   d = {
     ...listingData,
@@ -5004,7 +5044,7 @@ if (listingLang === "uz" && translatedListing) {
       let fullDesc = "—"
       if (d.full_description) fullDesc = d.full_description
 
-      let features: any[] = []
+      let features: ListingFeature[] = []
       if (Array.isArray(d.characteristics) && d.characteristics.length > 0) {
         features = d.characteristics
       }
@@ -5015,7 +5055,7 @@ if (listingLang === "uz" && translatedListing) {
             { label: "Название", limit: 90, value: title },
             { label: "Краткое описание", limit: 390, value: shortDesc },
             { label: "Полное описание", limit: 5000, value: fullDesc },
-          ].map((field: any) => (
+          ].map((field: ListingField) => (
             <div key={field.label} style={{ padding: "16px", borderRadius: "18px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}>
               <div style={{ fontSize: "14px", color: "#67e8f9", fontWeight: 900, marginBottom: "8px" }}>
                 {field.label} ({String(textValue(field.value)).length}/{field.limit})
@@ -5206,7 +5246,7 @@ if (listingLang === "uz" && translatedListing) {
 
     <div className="mc-ikpu-results">
       {ikpuResults.length ? (
-        ikpuResults.map((item: any, index: number) => (
+        ikpuResults.map((item, index) => (
           <div className="mc-ikpu-row" key={`${item.code || index}-${index}`}>
             <div>
               <span>#{index + 1} / {item.source || "parser"}</span>
