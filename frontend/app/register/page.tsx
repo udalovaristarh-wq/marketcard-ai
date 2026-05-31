@@ -28,19 +28,6 @@ type ApiErrorItem = {
   msg?: string;
 };
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        id?: {
-          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
-
 export default function RegisterPage() {
   const router = useRouter();
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
@@ -83,7 +70,7 @@ export default function RegisterPage() {
     const runPrompt = () => {
       window.google?.accounts?.id?.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: async (response) => {
+        callback: async (response: { credential?: string }) => {
           if (!response.credential) {
             alert("Google не вернул токен регистрации");
             return;

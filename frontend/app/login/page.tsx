@@ -17,19 +17,6 @@ const marketplaces = [
   { name: "Яндекс Маркет", color: "from-amber-300 to-orange-500", icon: "Я" },
 ];
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        id?: {
-          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
-          prompt: () => void;
-        };
-      };
-    };
-  }
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
@@ -74,7 +61,7 @@ export default function LoginPage() {
     const runPrompt = () => {
       window.google?.accounts?.id?.initialize({
         client_id: GOOGLE_CLIENT_ID,
-        callback: async (response) => {
+        callback: async (response: { credential?: string }) => {
           if (!response.credential) {
             alert("Google не вернул токен входа");
             return;

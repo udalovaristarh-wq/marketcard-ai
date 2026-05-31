@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { authFetch } from "@/lib/auth";
 import {
   ResponsiveContainer,

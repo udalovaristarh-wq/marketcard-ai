@@ -24,5 +24,13 @@ frontend/.env.local
 *.save
 *.broken
 *.bak-*
+page.tsx.bak*
+page.tsx.backup
+page.tsx.save*
+page.tsx.genbak
+page.tsx.broken*
+page.tsx.*-backup
+dashboard-premium.css.bak*
+*.lux-backup
 *.sql
 database.db
