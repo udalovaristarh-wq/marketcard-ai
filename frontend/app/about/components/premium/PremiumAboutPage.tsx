@@ -20,13 +20,20 @@ export default function PremiumAboutPage() {
     <main className={styles.pageShell}>
       <PremiumHero />
       <div className={styles.contentShell}>
-        <MissionSection />
         <StatsSection />
+        <div className={styles.sectionDivider} />
+        <MissionSection />
+        <div className={styles.sectionDivider} />
         <FeaturesSection />
+        <div className={styles.sectionDivider} />
         <BeforeAfterSection />
+        <div className={styles.sectionDivider} />
         <EcosystemPipelineSection />
+        <div className={styles.sectionDivider} />
         <ResultsSection />
+        <div className={styles.sectionDivider} />
         <FounderSection />
+        <div className={styles.sectionDivider} />
         <ContactSection />
         <FinalCTASection />
         <PremiumFooter />

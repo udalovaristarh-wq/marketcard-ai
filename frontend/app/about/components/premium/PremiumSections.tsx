@@ -29,11 +29,11 @@ export function MissionSection() {
       <div className={styles.missionGrid}>
         {missionPoints.map((point, index) => (
           <Reveal key={point.title} delay={index * 0.06}>
-            <motion.div whileHover={{ y: -6 }} className={styles.missionCard}>
+            <div className={styles.missionCard}>
               <span className={styles.missionIcon}>{point.icon}</span>
               <h3>{point.title}</h3>
               <p>{point.text}</p>
-            </motion.div>
+            </div>
           </Reveal>
         ))}
       </div>
@@ -53,11 +53,11 @@ export function FeaturesSection() {
       <div className={styles.featuresGrid}>
         {features.map((feature, index) => (
           <Reveal key={feature.title} delay={index * 0.04}>
-            <motion.div whileHover={{ y: -6 }} className={styles.featureCard}>
+            <div className={styles.featureCard}>
               <span>{feature.tag}</span>
               <h3>{feature.title}</h3>
               <p>{feature.text}</p>
-            </motion.div>
+            </div>
           </Reveal>
         ))}
       </div>
@@ -71,13 +71,13 @@ export function StatsSection() {
       <SectionHeader
         eyebrow="Цифры"
         title="Цифры, которые продавец чувствует в запуске."
-        text="MarketCard AI создан не для красивой презентации, а для скорости: быстрее собрать карточку, быстрее проверить гипотезу, быстрее выйти в продажи."
+        text="Реальные метрики продавцов, которые уже запускают SKU через MarketCard AI."
         align="center"
       />
       <div className={styles.statsGrid}>
         {stats.map((stat, index) => (
           <Reveal key={stat.label} delay={index * 0.05}>
-            <motion.div whileHover={{ y: -8 }} className={styles.statCard}>
+            <div className={styles.statCard}>
               <div className={styles.statGlow} aria-hidden="true" />
               <strong className={styles.statValue}>
                 {stat.value}
@@ -85,7 +85,7 @@ export function StatsSection() {
               </strong>
               <span className={styles.statLabel}>{stat.label}</span>
               <p>{stat.text}</p>
-            </motion.div>
+            </div>
           </Reveal>
         ))}
       </div>
@@ -156,8 +156,8 @@ export function EcosystemPipelineSection() {
     <SectionShell id="pipeline">
       <SectionHeader
         eyebrow="Как это работает"
-        title="От product intake до SEO-аудита в одном AI-потоке."
-        text="MarketCard AI работает как операционная система запуска товара: понимает продукт, рынок, визуальную стратегию, генерацию и качество финального ассета."
+        title="От загрузки фото до SEO-аудита в одном потоке."
+        text="Пять шагов — и у вас готовый пакет для публикации на маркетплейсе."
         align="center"
       />
 
@@ -184,11 +184,11 @@ export function EcosystemPipelineSection() {
         <div className={styles.ecosystemCards}>
           {ecosystemCards.map((card, index) => (
             <Reveal key={card.title} delay={index * 0.06}>
-              <motion.div whileHover={{ y: -8 }} className={styles.ecosystemCard}>
+              <div className={styles.ecosystemCard}>
                 <span>{card.accent}</span>
                 <h3>{card.title}</h3>
                 <p>{card.text}</p>
-              </motion.div>
+              </div>
             </Reveal>
           ))}
         </div>
@@ -208,7 +208,7 @@ export function ResultsSection() {
       <div className={styles.resultsGrid}>
         {results.map((result, index) => (
           <Reveal key={result.author} delay={index * 0.06}>
-            <motion.article whileHover={{ y: -9 }} className={styles.resultCard}>
+            <article className={styles.resultCard}>
               <div className={styles.resultImage}>
                 <Image
                   src={result.image}
@@ -227,7 +227,7 @@ export function ResultsSection() {
                 <p>“{result.quote}”</p>
                 <small>{result.author}</small>
               </div>
-            </motion.article>
+            </article>
           </Reveal>
         ))}
       </div>
@@ -242,8 +242,8 @@ export function FounderSection() {
         <div className={styles.founderPanel}>
           <div>
             <div className={styles.eyebrow}>Основатель</div>
-            <h2>Основатель: Удалов Аристарх Александрович</h2>
-            <p className={styles.founderLead}>Разработано командой MarketCard AI</p>
+            <h2 className={styles.founderName}>Удалов Аристарх Александрович</h2>
+            <p className={styles.founderLead}>Основатель MarketCard AI</p>
             <p>
               MarketCard AI создан вокруг реальной боли продавцов. Мы не просто
               генерируем картинки — мы строим операционную систему для запуска товаров
@@ -252,8 +252,8 @@ export function FounderSection() {
           </div>
           <div className={styles.founderArtifact} aria-hidden="true">
             <span>MC</span>
-            <strong>Seller OS</strong>
-            <small>strategy / generation / SEO / audit</small>
+            <strong>MarketCard AI</strong>
+            <small>стратегия · генерация · SEO · аудит</small>
           </div>
         </div>
       </Reveal>
@@ -301,6 +301,7 @@ export function ContactSection() {
               whileHover={{ y: -6 }}
               className={styles.contactCard}
             >
+              <span className={styles.contactIcon}>{item.icon}</span>
               <strong>{item.label}</strong>
               <span>{item.description}</span>
             </motion.a>
