@@ -1,6 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/auth";
 import {
   ResponsiveContainer,
   LineChart,
@@ -52,7 +50,7 @@ export default function ChartsBlock() {
   const [data, setData] = useState<GrowthData | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/growth-timeseries", { cache: "no-store" })
+    authFetch("/api/admin/growth-timeseries", { cache: "no-store" })
       .then((res) => res.json())
       .then(setData);
   }, []);

@@ -3,12 +3,9 @@
 import PremiumHero from "./PremiumHero";
 import {
   BeforeAfterSection,
-  ContactSection,
   EcosystemPipelineSection,
-  FeaturesSection,
   FinalCTASection,
   FounderSection,
-  MissionSection,
   PremiumFooter,
   ResultsSection,
   StatsSection,
@@ -21,20 +18,10 @@ export default function PremiumAboutPage() {
       <PremiumHero />
       <div className={styles.contentShell}>
         <StatsSection />
-        <div className={styles.sectionDivider} />
-        <MissionSection />
-        <div className={styles.sectionDivider} />
-        <FeaturesSection />
-        <div className={styles.sectionDivider} />
         <BeforeAfterSection />
-        <div className={styles.sectionDivider} />
         <EcosystemPipelineSection />
-        <div className={styles.sectionDivider} />
         <ResultsSection />
-        <div className={styles.sectionDivider} />
         <FounderSection />
-        <div className={styles.sectionDivider} />
-        <ContactSection />
         <FinalCTASection />
         <PremiumFooter />
       </div>

@@ -7,12 +7,16 @@ from app.db import get_session
 from app.models import User
 from app.models.finance_income import TariffIncome
 from app.models.generationexpense import GenerationExpense
+from app.security import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin-analytics"])
 
 
 @router.get("/tariff-stats")
-def get_tariff_stats(session: Session = Depends(get_session)):
+def get_tariff_stats(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     users = session.exec(select(User)).all()
     incomes = session.exec(select(TariffIncome)).all()
     expenses = session.exec(select(GenerationExpense)).all()
@@ -34,7 +38,10 @@ def get_tariff_stats(session: Session = Depends(get_session)):
     return data
 
 @router.get("/arpu-stats")
-def get_arpu_stats(session: Session = Depends(get_session)):
+def get_arpu_stats(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     users = session.exec(select(User)).all()
     incomes = session.exec(select(TariffIncome)).all()
     expenses = session.exec(select(GenerationExpense)).all()
@@ -69,7 +76,10 @@ def get_arpu_stats(session: Session = Depends(get_session)):
     }
 
 @router.get("/top-users")
-def get_top_users(session: Session = Depends(get_session)):
+def get_top_users(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     users = session.exec(select(User)).all()
     incomes = session.exec(select(TariffIncome)).all()
     expenses = session.exec(select(GenerationExpense)).all()
@@ -116,7 +126,10 @@ def get_top_users(session: Session = Depends(get_session)):
     }
 
 @router.get("/growth-timeseries")
-def get_growth_timeseries(session: Session = Depends(get_session)):
+def get_growth_timeseries(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     users = session.exec(select(User)).all()
     incomes = session.exec(select(TariffIncome)).all()
     expenses = session.exec(select(GenerationExpense)).all()
@@ -170,7 +183,7 @@ def get_growth_timeseries(session: Session = Depends(get_session)):
     }
 
 @router.get("/usd-rate")
-def get_usd_rate():
+def get_usd_rate(current_user: User = Depends(get_current_admin)):
     try:
         r = requests.get("https://cbu.uz/ru/arkhiv-kursov-valyut/json/", timeout=10)
         r.raise_for_status()

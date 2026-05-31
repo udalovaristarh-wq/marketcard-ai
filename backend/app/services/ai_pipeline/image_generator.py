@@ -12,6 +12,7 @@ from PIL import Image, ImageOps
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_IMAGE_EDIT_URL = "https://api.openai.com/v1/images/edits"
+IMAGE_MODE = os.getenv("MARKETCARD_IMAGE_MODE", "template").strip().lower()
 
 
 def _guess_mime_type(path: Path) -> str:
@@ -46,16 +47,47 @@ def generate_card_image(
     output_path: str,
     size: str = "1024x1536",
     final_size: tuple[int, int] | None = None,
+    copy_data: dict[str, Any] | None = None,
+    brand: str = "",
+    marketplace: str = "uzum",
+    variant_index: int = 0,
 ) -> dict[str, Any]:
-    if not OPENAI_API_KEY:
-        raise RuntimeError("OPENAI_API_KEY is not set")
-
     image_path = Path(product_image_path).resolve()
     if not image_path.exists():
         raise FileNotFoundError(f"Product image not found: {image_path}")
 
     output_file = Path(output_path).resolve()
     output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    if IMAGE_MODE in {"template", "local", "render"} and copy_data:
+        from app.services.render_engine import render_card
+
+        render_card(
+            product_image=str(image_path),
+            output_path=str(output_file),
+            copy_data=copy_data,
+            brand=brand,
+            marketplace=marketplace,
+            style_name="premium",
+            variant_index=variant_index,
+        )
+        img = Image.open(output_file).convert("RGBA")
+        return {
+            "success": True,
+            "output_path": str(output_file),
+            "filename": output_file.name,
+            "width": img.width,
+            "height": img.height,
+            "_openai_meta": None,
+            "_render_meta": {
+                "provider": "local_template_renderer",
+                "mode": IMAGE_MODE,
+                "template_seed": variant_index,
+            },
+        }
+
+    if not OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is not set")
 
     mime_type = _guess_mime_type(image_path)
 
@@ -92,12 +124,12 @@ def generate_card_image(
     img = _decode_response_image(payload)
     if final_size:
         # Не режем верх/низ текста: помещаем изображение целиком в нужный формат
-            bg = Image.new("RGB", final_size, (8, 8, 12))
-            img = ImageOps.contain(img, final_size, method=Image.LANCZOS)
-            x = (final_size[0] - img.width) // 2
-            y = (final_size[1] - img.height) // 2
-            bg.paste(img.convert("RGB"), (x, y))
-            img = bg
+        bg = Image.new("RGB", final_size, (8, 8, 12))
+        img = ImageOps.contain(img, final_size, method=Image.LANCZOS)
+        x = (final_size[0] - img.width) // 2
+        y = (final_size[1] - img.height) // 2
+        bg.paste(img.convert("RGB"), (x, y))
+        img = bg
     img.save(output_file, "PNG")
 
     if not output_file.exists():
@@ -148,6 +180,10 @@ def generate_series_images(
                 output_path=str(output_path),
                 size=size,
                 final_size=final_size,
+                copy_data=item.get("copy_data"),
+                brand=str(item.get("brand", "")),
+                marketplace=str(item.get("marketplace", "uzum")),
+                variant_index=index - 1,
             )
 
             results.append(
@@ -157,7 +193,8 @@ def generate_series_images(
                     "prompt": prompt,
                     "image_url": image_url,
                     "download_url": image_url,
-                    "output_path": str(output_path),"rendered": True,
+                    "output_path": str(output_path),
+                    "rendered": True,
                     "render_error": None,
                     **result,
                 }

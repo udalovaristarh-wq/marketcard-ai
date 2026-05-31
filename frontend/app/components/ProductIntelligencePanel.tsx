@@ -107,7 +107,7 @@ export default function ProductIntelligencePanel() {
         />
 
         <button onClick={analyze} disabled={loading} style={buttonStyle}>
-          {loading ? "Анализируем..." : "Проанализировать товар · 1 аудит"}
+          {loading ? "Анализируем..." : "Проанализировать товар · 2 аудита"}
         </button>
       </div>
 

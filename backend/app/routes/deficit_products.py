@@ -11,7 +11,10 @@ from sqlmodel import Session
 from app.db import get_session
 from app.models import User
 from app.security import get_current_user
+from app.services.product_intelligence.parsers.ozon_parser import parse_ozon
 from app.services.product_intelligence.parsers.uzum_parser import parse_uzum
+from app.services.product_intelligence.parsers.wb_parser import parse_wildberries
+from app.services.product_intelligence.parsers.yandex_parser import parse_yandex
 from app.services.product_intelligence.uzum_analyzer import analyze_items
 
 from openpyxl import Workbook
@@ -28,6 +31,20 @@ COST_BY_LIMIT = {
     100: 20,
     300: 20,
     500: 20,
+}
+
+MARKETPLACE_PARSERS = {
+    "uzum": parse_uzum,
+    "wildberries": parse_wildberries,
+    "ozon": parse_ozon,
+    "yandex": parse_yandex,
+}
+
+MARKETPLACE_NAMES = {
+    "uzum": "Uzum",
+    "wildberries": "Wildberries",
+    "ozon": "Ozon",
+    "yandex": "Yandex Market",
 }
 
 
@@ -161,7 +178,7 @@ def _score_item(item: dict[str, Any], stats: dict[str, Any]) -> dict[str, Any]:
 
 def _make_excel(rows: list[dict[str, Any]], query: str, limit: int) -> tuple[str, str]:
     now = datetime.now()
-    safe_query = "".join(ch if ch.isalnum() else "_" for ch in query.lower())[:40].strip("_") or "uzum"
+    safe_query = "".join(ch if ch.isalnum() else "_" for ch in query.lower())[:40].strip("_") or "marketplace"
     filename = f"deficit_products_{safe_query}_{limit}_{now.strftime('%Y%m%d_%H%M%S')}.xlsx"
     filepath = REPORTS_DIR / filename
 
@@ -280,8 +297,16 @@ def deficit_products(
     if limit not in COST_BY_LIMIT:
         raise HTTPException(status_code=400, detail="Доступные лимиты: 100, 300, 500")
 
-    if (req.marketplace or "uzum").lower() != "uzum":
-        raise HTTPException(status_code=400, detail="Сейчас доступен только Uzum")
+    marketplace = (req.marketplace or "uzum").strip().lower()
+    if marketplace == "wb":
+        marketplace = "wildberries"
+
+    parser = MARKETPLACE_PARSERS.get(marketplace)
+    if not parser:
+        raise HTTPException(
+            status_code=400,
+            detail="Доступные маркетплейсы: uzum, wildberries, ozon, yandex",
+        )
 
     cost = COST_BY_LIMIT[limit]
 
@@ -291,12 +316,12 @@ def deficit_products(
             detail=f"Недостаточно аудитов. Нужно {cost}, доступно {current_user.audit_credits or 0}",
         )
 
-    items = parse_uzum(query, query, limit)
+    items = parser(query, query, limit)
 
     if not items:
         raise HTTPException(
             status_code=502,
-            detail="Uzum не вернул товары. Попробуйте другой запрос.",
+            detail=f"{MARKETPLACE_NAMES[marketplace]} не вернул товары. Попробуйте другой запрос.",
         )
 
     stats = analyze_items(items)
@@ -319,7 +344,8 @@ def deficit_products(
 
     return {
         "success": True,
-        "marketplace": "uzum",
+        "marketplace": marketplace,
+        "marketplace_name": MARKETPLACE_NAMES[marketplace],
         "query": query,
         "limit": limit,
         "cost": cost,

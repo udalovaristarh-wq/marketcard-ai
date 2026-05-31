@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import os
+import time
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -41,7 +42,7 @@ def _verify_click_signature(data: dict) -> bool:
 async def click_callback(request: Request, session: Session = Depends(get_session)):
     data = await request.json()
 
-    if CLICK_SECRET_KEY and not _verify_click_signature(data):
+    if not _verify_click_signature(data):
         logger.warning("Click callback rejected: invalid signature")
         raise HTTPException(status_code=403, detail="Invalid Click signature")
 

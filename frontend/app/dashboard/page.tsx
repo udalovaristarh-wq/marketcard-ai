@@ -1,5 +1,15 @@
 "use client"
 
+import "./dashboard-premium.css";
+import "./effects/index.css";
+import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
+import CardAuditPanel from "@/app/components/CardAuditPanel"
+import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
+import SupportWidget from "../components/support-widget/SupportWidget"
+import React, { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import type { CSSProperties } from "react";
+import DashboardOnboarding from "../components/DashboardOnboarding"
 
 const buyAudit = async (pkg: string) => {
   try {
@@ -33,19 +43,25 @@ const buyAudit = async (pkg: string) => {
   }
 }
 ;
-import ABCFloatingAnalysis from "../components/ABCFloatingAnalysis"
-import CardAuditPanel from "@/app/components/CardAuditPanel"
-import ProductIntelligencePanel from "../components/ProductIntelligencePanel"
-import "./effects/index.css";
-
-import React, { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import type { CSSProperties } from "react";
-import DashboardOnboarding from "../components/DashboardOnboarding"
 type Lang = "ru" | "uz" | "en"
 type MarketplaceKey = "uzum" | "wildberries" | "ozon" | "yandex"
 type TariffName = "Start" | "Business" | "Premium"
-type DashboardPageKey = "generator" | "economy" | "listing" | "ikpu" | "audit" | "intelligence" | "intelligence"
+type DashboardPageKey =
+  | "generator"
+  | "video"
+  | "economy"
+  | "listing"
+  | "ikpu"
+  | "audit"
+  | "intelligence"
+  | "warehouse"
+  | "invoices"
+  | "integrations"
+  | "recommendations"
+  | "purchase"
+  | "didox"
+  | "deficit"
+  | "instructions"
 type LanguageMode = "ru" | "uz" | "both"
 
 type ProfileResponse = {
@@ -118,6 +134,16 @@ limits?: {
   short_max?: number
   full_max?: number
 }
+}
+
+type ProductPhotoAnalysisResponse = {
+  success?: boolean
+  title?: string
+  brand?: string
+  category?: string
+  characteristics?: string[]
+  short_description?: string
+  confidence?: number
 }
 
 const dict = {
@@ -548,17 +574,21 @@ function MarketplaceButton({
   label,
   selected,
   gradient,
+  logoSrc,
   onClick,
 }: {
   label: string
   selected: boolean
   gradient: string
+  logoSrc?: string
   onClick: () => void
 }) {
   return (
     <>
       
     <button
+      className={selected ? "mc-marketplace-pill is-selected" : "mc-marketplace-pill"}
+      data-marketplace={label.toLowerCase().replace(/\s+/g, "-")}
       onClick={onClick}
       style={{
         minWidth: "150px",
@@ -578,7 +608,14 @@ function MarketplaceButton({
           : "0 10px 24px rgba(0,0,0,0.18)",
       }}
     >
-      {label}
+      <span className="mc-marketplace-pill-icon">
+        {logoSrc ? (
+          <img className="mc-marketplace-logo" src={logoSrc} alt={label} />
+        ) : (
+          label.charAt(0)
+        )}
+      </span>
+      <span className="mc-marketplace-pill-label">{label}</span>
     </button>
     </>
   )
@@ -773,6 +810,7 @@ function CardTextBlock({
         {title}
       </div>
       <div
+        className="mc-payment-grid"
         style={{
           fontSize: "18px",
           lineHeight: 1.7,
@@ -806,6 +844,72 @@ function ProgressBar({
           background: gradient,
         }}
       />
+    </div>
+  )
+}
+
+function useSimulatedProgress(active: boolean, complete = false) {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    if (active) {
+      setProgress(6)
+      const timer = window.setInterval(() => {
+        setProgress((value) => Math.min(98, value + Math.max(1, Math.round((100 - value) * 0.11))))
+      }, 720)
+      return () => window.clearInterval(timer)
+    }
+
+    if (complete) {
+      setProgress(100)
+      const timer = window.setTimeout(() => setProgress(0), 1800)
+      return () => window.clearTimeout(timer)
+    }
+
+    setProgress(0)
+    return undefined
+  }, [active, complete])
+
+  return progress
+}
+
+function LiveGenerationProgress({
+  progress,
+  title,
+  note,
+  steps,
+}: {
+  progress: number
+  title: string
+  note: string
+  steps: string[]
+}) {
+  const safeProgress = Math.max(0, Math.min(100, Math.round(progress)))
+
+  return (
+    <div className="mc-live-progress">
+      <div className="mc-live-progress-orbit" aria-hidden="true">
+        <span>⌛</span>
+        <i />
+        <b />
+      </div>
+      <div className="mc-live-progress-copy">
+        <div className="mc-live-progress-top">
+          <strong>{title}</strong>
+          <em>{safeProgress}%</em>
+        </div>
+        <div className="mc-live-progress-bar">
+          <span style={{ width: `${safeProgress}%` }} />
+        </div>
+        <p>{note}</p>
+        <div className="mc-live-progress-steps">
+          {steps.map((step, index) => (
+            <small key={step} className={safeProgress >= (index + 1) * (100 / steps.length) ? "is-done" : ""}>
+              {step}
+            </small>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -955,8 +1059,11 @@ export default function DashboardPage() {
   const [productTitle, setProductTitle] = useState("")
   const [brand, setBrand] = useState("")
   const [category, setCategory] = useState("")
+  const [productCharacteristics, setProductCharacteristics] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState("")
+  const [photoAnalyzing, setPhotoAnalyzing] = useState(false)
+  const [photoAnalyzeError, setPhotoAnalyzeError] = useState("")
   const [ikpuQuery, setIkpuQuery] = useState("")
   const [ikpuResults, setIkpuResults] = useState<any[]>([])
   const [ikpuLoading, setIkpuLoading] = useState(false)
@@ -968,7 +1075,7 @@ export default function DashboardPage() {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedPayment, setSelectedPayment] =
-    useState<"payme" | "click" | null>(null)
+    useState<"payme" | "click" | "visa" | null>(null)
 
   const [createdProduct, setCreatedProduct] = useState<ProductResponse | null>(null)
   const [pngReady, setPngReady] = useState(false)
@@ -983,6 +1090,15 @@ export default function DashboardPage() {
   const [otherCosts, setOtherCosts] = useState("2000")
   const [desiredProfit, setDesiredProfit] = useState("10000")
   const [competitorPrice, setCompetitorPrice] = useState("0")
+  const [sellingPrice, setSellingPrice] = useState("79000")
+  const [adCostPercent, setAdCostPercent] = useState("8")
+  const [returnRatePercent, setReturnRatePercent] = useState("5")
+  const [returnCost, setReturnCost] = useState("4000")
+  const [taxPercent, setTaxPercent] = useState("4")
+  const [paymentFeePercent, setPaymentFeePercent] = useState("1.5")
+  const [storagePerUnit, setStoragePerUnit] = useState("1200")
+  const [monthlyFixedCosts, setMonthlyFixedCosts] = useState("500000")
+  const [plannedUnits, setPlannedUnits] = useState("100")
 
   const [activePage, setActivePage] =
     useState<DashboardPageKey>("generator")
@@ -998,6 +1114,18 @@ export default function DashboardPage() {
   const [selectedFixIndex, setSelectedFixIndex] = useState(0)
   const [fixedImages, setFixedImages] = useState<Record<number, string>>({})
   const [isGenerating, setIsGenerating] = useState(false)
+  const [videoPrompt, setVideoPrompt] = useState("")
+  const [videoStyle, setVideoStyle] = useState("cinematic")
+  const [videoAspect, setVideoAspect] = useState("9:16")
+  const [videoMarketplace, setVideoMarketplace] = useState<MarketplaceKey>("uzum")
+  const [isVideoGenerating, setIsVideoGenerating] = useState(false)
+  const [videoResultReady, setVideoResultReady] = useState(false)
+  const [videoAssetUrl, setVideoAssetUrl] = useState("")
+  const [videoAssetType, setVideoAssetType] = useState<"video" | "gif" | "">("")
+  const imageProgress = useSimulatedProgress(creating || isGenerating, generatedVariants.length > 0)
+  const fixProgress = useSimulatedProgress(isFixingImage, Boolean(fixedImages[selectedFixIndex]))
+  const videoProgress = useSimulatedProgress(isVideoGenerating, videoResultReady)
+  const ikpuProgress = useSimulatedProgress(ikpuLoading, ikpuResults.length > 0)
   const [listingData, setlistingData] = useState<ListingResponse | null>(null)
   const [listingLang, setListingLang] = useState<"ru" | "uz">("ru")
   const [translatedListing, setTranslatedListing] = useState<any | null>(null)
@@ -1029,56 +1157,28 @@ useEffect(() => {
     }
 
     ping()
-    const interval = setInterval(ping, 120000)
+    const interval = setInterval(ping, 30000)
 
     return () => clearInterval(interval)
   }, [userEmail])
 
   const searchIkpu = async () => {
-  if (!ikpuQuery) return
+    const query = ikpuQuery.trim()
+    if (!query) return
 
-  setIkpuLoading(true)
+    setIkpuLoading(true)
 
-  try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
-    const res = await fetch(
-      `https://tasnif.soliq.uz/api/cl-api/classifier/search?search=${encodeURIComponent(ikpuQuery)}`
-    )
-
-    console.log("GEN 3 STATUS", res.status)
-    const data = await res.json()
-      if (selectedPayment === "payme" && data?.payme_url) {
-        localStorage.setItem("marketcard_pending_tariff_purchase", "1")
-        window.location.href = data.payme_url
-        return
-      }
-
-      if (selectedPayment === "click" && data?.click_url) {
-        window.location.href = data.click_url
-        return
-      }
-
-      if (selectedPayment === "click") {
-        alert("Click ссылка не получена")
-        return
-      }
-
-    let items: any[] = []
-
-    if (Array.isArray(data)) {
-      items = data
-    } else if (data?.data) {
-      items = data.data
+    try {
+      const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}&limit=12`)
+      const data = await res.json()
+      setIkpuResults(Array.isArray(data?.items) ? data.items : [])
+    } catch (e) {
+      console.log("IKPU error:", e)
+      setIkpuResults([])
+    } finally {
+      setIkpuLoading(false)
     }
-
-    setIkpuResults(items.slice(0, 10))
-  } catch (e) {
-    console.log("IKPU error:", e)
-    setIkpuResults([])
   }
-
-  setIkpuLoading(false)
-}
 
 const listingCharacteristics = listingView?.characteristics
   ? Array.isArray(listingView.characteristics)
@@ -1092,6 +1192,18 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   ? listingView.keywords
   : []
   const t = dict[lang]
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const nextLang = (event as CustomEvent<{ lang?: Lang }>).detail?.lang
+      if (nextLang === "ru" || nextLang === "uz" || nextLang === "en") {
+        setLang(nextLang)
+      }
+    }
+
+    window.addEventListener("marketcard:language-change", handler)
+    return () => window.removeEventListener("marketcard:language-change", handler)
+  }, [])
   const currentFormat = marketplaceFormats[selectedMarketplace]
 
   const allowedVariantOptions = (() => {
@@ -1193,11 +1305,9 @@ const listingKeywords = Array.isArray(listingView?.keywords)
   const loadProfile = async () => {
     try {
       setProfileLoading(true)
-    const token = localStorage.getItem("access_token")
-
     const email = localStorage.getItem("user_email")
 
-if (!token || !email) {
+if (!email) {
   setProfileLoading(false)
   setProfile(null)
   return
@@ -1206,28 +1316,34 @@ if (!token || !email) {
 const res = await fetch(
 `/api/auth/me?email=${encodeURIComponent(email)}`,
  {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
+  credentials: "include",
 })
 
       if (!res.ok) {
   const errorData = await res.json().catch(() => null)
 
+  if (res.status === 401 || errorData?.detail === "Profile access denied") {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("user_email")
+    setProfile(null)
+    router.push("/login")
+    return
+  }
+
   if (res.status === 403) {
     const message = errorData?.detail || "Ваш аккаунт заблокирован"
-
-    document.body.innerHTML = ` 
-      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;">
-        <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
-          <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
-          <div style="font-size:18px;opacity:0.9;line-height:1.5;">
-            ${message}
-          </div>
-        </div>
+    const banRoot = document.createElement("div")
+    banRoot.style.cssText = "min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b1220;color:white;font-family:Arial,sans-serif;padding:24px;"
+    banRoot.innerHTML = `
+      <div style="max-width:560px;width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:32px;text-align:center;">
+        <div style="font-size:42px;font-weight:800;margin-bottom:16px;">Аккаунт заблокирован</div>
       </div>
     `
-
+    const msgEl = document.createElement("div")
+    msgEl.style.cssText = "font-size:18px;opacity:0.9;line-height:1.5;"
+    msgEl.textContent = String(message)
+    banRoot.firstElementChild?.appendChild(msgEl)
+    document.body.replaceChildren(banRoot)
     throw new Error(message)
   }
 
@@ -1256,10 +1372,9 @@ const res = await fetch(
   }, [])
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
     const savedEmail = localStorage.getItem("user_email")
 
-    if (!token || !savedEmail) {
+    if (!savedEmail) {
       router.push("/login")
       return
     }
@@ -1278,6 +1393,8 @@ const res = await fetch(
   useEffect(() => {
     if (!selectedFile) {
       setPreviewUrl("")
+      setPhotoAnalyzeError("")
+      setPhotoAnalyzing(false)
       return
     }
 
@@ -1285,6 +1402,62 @@ const res = await fetch(
     setPreviewUrl(objectUrl)
 
     return () => URL.revokeObjectURL(objectUrl)
+  }, [selectedFile])
+
+  useEffect(() => {
+    if (!selectedFile) return
+
+    let cancelled = false
+
+    const analyzePhoto = async () => {
+      try {
+        setPhotoAnalyzing(true)
+        setPhotoAnalyzeError("")
+
+        const formData = new FormData()
+        formData.append("image", selectedFile)
+
+        const res = await fetch("/api/analyze-product-photo", {
+          method: "POST",
+          body: formData,
+        })
+        const data: ProductPhotoAnalysisResponse | null = await res.json().catch(() => null)
+
+        if (cancelled) return
+
+        if (!res.ok || !data?.success) {
+          throw new Error((data as any)?.detail || "Не удалось распознать фото")
+        }
+
+        if (data.title?.trim()) setProductTitle(data.title.trim())
+        if (data.category?.trim()) setCategory(data.category.trim())
+        if (data.brand?.trim()) {
+          setBrand((current) => (current.trim() ? current : data.brand!.trim()))
+        }
+
+        const characteristics = Array.isArray(data.characteristics)
+          ? data.characteristics.filter(Boolean)
+          : []
+        if (characteristics.length > 0) {
+          setProductCharacteristics(characteristics.join("\n"))
+        } else if (data.short_description?.trim()) {
+          setProductCharacteristics(data.short_description.trim())
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("PHOTO ANALYZE ERROR:", error)
+          setPhotoAnalyzeError("AI не смог распознать фото. Можно заполнить поля вручную.")
+        }
+      } finally {
+        if (!cancelled) setPhotoAnalyzing(false)
+      }
+    }
+
+    analyzePhoto()
+
+    return () => {
+      cancelled = true
+    }
   }, [selectedFile])
 
   
@@ -1328,7 +1501,27 @@ const handleLogout = () => {
     localStorage.removeItem("user_email")
     router.push("/login")
   }
-  const searchIkpuAuto = async (query: string) => {
+
+  const handleSwitchAccount = () => {
+    localStorage.removeItem("access_token")
+    localStorage.removeItem("user_email")
+    router.push("/login")
+  }
+
+  const handleAccountDeleteRequest = () => {
+    const confirmed = window.confirm(
+      "Удаление аккаунта необратимо. Открыть поддержку, чтобы подтвердить удаление MarketCard AI аккаунта?"
+    )
+
+    if (!confirmed) return
+
+    window.open(
+      "https://t.me/marketcardai_support_bot",
+      "_blank",
+      "noopener,noreferrer"
+    )
+  }
+const searchIkpuAuto = async (query: string) => {
   if (!query.trim()) {
     setIkpuResults([])
     return
@@ -1337,10 +1530,31 @@ const handleLogout = () => {
   setIkpuLoading(true)
 
   try {
-    console.log("ACTIVATE 4 BEFORE FETCH")
- // const res = await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}`)
- // const data = await res.json()
-    setIkpuResults([])
+    const productPayload =
+      productTitle.trim() || category.trim() || brand.trim()
+        ? {
+            title: productTitle.trim() || query,
+            brand: brand.trim(),
+            category: category.trim(),
+            description: `${query} ${productCharacteristics}`.trim(),
+          }
+        : null
+
+    const res = productPayload
+      ? await fetch("/api/ikpu/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productPayload),
+        })
+      : await fetch(`/api/ikpu/search?q=${encodeURIComponent(query)}&limit=8`)
+    const data = await res.json().catch(() => null)
+
+    if (!res.ok || !data?.success) {
+      setIkpuResults([])
+      return
+    }
+
+    setIkpuResults(Array.isArray(data.items) ? data.items.slice(0, 8) : [])
   } catch (e) {
     console.log("IKPU AUTO ERROR:", e)
     setIkpuResults([])
@@ -1350,10 +1564,6 @@ const handleLogout = () => {
 }
   const handleActivateTariff = async () => {
   console.log("ACTIVATE 1 START", { userEmail, selectedTariff })
-    const ikpuSearchText = `${productTitle} ${category}`.trim()
-setIkpuQuery(ikpuSearchText)
-
-const ikpuPromise = Promise.resolve()
   const emailToUse = userEmail || profile?.email
   if (!emailToUse) {
     console.log("ACTIVATE STOP: no email at all")
@@ -1392,6 +1602,11 @@ const ikpuPromise = Promise.resolve()
       }
       if (selectedPayment === "click") {
         alert("Click ссылка не получена")
+        return
+      }
+
+      if (selectedPayment === "visa") {
+        alert("Visa пока недоступна. Выберите Payme или Click.")
         return
       }
 
@@ -1436,10 +1651,11 @@ const ikpuPromise = Promise.resolve()
     return
   }
 
-    const ikpuSearchText = `${productTitle} ${category}`.trim()
+  console.log("GEN 0 PROFILE", profile)
+    const ikpuSearchText = `${productTitle} ${category} ${productCharacteristics}`.trim()
 setIkpuQuery(ikpuSearchText)
 
-const ikpuPromise = Promise.resolve()
+const ikpuPromise = searchIkpuAuto(ikpuSearchText)
     setIsGenerating(true)
   try {
     setCreating(true)
@@ -1450,17 +1666,18 @@ const ikpuPromise = Promise.resolve()
 
     const formData = new FormData()
     if (!profile?.email) {
+      console.log("GEN STOP: NO EMAIL", profile)
       alert("Email пользователя не найден")
       return
     }
 
-    formData.append("email", profile?.email)
     formData.append("product_title", productTitle)
     formData.append("brand", brand)
     formData.append("category", category)
     formData.append("marketplace", selectedMarketplace)
     formData.append("language_mode", languageMode)
     formData.append("variant_count", String(variantCount))
+    formData.append("extra_features", productCharacteristics)
 
     if (selectedFile) {
       formData.append("image", selectedFile)
@@ -1468,8 +1685,9 @@ const ikpuPromise = Promise.resolve()
 
     
     console.log("GEN 2 BEFORE FETCH")
-    const res = await fetch("https://marketcard.uz/api/full-generate", {
+    const res = await fetch("/api/full-generate", {
       method: "POST",
+      credentials: "include",
       body: formData,
     })
 
@@ -1487,7 +1705,7 @@ const ikpuPromise = Promise.resolve()
     // ✅ КАРТИНКИ
     const images = (data.slides || [])
       .filter((s: any) => s.image_url)
-      .map((s: any) => `https://marketcard.uz${s.image_url}`)
+      .map((s: any) => `/api${s.image_url}`)
 
     setGeneratedVariants(images)
     setPngReady(images.length > 0)
@@ -1506,9 +1724,15 @@ const ikpuPromise = Promise.resolve()
       setListingReady(true)
     }
     if (profile?.email) {
-  await loadProfile()
-}
-  await ikpuPromise
+      await loadProfile()
+    }
+    await ikpuPromise
+    const generationIkpuItems = Array.isArray(data?.ikpu?.items) ? data.ikpu.items : []
+    if (generationIkpuItems.length > 0) {
+      setIkpuResults(generationIkpuItems.slice(0, 8))
+    } else if (data?.ikpu?.best) {
+      setIkpuResults([data.ikpu.best])
+    }
   } catch (err) {
     console.log("GEN ERROR", err)
     console.error(err)
@@ -1542,17 +1766,17 @@ const ikpuPromise = Promise.resolve()
 
       setIsFixingImage(true)
 
-      const imageUrl = selectedImage.replace("https://marketcard.uz", "")
+      const imageUrl = selectedImage.replace(/^https?:\/\/[^/]+/, "").replace(/^\/api/, "")
 
-      const res = await fetch("https://marketcard.uz/api/fix-generated-image", {
+      const res = await fetch("/api/fix-generated-image", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           image_url: imageUrl,
           fix_prompt: fixPrompt,
-          email: profile?.email ?? userEmail ?? "",
         }),
       })
 
@@ -1563,7 +1787,7 @@ const ikpuPromise = Promise.resolve()
         return
       }
 
-      const finalUrl = `https://marketcard.uz${data.fixed_image_url}`
+      const finalUrl = `/api${data.fixed_image_url}`
 
       setFixedImageUrl(finalUrl)
       setFixedImages((prev) => ({
@@ -1639,6 +1863,15 @@ const handleDownloadPng = async () => {
     const otherNum = toNumber(otherCosts)
     const desiredProfitNum = toNumber(desiredProfit)
     const competitorNum = toNumber(competitorPrice)
+    const sellingPriceNum = toNumber(sellingPrice)
+    const adCostPercentNum = toNumber(adCostPercent)
+    const returnRateNum = toNumber(returnRatePercent)
+    const returnCostNum = toNumber(returnCost)
+    const taxPercentNum = toNumber(taxPercent)
+    const paymentFeePercentNum = toNumber(paymentFeePercent)
+    const storageNum = toNumber(storagePerUnit)
+    const monthlyFixedNum = toNumber(monthlyFixedCosts)
+    const plannedUnitsNum = Math.max(1, toNumber(plannedUnits))
 
     const purchaseCostUzs = purchaseUsdNum * usdRateNum
     const totalCost =
@@ -1647,27 +1880,57 @@ const handleDownloadPng = async () => {
       localNum +
       marketingNum +
       packagingNum +
-      otherNum
+      otherNum +
+      storageNum
 
-    const commissionFactor = 1 - commissionNum / 100
+    const variableRate = (commissionNum + adCostPercentNum + taxPercentNum + paymentFeePercentNum) / 100
+    const commissionFactor = 1 - variableRate
     const safeFactor = commissionFactor > 0 ? commissionFactor : 0.01
+    const returnReserve = (purchaseCostUzs + returnCostNum) * (returnRateNum / 100)
+    const fixedPerUnit = monthlyFixedNum / plannedUnitsNum
+    const trueUnitCost = totalCost + returnReserve + fixedPerUnit
 
-    const breakEven = roundMoney(totalCost / safeFactor)
-    const aggressive = roundMoney((totalCost + desiredProfitNum * 0.55) / safeFactor)
-    const optimal = roundMoney((totalCost + desiredProfitNum) / safeFactor)
-    const premium = roundMoney((totalCost + desiredProfitNum * 1.8) / safeFactor)
+    const breakEven = roundMoney(trueUnitCost / safeFactor)
+    const aggressive = roundMoney((trueUnitCost + desiredProfitNum * 0.55) / safeFactor)
+    const optimal = roundMoney((trueUnitCost + desiredProfitNum) / safeFactor)
+    const premium = roundMoney((trueUnitCost + desiredProfitNum * 1.8) / safeFactor)
 
-    const profitAtPrice = (price: number) => price * safeFactor - totalCost
+    const profitAtPrice = (price: number) => price * safeFactor - trueUnitCost
     const marginAtPrice = (price: number) =>
       price > 0 ? (profitAtPrice(price) / price) * 100 : 0
     const roiAtPrice = (price: number) =>
-      totalCost > 0 ? (profitAtPrice(price) / totalCost) * 100 : 0
+      trueUnitCost > 0 ? (profitAtPrice(price) / trueUnitCost) * 100 : 0
+    const contributionProfit = roundMoney(profitAtPrice(sellingPriceNum))
+    const contributionMargin = marginAtPrice(sellingPriceNum)
+    const roi = roiAtPrice(sellingPriceNum)
+    const breakEvenUnits =
+      contributionProfit > 0 ? Math.ceil(monthlyFixedNum / contributionProfit) : 0
+    const breakEvenRevenue = breakEvenUnits * sellingPriceNum
+    const maxAcos =
+      sellingPriceNum > 0
+        ? Math.max(0, ((sellingPriceNum - trueUnitCost + sellingPriceNum * (adCostPercentNum / 100)) / sellingPriceNum) * 100)
+        : 0
+    const profitPlan = contributionProfit * plannedUnitsNum
+    const safetyGap = sellingPriceNum - breakEven
 
     return {
       competitorNum,
       purchaseCostUzs,
       totalCost,
+      trueUnitCost,
+      returnReserve,
+      fixedPerUnit,
+      variableRate,
       breakEven,
+      sellingPriceNum,
+      contributionProfit,
+      contributionMargin,
+      roi,
+      breakEvenUnits,
+      breakEvenRevenue,
+      maxAcos,
+      profitPlan,
+      safetyGap,
       aggressive,
       optimal,
       premium,
@@ -1695,12 +1958,24 @@ const handleDownloadPng = async () => {
     otherCosts,
     desiredProfit,
     competitorPrice,
+    sellingPrice,
+    adCostPercent,
+    returnRatePercent,
+    returnCost,
+    taxPercent,
+    paymentFeePercent,
+    storagePerUnit,
+    monthlyFixedCosts,
+    plannedUnits,
   ])
 
   
   useEffect(() => {
     const root = document.documentElement
+    const body = document.body
     root.classList.add("dashboard-cursor-glow")
+    root.classList.add("mc-dashboard-no-page-scroll")
+    body.classList.add("mc-dashboard-no-page-scroll")
 
     const handleMove = (e: MouseEvent) => {
       const main = document.querySelector("main")
@@ -1723,16 +1998,502 @@ const handleDownloadPng = async () => {
       window.removeEventListener("mousemove", handleMove)
       window.removeEventListener("mouseout", handleLeave)
       root.classList.remove("dashboard-cursor-glow")
+      root.classList.remove("mc-dashboard-no-page-scroll")
+      body.classList.remove("mc-dashboard-no-page-scroll")
       root.style.removeProperty("--mc-x")
       root.style.removeProperty("--mc-y")
       root.style.removeProperty("--mc-opacity")
     }
   }, [])
 
+  const dashboardName =
+    profile?.full_name?.trim() ||
+    (userEmail ? userEmail.split("@")[0] : "продавец")
+  const dashboardInitial = (dashboardName || "M").charAt(0).toUpperCase()
+  const dashboardTotal = Math.max(profile?.tariff_generations_total ?? 0, 0)
+  const dashboardUsed = Math.max(profile?.tariff_generations_used ?? 0, 0)
+  const dashboardLeft = Math.max(profile?.tariff_generations_left ?? 0, 0)
+  const dashboardProgress =
+    dashboardTotal > 0 ? Math.min(100, Math.round((dashboardUsed / dashboardTotal) * 100)) : 0
+
+  const dashboardStats = [
+    {
+      label: "Карточек создано",
+      value: profileLoading ? "..." : String(dashboardUsed),
+      detail: `${dashboardLeft} генераций осталось`,
+      tone: "cyan",
+    },
+    {
+      label: "Лимит тарифа",
+      value: profileLoading ? "..." : String(dashboardTotal),
+      detail: profile?.tariff_name || "Тариф не выбран",
+      tone: "violet",
+    },
+    {
+      label: "AI варианты",
+      value: String(generatedVariants.length),
+      detail: generatedVariants.length > 0 ? "готовы к просмотру" : "после генерации появятся здесь",
+      tone: "emerald",
+    },
+    {
+      label: "Аудиты карточек",
+      value: String(profile?.audit_credits ?? 0),
+      detail: "для проверки инфографики",
+      tone: "pink",
+    },
+    {
+      label: "AI видео",
+      value: videoResultReady ? "1" : "0",
+      detail: "короткие промо-ролики товара",
+      tone: "amber",
+    },
+  ]
+
+  const dashboardTips = [
+    {
+      title: "Быстрый старт",
+      text: "Загружайте чистое фото товара и сразу выбирайте площадку: Uzum, Wildberries или Ozon.",
+      accent: "cyan",
+    },
+    {
+      title: "Pro логика",
+      text: "Добавьте бренд, категорию и 2-3 преимущества товара, чтобы AI точнее собрал инфографику.",
+      accent: "violet",
+    },
+    {
+      title: "SEO и аудит",
+      text: "После генерации проверьте карточку через аудит и соберите описание для маркетплейса.",
+      accent: "emerald",
+    },
+  ]
+
+  const closeDashboardMenu = () => {
+    if (isMobile) setIsMobileMenuOpen(false)
+  }
+
+  const selectDashboardPage = (page: DashboardPageKey) => {
+    setActivePage(page)
+    closeDashboardMenu()
+  }
+
+  const handleVideoGenerate = async () => {
+    if (!selectedFile) {
+      alert("Сначала загрузите фото товара для AI-видео.")
+      return
+    }
+
+    const scenario =
+      videoPrompt.trim() ||
+      "Красивый 360° оборот товара, премиальная подсветка, динамичные переходы, крупные преимущества и финальный оффер для маркетплейса."
+
+    setIsVideoGenerating(true)
+    setVideoResultReady(false)
+    setVideoAssetUrl("")
+    setVideoAssetType("")
+
+    if (!videoPrompt.trim()) {
+      setVideoPrompt(scenario)
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("product_title", productTitle || selectedFile.name || "MarketCard product")
+      formData.append("marketplace", videoMarketplace)
+      formData.append("scenario", scenario)
+      formData.append("style", videoStyle)
+      formData.append("image", selectedFile)
+
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/video/generate", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.detail || "Не удалось создать видео")
+      }
+
+      const assetUrl =
+        typeof data.video_url === "string" && data.video_url.startsWith("/generated_videos")
+          ? `/api${data.video_url}`
+          : data.video_url
+
+      setVideoAssetUrl(assetUrl || "")
+      setVideoAssetType(data.asset_type === "gif" ? "gif" : "video")
+      setVideoResultReady(true)
+    } catch (error) {
+      console.error("VIDEO GENERATE ERROR", error)
+      alert(error instanceof Error ? error.message : "Ошибка генерации видео")
+    } finally {
+      setIsVideoGenerating(false)
+    }
+  }
+
+  const checkMarketplaceStatus = async () => {
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/marketplaces/status", {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.detail || "Не удалось проверить API")
+      const lines = Object.entries(data.marketplaces || {}).map(([name, info]: any) => {
+        return `${name}: ${info.configured ? "подключен" : `нет ключей (${info.missing_env?.join(", ")})`}`
+      })
+      alert(lines.join("\n"))
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Ошибка проверки API")
+    }
+  }
+
+  const videoMarketplaces = [
+    {
+      key: "uzum" as const,
+      label: "UZUM",
+      format: "9:16",
+      caption: "Stories / Reels",
+      logo: "/marketplaces-premium/uzum.png",
+    },
+    {
+      key: "wildberries" as const,
+      label: "Wildberries",
+      format: "9:16",
+      caption: "vertical promo",
+      logo: "/marketplaces-premium/wildberries.png",
+    },
+    {
+      key: "ozon" as const,
+      label: "OZON",
+      format: "1:1",
+      caption: "square feed",
+      logo: "/marketplaces-premium/ozon.png",
+    },
+    {
+      key: "yandex" as const,
+      label: "Yandex Market",
+      format: "16:9",
+      caption: "wide showcase",
+      logo: "/marketplaces-premium/yandex.png",
+    },
+  ]
+
+  const activeVideoMarketplace =
+    videoMarketplaces.find((item) => item.key === videoMarketplace) ||
+    videoMarketplaces[0]
+
+  const videoStyles = [
+    { key: "cinematic", label: "Cinematic" },
+    { key: "luxury", label: "Luxury" },
+    { key: "dynamic", label: "Dynamic" },
+    { key: "studio", label: "Studio" },
+  ]
+
+  const videoPipeline = [
+    {
+      title: "Browser preview",
+      text: "Мгновенный render brief в кабинете",
+      url: "https://www.canva.com/ai-video-generator/",
+    },
+    {
+      title: "Free AI queue",
+      text: "Быстрый переход к open image-to-video сервисам",
+      url: "https://huggingface.co/spaces?search=image%20to%20video",
+    },
+    {
+      title: "MP export",
+      text: "Форматы Uzum, WB, Ozon, Yandex",
+      url: "https://www.capcut.com/tools/ai-video-generator",
+    },
+  ]
+
+  const openSourcingLinks = () => {
+    const sites = [
+      ["1688", "https://www.1688.com", "Китайский оптовый маркетплейс"],
+      ["Alibaba", "https://www.alibaba.com", "Международные поставщики"],
+      ["Taobao", "https://world.taobao.com", "Товары и тренды Китая"],
+      ["Made-in-China", "https://www.made-in-china.com", "Фабрики и производство"],
+      ["Global Sources", "https://www.globalsources.com", "B2B поставщики"],
+      ["DHgate", "https://www.dhgate.com", "Мелкий опт"],
+      ["Курс юаня", "https://www.google.com/search?q=курс+юаня+к+суму", "CNY к UZS"],
+    ]
+
+    const modal = document.createElement("div")
+    modal.className = "mc-dashboard-native-modal"
+    modal.innerHTML = `
+      <div class="mc-dashboard-native-modal-card">
+        <div class="mc-dashboard-native-modal-kicker">MarketCard AI sourcing</div>
+        <h2>Поиск и закуп товара</h2>
+        <p>Быстрый переход к поставщикам, фабрикам и площадкам для запуска товаров.</p>
+        <div class="mc-dashboard-native-modal-grid">
+          ${sites
+            .map(
+              ([name, url, description]) => `
+                <button type="button" data-url="${url}">
+                  <strong>${name}</strong>
+                  <span>${description}</span>
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+        <button class="mc-dashboard-native-modal-close" type="button">Закрыть</button>
+      </div>
+    `
+
+    modal.querySelectorAll<HTMLButtonElement>("[data-url]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const url = button.dataset.url
+        if (url) window.open(url, "_blank")
+      })
+    })
+
+    modal.querySelector(".mc-dashboard-native-modal-close")?.addEventListener("click", () => {
+      modal.remove()
+    })
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) modal.remove()
+    })
+
+    document.body.appendChild(modal)
+  }
+
+  const openDeficitProducts = async () => {
+    const niche = window.prompt("Введите нишу для анализа дефицита товаров на Uzum")
+    if (!niche?.trim()) return
+
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/deficit-products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          query: niche.trim(),
+          limit: 100,
+          marketplace: "uzum",
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || "Ошибка анализа")
+
+      const fileUrl = data.download_url?.startsWith("/")
+        ? data.download_url
+        : `/api${data.download_url || ""}`
+      window.open(fileUrl, "_blank")
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Ошибка анализа")
+    }
+  }
+
+  const openDeficitProductsAllMarketplaces = async () => {
+    const niche = window.prompt("Введите нишу для анализа дефицита товаров")
+    if (!niche?.trim()) return
+
+    const marketplace =
+      window.prompt("Маркетплейс: uzum, wildberries, ozon, yandex", "uzum") || "uzum"
+
+    try {
+      const token = localStorage.getItem("access_token")
+      const res = await fetch("/api/deficit-products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          query: niche.trim(),
+          limit: 100,
+          marketplace,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || "Ошибка анализа")
+
+      const fileUrl = data.download_url?.startsWith("/")
+        ? `/api${data.download_url}`
+        : data.download_url
+      if (fileUrl) window.open(fileUrl, "_blank")
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Ошибка анализа")
+    }
+  }
+
+  const mainDashboardNav = [
+    { key: "generator" as const, label: "Создать карточку", meta: "AI", icon: "AI", onClick: () => selectDashboardPage("generator") },
+    { key: "video" as const, label: "AI видео", meta: "NEW", icon: "VI", onClick: () => selectDashboardPage("video") },
+    { key: "listing" as const, label: "SEO и описание", meta: listingReady ? "1" : "", icon: "SE", onClick: () => selectDashboardPage("listing") },
+    { key: "economy" as const, label: "Экономика товара", meta: "", icon: "EC", onClick: () => selectDashboardPage("economy") },
+    { key: "audit" as const, label: "Оценка карточки", meta: String(profile?.audit_credits ?? 0), icon: "AU", onClick: () => selectDashboardPage("audit") },
+    { key: "intelligence" as const, label: "Аналитика товара", meta: "", icon: "BI", onClick: () => selectDashboardPage("intelligence") },
+    { key: "recommendations" as const, label: "Рекомендации продаж", meta: "AI", icon: "RS", onClick: () => selectDashboardPage("recommendations") },
+    { key: "integrations" as const, label: "Интеграции МП", meta: "API", icon: "MP", onClick: () => selectDashboardPage("integrations") },
+  ]
+
+  const toolDashboardNav = [
+    { label: "ABC анализ", meta: "URL", icon: "AB", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
+    { label: "ИКПУ", meta: "TASNIF", icon: "IK", onClick: () => window.open("https://tasnif.soliq.uz", "_blank") },
+    { label: "Закуп товара", meta: "B2B", icon: "BZ", onClick: openSourcingLinks },
+    { label: "DIDOX / ЭДО", meta: "DOC", icon: "DX", onClick: () => window.open("https://didox.uz", "_blank") },
+    { label: "Дефицит Uzum", meta: "XLS", icon: "DF", onClick: openDeficitProducts },
+  ]
+
+  const premiumToolDashboardNav = [
+    { label: "ABC анализ", meta: "URL", icon: "AB", onClick: () => window.dispatchEvent(new Event("marketcard:open-abc")) },
+    { label: "ИКПУ", meta: ikpuResults.length ? String(ikpuResults.length) : "AUTO", icon: "IK", onClick: () => selectDashboardPage("ikpu") },
+    { label: "Мой склад", meta: "WMS", icon: "WH", onClick: () => selectDashboardPage("warehouse") },
+    { label: "Накладные", meta: "DOC", icon: "NV", onClick: () => selectDashboardPage("invoices") },
+    { label: "Закуп товара", meta: "B2B", icon: "BZ", onClick: () => selectDashboardPage("purchase") },
+    { label: "DIDOX / ЭДО", meta: "DOC", icon: "DX", onClick: () => selectDashboardPage("didox") },
+    { label: "Дефицит товаров", meta: "4 MP", icon: "DF", onClick: () => selectDashboardPage("deficit") },
+    { label: "Инструкции", meta: "LIVE", icon: "IN", onClick: () => selectDashboardPage("instructions") },
+  ]
+
+  const dashboardSectionMeta: Record<DashboardPageKey, { title: string; subtitle: string; badge: string }> = {
+    generator: {
+      title: "AI генератор карточек",
+      subtitle: "Создавайте премиальную инфографику для маркетплейсов из одного фото товара.",
+      badge: "Image studio",
+    },
+    video: {
+      title: "AI видео генератор",
+      subtitle: "Собирайте короткие промо-ролики и motion-preview товара в едином стиле MarketCard AI.",
+      badge: "Video studio",
+    },
+    listing: {
+      title: "SEO и описание",
+      subtitle: "Готовьте название, описание, свойства и локализацию карточки под площадку.",
+      badge: "Marketplace copy",
+    },
+    economy: {
+      title: "Экономика товара",
+      subtitle: "Считайте цену, маржу, ROI и сценарии запуска без таблиц и хаоса.",
+      badge: "Profit cockpit",
+    },
+    audit: {
+      title: "Оценка карточки",
+      subtitle: "Проверяйте инфографику, визуальную логику и готовность к продажам.",
+      badge: "Card audit",
+    },
+    intelligence: {
+      title: "Аналитика товара",
+      subtitle: "Смотрите сигналы продукта, гипотезы, конкурентов и потенциал ниши.",
+      badge: "Product intelligence",
+    },
+    warehouse: {
+      title: "Мой склад",
+      subtitle: "Остатки, оборачиваемость, заморозка денег, товары без движения и быстрые действия продавца.",
+      badge: "Warehouse OS",
+    },
+    invoices: {
+      title: "Накладные",
+      subtitle: "Создание, статусы, экспорт и будущая синхронизация накладных с DIDOX и маркетплейсами.",
+      badge: "Invoices",
+    },
+    integrations: {
+      title: "Интеграции маркетплейсов",
+      subtitle: "API-ready центр публикации карточек, видео, описаний и остатков в Uzum, Wildberries, Ozon и Yandex Market.",
+      badge: "Marketplace API",
+    },
+    recommendations: {
+      title: "Рекомендации продаж",
+      subtitle: "AI подсказывает, что делать с залежавшимся товаром, ценой, карточкой, рекламой и остатками.",
+      badge: "Sales advisor",
+    },
+    ikpu: {
+      title: "ИКПУ",
+      subtitle: "Автоподбор кода через Soliq parser, локальный кеш и ранжирование по товару.",
+      badge: "Soliq parser",
+    },
+    purchase: {
+      title: "Закуп товара",
+      subtitle: "Площадки Китая, фабрики, карго Узбекистана и быстрые ссылки для закупа.",
+      badge: "Sourcing hub",
+    },
+    didox: {
+      title: "DIDOX / ЭДО",
+      subtitle: "Подготовка к интеграции документов, счетов и электронного документооборота.",
+      badge: "Documents",
+    },
+    deficit: {
+      title: "Дефицит товаров",
+      subtitle: "Сигналы дефицита по Uzum, Wildberries, Ozon и Yandex Market.",
+      badge: "Market gaps",
+    },
+    instructions: {
+      title: "Инструкции маркетплейсов",
+      subtitle: "Живой центр правил и чеклистов по требованиям площадок.",
+      badge: "Live rules",
+    },
+  }
+
+  const platformMapItems = [
+    {
+      key: "generator" as const,
+      title: "AI карточки",
+      text: "Фото товара, маркетплейс, язык и варианты инфографики в одном studio-flow.",
+      metric: `${dashboardLeft}/${dashboardTotal || 0}`,
+      tone: "cyan",
+      onClick: () => selectDashboardPage("generator"),
+      active: activePage === "generator",
+    },
+    {
+      key: "video" as const,
+      title: "AI видео",
+      text: "Motion brief, формат ролика и preview для будущей video generation.",
+      metric: videoResultReady ? "ready" : "new",
+      tone: "pink",
+      onClick: () => selectDashboardPage("video"),
+      active: activePage === "video",
+    },
+    {
+      key: "listing" as const,
+      title: "SEO карточки",
+      text: "Название, описание, свойства и локализация под площадки.",
+      metric: listingReady ? "done" : "copy",
+      tone: "violet",
+      onClick: () => selectDashboardPage("listing"),
+      active: activePage === "listing",
+    },
+    {
+      key: "economy" as const,
+      title: "Экономика",
+      text: "Маржа, ROI, точка безубыточности и сценарии цены.",
+      metric: "ROI",
+      tone: "emerald",
+      onClick: () => selectDashboardPage("economy"),
+      active: activePage === "economy",
+    },
+    {
+      key: "audit" as const,
+      title: "Аудит",
+      text: "Проверка карточки перед запуском и визуальная диагностика.",
+      metric: String(profile?.audit_credits ?? 0),
+      tone: "amber",
+      onClick: () => selectDashboardPage("audit"),
+      active: activePage === "audit",
+    },
+    {
+      key: "intelligence" as const,
+      title: "Аналитика",
+      text: "Сигналы товара, конкуренты, спрос и продуктовые гипотезы.",
+      metric: "BI",
+      tone: "blue",
+      onClick: () => selectDashboardPage("intelligence"),
+      active: activePage === "intelligence",
+    },
+  ]
+
 if (!authChecked) return null 
   return (
     <>
       <main
+        className="mc-dashboard-shell"
+        data-page={activePage}
         style={{
           columnGap: isMobile ? "0" : "28px",
     minHeight: "100vh",
@@ -1743,7 +2504,13 @@ if (!authChecked) return null
         }}
       >
       <DashboardOnboarding />
+      <div className="mc-dashboard-ambient" aria-hidden="true">
+        <span className="mc-dashboard-ambient-one" />
+        <span className="mc-dashboard-ambient-two" />
+        <span className="mc-dashboard-ambient-grid" />
+      </div>
 <div
+  className="mc-dashboard-layout"
   style={{
     display: "grid",
     gridTemplateColumns: isMobile ? "1fr" : "320px minmax(0, 1fr)", 
@@ -1763,6 +2530,7 @@ if (!authChecked) return null
     }}
   >
     <button
+      className="mc-dashboard-mobile-toggle"
       onClick={() => setIsMobileMenuOpen((prev) => !prev)}
       style={{
         background: "#0ea5e9",
@@ -1781,6 +2549,86 @@ if (!authChecked) return null
 )}
 
  <aside
+  className="mc-dashboard-sidebar mc-dashboard-sidebar-v2"
+  style={{
+    display: isMobile ? (isMobileMenuOpen ? "flex" : "none") : "flex",
+    position: isMobile ? "fixed" : "relative",
+    top: isMobile ? "0" : undefined,
+    left: isMobile ? "0" : undefined,
+    zIndex: isMobile ? 9998 : undefined,
+    width: isMobile ? "300px" : "320px",
+    minWidth: isMobile ? "300px" : "320px",
+  }}
+>
+  <div className="mc-dashboard-brand">
+    <div className="mc-dashboard-brand-mark">
+      <img src="/logo.jpg" alt="MarketCard AI" />
+    </div>
+    <div>
+      <strong>MarketCard</strong>
+      <span>AI</span>
+    </div>
+  </div>
+
+  <nav className="mc-dashboard-nav" aria-label="Главные разделы">
+    <div className="mc-dashboard-nav-label">Основное</div>
+    {mainDashboardNav.map((item) => (
+      <button
+        key={item.key}
+        type="button"
+        onClick={item.onClick}
+        className={activePage === item.key ? "mc-dashboard-nav-item is-active" : "mc-dashboard-nav-item"}
+      >
+        <span className="mc-dashboard-nav-dot">{item.icon}</span>
+        <span>{item.label}</span>
+        {item.meta && <b>{item.meta}</b>}
+      </button>
+    ))}
+  </nav>
+
+  <nav className="mc-dashboard-nav mc-dashboard-nav-tools" aria-label="Инструменты">
+    <div className="mc-dashboard-nav-label">Инструменты</div>
+    {premiumToolDashboardNav.map((item) => (
+      <button
+        key={item.label}
+        type="button"
+        onClick={() => {
+          item.onClick()
+          closeDashboardMenu()
+        }}
+        className="mc-dashboard-nav-item"
+      >
+        <span className="mc-dashboard-nav-dot">{item.icon}</span>
+        <span>{item.label}</span>
+        <b>{item.meta}</b>
+      </button>
+    ))}
+  </nav>
+
+  <div className="mc-dashboard-sidebar-spacer" />
+
+  <div className="mc-dashboard-credit-card">
+    <div className="mc-dashboard-credit-card-top">
+      <span>Кредиты</span>
+      <strong>{dashboardLeft}/{dashboardTotal || 0}</strong>
+    </div>
+    <div className="mc-dashboard-credit-bar">
+      <span style={{ width: `${Math.max(4, 100 - dashboardProgress)}%` }} />
+    </div>
+    <button type="button" onClick={() => setShowTariffModal(true)}>
+      Пополнить тариф
+    </button>
+  </div>
+
+  <div className="mc-dashboard-sidebar-bottom">
+    <button type="button" onClick={() => setShowTariffModal(true)}>Тарифы</button>
+    <button type="button" onClick={() => window.open("https://t.me/marketcardai_support_bot", "_blank")}>Поддержка</button>
+    <button type="button" onClick={handleLogout}>Выйти</button>
+  </div>
+</aside>
+
+ <aside
+  className="mc-dashboard-sidebar mc-dashboard-sidebar-legacy"
   style={{
     display: isMobile ? (isMobileMenuOpen ? "block" : "none") : "block",
     position: isMobile ? "fixed" : "relative",
@@ -2085,7 +2933,7 @@ if (!authChecked) return null
 
       <div
         onClick={async () => {
-          const formResult = await new Promise<{ niche: string; limit: number } | null>((resolve) => {
+          const formResult = await new Promise<{ niche: string; limit: number; marketplace: string } | null>((resolve) => {
             const modal = document.createElement("div");
             modal.style.position = "fixed";
             modal.style.inset = "0";
@@ -2100,6 +2948,12 @@ if (!authChecked) return null
                 <div style="font-size:26px;font-weight:900;margin-bottom:8px">Дефицит товаров Uzum</div>
                 <div style="font-size:15px;color:rgba(255,255,255,.72);line-height:1.5;margin-bottom:20px">Введите нишу. Анализ автоматически спишет 20 аудитов и соберёт максимум доступных товаров.</div>
                 <input id="deficitNicheInput" placeholder="Например: наушники, коврики, зарядки" style="width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);outline:none;border-radius:16px;padding:15px 16px;background:rgba(255,255,255,.08);color:white;font-size:16px;margin-bottom:16px" />
+                <select id="deficitMarketplaceInput" style="width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.16);outline:none;border-radius:16px;padding:15px 16px;background:#0f172a;color:white;font-size:16px;margin-bottom:16px">
+                  <option value="uzum">Uzum</option>
+                  <option value="wildberries">Wildberries</option>
+                  <option value="ozon">Ozon</option>
+                  <option value="yandex">Yandex Market</option>
+                </select>
                 
                 <div style="display:flex;gap:12px;flex-wrap:wrap">
                   <button id="startDeficitAnalysis" style="flex:1;min-width:220px;border:0;border-radius:18px;padding:16px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-weight:900;cursor:pointer;font-size:16px">🚀 Начать анализ</button>
@@ -2117,7 +2971,9 @@ if (!authChecked) return null
 
             modal.querySelector("#startDeficitAnalysis")?.addEventListener("click", () => {
               const input = modal.querySelector("#deficitNicheInput") as HTMLInputElement | null;
+              const marketplaceInput = modal.querySelector("#deficitMarketplaceInput") as HTMLSelectElement | null;
               const niche = (input?.value || "").trim();
+              const marketplace = marketplaceInput?.value || "uzum";
               const limit = 100;
 
               if (!niche) {
@@ -2137,12 +2993,12 @@ if (!authChecked) return null
                   </style>
                   <div style="font-size:26px;font-weight:900;margin-bottom:10px">Подождите</div>
                   <div style="font-size:16px;color:rgba(255,255,255,.76);line-height:1.6">
-                    Собираем данные с Uzum и формируем Excel-отчёт.<br/>
+                    Собираем данные с выбранного маркетплейса и формируем Excel-отчёт.<br/>
                     Это может занять немного времени.
                   </div>`;
                 
               }
-              resolve({ niche, limit });
+              resolve({ niche, limit, marketplace });
             });
           });
 
@@ -2156,19 +3012,7 @@ if (!authChecked) return null
               "Content-Type": "application/json",
               ...(token ? { Authorization: `Bearer ${token}` } : {})
             },
-            body: JSON.stringify({
-              query: formResult.niche,
-              limit: formResult.limit,
-              marketplace: "uzum"
-            })
-          })
-          fetch("/api/deficit-products", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({ query: formResult.niche, limit: formResult.limit, marketplace: "uzum" })
+            body: JSON.stringify({ query: formResult.niche, limit: formResult.limit, marketplace: formResult.marketplace })
           })
             .then(async (r) => {
               const data = await r.json();
@@ -2176,7 +3020,7 @@ if (!authChecked) return null
 
               const fileUrl = data.download_url?.startsWith("/")
                 ? data.download_url
-                : `/api ${data.download_url}`;
+                : `/api${data.download_url}`;
 
               document.querySelectorAll("div").forEach((el) => {
                 if (el.textContent?.includes("Собираем данные с Uzum")) el.remove();
@@ -2264,6 +3108,7 @@ if (!authChecked) return null
   />
 )}
         <section
+  className="mc-dashboard-content"
   style={{
     padding: "24px",
     paddingBottom: "24px",
@@ -2274,6 +3119,54 @@ if (!authChecked) return null
     maxHeight: "none",
   }}
 >
+  <header className="mc-dashboard-topbar">
+    <label className="mc-dashboard-topbar-search">
+      <span>Поиск</span>
+      <input type="text" placeholder="Поиск карточек, шаблонов, аудитов..." readOnly />
+    </label>
+
+    <div className="mc-dashboard-topbar-actions">
+      <button
+        type="button"
+        className="mc-dashboard-topbar-primary"
+        onClick={() => selectDashboardPage("generator")}
+      >
+        Новая карточка
+      </button>
+      <button
+        type="button"
+        className="mc-dashboard-topbar-icon"
+        onClick={() => setShowLangMenu((prev) => !prev)}
+      >
+        {lang.toUpperCase()}
+      </button>
+      <button type="button" className="mc-dashboard-topbar-user" onClick={() => setShowTariffModal(true)}>
+        <span>{dashboardInitial}</span>
+        <div>
+          <strong>{dashboardName}</strong>
+          <small>{profile?.tariff_name || "без тарифа"}</small>
+        </div>
+      </button>
+    </div>
+
+    {showLangMenu && (
+      <div className="mc-dashboard-lang-menu">
+        {(["ru", "uz", "en"] as Lang[]).map((item: Lang) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => {
+              setLang(item)
+              setShowLangMenu(false)
+            }}
+          >
+            {item.toUpperCase()}
+          </button>
+        ))}
+      </div>
+    )}
+  </header>
+
   {false && (
   <div
     style={{
@@ -2373,13 +3266,118 @@ if (!authChecked) return null
   </div>
 )}
   <div
+    className="mc-dashboard-container"
     style={{
       maxWidth: "1360px",
       margin: "0 auto",
       padding: "28px",
     }}
   >
+    <div className="mc-dashboard-command mc-seller-cabinet">
+      <div className="mc-dashboard-command-copy mc-seller-identity">
+        <div className="mc-seller-avatar">{dashboardInitial}</div>
+        <div className="mc-seller-meta">
+          <div className="mc-dashboard-kicker">MarketCard AI seller cabinet</div>
+          <h1>Личный кабинет продавца</h1>
+          <p>
+            {dashboardName}, управляйте генерациями, тарифом, аудитами, AI-видео и экспортами для маркетплейсов в одном premium workspace.
+          </p>
+        </div>
+      </div>
+
+      <div className="mc-seller-cabinet-panel">
+        <div className="mc-seller-metrics">
+          <div>
+            <span>Email</span>
+            <strong>{accountEmailLabel}</strong>
+          </div>
+          <div>
+            <span>Тариф</span>
+            <strong>{profile?.tariff_name || "Start"}</strong>
+          </div>
+          <div>
+            <span>Генерации</span>
+            <strong>{dashboardLeft}/{dashboardTotal || 0}</strong>
+          </div>
+          <div>
+            <span>Аудиты</span>
+            <strong>{profile?.audit_credits ?? 0}</strong>
+          </div>
+        </div>
+
+        <div className="mc-seller-actions">
+          <button type="button" onClick={() => setShowTariffModal(true)}>
+            Тарифы
+          </button>
+          <button type="button" onClick={handleSwitchAccount}>
+            Сменить аккаунт
+          </button>
+          <button type="button" onClick={handleLogout}>
+            Выйти
+          </button>
+          <button type="button" className="is-danger" onClick={handleAccountDeleteRequest}>
+            Удалить аккаунт
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div className="mc-dashboard-stats-grid">
+      {dashboardStats.map((stat) => (
+        <div key={stat.label} className={`mc-dashboard-stat-card mc-dashboard-stat-${stat.tone}`}>
+          <div className="mc-dashboard-stat-top">
+            <span>{stat.label}</span>
+            <i />
+          </div>
+          <strong>{stat.value}</strong>
+          <p>{stat.detail}</p>
+        </div>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-quick-title">Быстрый старт</div>
+
+    <div className="mc-dashboard-platform-map mc-dashboard-platform-map-primary" aria-label="Карта платформы">
+      {platformMapItems.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={item.onClick}
+          className={item.active ? `mc-dashboard-platform-card is-active tone-${item.tone}` : `mc-dashboard-platform-card tone-${item.tone}`}
+        >
+          <span>{item.metric}</span>
+          <strong>{item.title}</strong>
+          <small>{item.text}</small>
+        </button>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-quick-tips">
+      {dashboardTips.map((tip) => (
+        <button
+          key={tip.title}
+          className={`mc-dashboard-tip-card mc-dashboard-tip-${tip.accent}`}
+          type="button"
+          onClick={() => setActivePage(tip.title === "SEO и аудит" ? "audit" : "generator")}
+        >
+          <span>{tip.title}</span>
+          <p>{tip.text}</p>
+        </button>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-credits-strip">
+      <div>
+        <span>Использование тарифа</span>
+        <strong>{dashboardProgress}%</strong>
+      </div>
+      <div className="mc-dashboard-progress">
+        <span style={{ width: `${dashboardProgress}%` }} />
+      </div>
+    </div>
+
     <div
+      className="mc-dashboard-legacy-card"
       style={{
         padding: "28px",
         borderRadius: "24px",
@@ -2639,8 +3637,581 @@ if (!authChecked) return null
       </div>
     </div>
 
+    <div className="mc-dashboard-platform-map mc-dashboard-platform-map-secondary" aria-label="Карта платформы">
+      {platformMapItems.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={item.onClick}
+          className={item.active ? `mc-dashboard-platform-card is-active tone-${item.tone}` : `mc-dashboard-platform-card tone-${item.tone}`}
+        >
+          <span>{item.metric}</span>
+          <strong>{item.title}</strong>
+          <small>{item.text}</small>
+        </button>
+      ))}
+    </div>
+
+    <div className="mc-dashboard-workspace" data-page={activePage}>
+    <div className="mc-dashboard-section-hero" data-section={activePage}>
+      <div>
+        <span>{dashboardSectionMeta[activePage].badge}</span>
+        <h2>{dashboardSectionMeta[activePage].title}</h2>
+        <p>{dashboardSectionMeta[activePage].subtitle}</p>
+      </div>
+      <div className="mc-dashboard-section-orbit" aria-hidden="true">
+        <i />
+        <b />
+      </div>
+    </div>
+
+    {activePage === "video" && (
+      <div className="mc-video-generator-v2">
+        <div className="mc-video-v2-head">
+          <div className="mc-video-v2-brand">
+            <div className="mc-video-v2-icon">VI</div>
+            <div>
+              <h1>AI VIDEO</h1>
+              <p>Генератор промо-роликов под 4 маркетплейса</p>
+            </div>
+          </div>
+          <div className="mc-video-online-badge">
+            <i />
+            МОДЕЛЬ ОНЛАЙН
+          </div>
+        </div>
+
+        <div className="mc-video-v2-grid">
+          <div className="mc-video-v2-column">
+            <section className="mc-video-v2-panel">
+              <label className="mc-video-v2-label">Фото товара</label>
+              <label
+                className={previewUrl ? "mc-video-upload-zone has-image" : "mc-video-upload-zone"}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const file = e.dataTransfer.files?.[0] ?? null
+                  if (file && file.type.startsWith("image/")) {
+                    setSelectedFile(file)
+                  }
+                }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null
+                    setSelectedFile(file)
+                  }}
+                />
+
+                {previewUrl ? (
+                  <img src={previewUrl} alt="Фото товара для видео" />
+                ) : (
+                  <div className="mc-video-upload-empty">
+                    <span className="mc-video-upload-mark">UP</span>
+                    <strong>Загрузите фото товара</strong>
+                    <small>PNG, JPG, WEBP до 10MB</small>
+                  </div>
+                )}
+              </label>
+              <p className="mc-video-v2-help">
+                ИИ использует фото как hero-object и собирает motion brief под выбранную площадку.
+              </p>
+            </section>
+
+            <section className="mc-video-v2-panel">
+              <div className="mc-video-section-row">
+                <label className="mc-video-v2-label">Сценарий ролика</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setVideoPrompt(
+                      "Красивый 360° оборот товара, премиальная подсветка, динамичные переходы, крупные преимущества и финальный оффер для маркетплейса."
+                    )
+                  }
+                >
+                  AI подсказка
+                </button>
+              </div>
+              <textarea
+                value={videoPrompt}
+                onChange={(e) => setVideoPrompt(e.target.value)}
+                placeholder="Покажите товар с разных ракурсов, добавьте свечение, динамичные переходы и финальный оффер..."
+                className="mc-video-scenario"
+              />
+            </section>
+
+            <section className="mc-video-v2-panel">
+              <label className="mc-video-v2-label">Стиль</label>
+              <div className="mc-video-style-grid">
+                {videoStyles.map((style) => (
+                  <button
+                    key={style.key}
+                    type="button"
+                    className={videoStyle === style.key ? "mc-video-style-btn is-active" : "mc-video-style-btn"}
+                    onClick={() => setVideoStyle(style.key)}
+                  >
+                    {style.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="mc-video-v2-panel mc-video-free-panel">
+              <div className="mc-video-section-row">
+                <label className="mc-video-v2-label">Free video pipeline</label>
+                <span>готово к API</span>
+              </div>
+              <div className="mc-video-provider-grid">
+                {videoPipeline.map((item) => (
+                  <div className="mc-video-provider-card" key={item.title}>
+                    <strong>{item.title}</strong>
+                    <small>{item.text}</small>
+                    <button type="button" onClick={() => window.open(item.url, "_blank", "noopener,noreferrer")}>
+                      Открыть сервис
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <section className="mc-video-v2-preview-panel">
+            <div className="mc-video-preview-top">
+              <h3>Превью видео</h3>
+              <div className="mc-video-selected-platform">
+                <img src={activeVideoMarketplace.logo} alt={activeVideoMarketplace.label} />
+                <span>{activeVideoMarketplace.label}</span>
+              </div>
+            </div>
+
+            <div className={`mc-video-live-frame mc-video-live-${videoAspect.replace(":", "-")}`}>
+              {previewUrl && (
+                <div
+                  className="mc-video-bg"
+                  style={{ backgroundImage: `url(${previewUrl})` }}
+                />
+              )}
+
+              <div className="mc-video-preview-product">
+                {videoAssetUrl && videoAssetType === "video" ? (
+                  <video src={videoAssetUrl} autoPlay loop muted playsInline controls />
+                ) : videoAssetUrl ? (
+                  <img src={videoAssetUrl} alt="Готовый AI video motion preview" />
+                ) : previewUrl ? (
+                  <img src={previewUrl} alt="Видео preview товара" />
+                ) : (
+                  <span>MC</span>
+                )}
+                <strong>{productTitle || "Premium product"}</strong>
+                <small>{activeVideoMarketplace.caption}</small>
+              </div>
+
+              <div className="mc-video-frame-gradient" />
+              <div className="mc-video-frame-track">
+                <i />
+                <i />
+                <i />
+              </div>
+
+              {isVideoGenerating && (
+                <div className="mc-video-render-state is-processing">
+                  <span />
+                  ГЕНЕРАЦИЯ...
+                </div>
+              )}
+              {videoResultReady && (
+                <div className="mc-video-render-state is-ready">
+                  Видео поставлено в очередь
+                </div>
+              )}
+            </div>
+
+            {isVideoGenerating && (
+              <LiveGenerationProgress
+                progress={videoProgress}
+                title="AI собирает видео"
+                note="Ожидание 35-40 секунд: готовим motion, формат и маркетплейс-версию."
+                steps={["Фото", "Сценарий", "Motion", "Формат"]}
+              />
+            )}
+
+            <div className="mc-video-market-panel">
+              <label className="mc-video-v2-label">Маркетплейс</label>
+              <div className="mc-video-market-grid">
+                {videoMarketplaces.map((market) => (
+                  <button
+                    key={market.key}
+                    type="button"
+                    className={videoMarketplace === market.key ? "mc-video-market-card is-active" : "mc-video-market-card"}
+                    onClick={() => {
+                      setVideoMarketplace(market.key)
+                      setVideoAspect(market.format)
+                    }}
+                  >
+                    <img className="mc-video-market-logo" src={market.logo} alt={market.label} />
+                    <strong>{market.label}</strong>
+                    <small>{market.format}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mc-video-generate-footer">
+              <button
+                type="button"
+                className="mc-video-v2-generate"
+                onClick={handleVideoGenerate}
+                disabled={isVideoGenerating}
+              >
+                <span>{isVideoGenerating ? "..." : "AI"}</span>
+                {isVideoGenerating ? "СОЗДАЁМ ВИДЕО..." : "СОЗДАТЬ ВИДЕО ПО ФОТО"}
+              </button>
+              <p>35-40 сек • 4K brief • адаптивно под Uzum, Wildberries, Ozon и Yandex Market</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    )}
+
     {activePage === "generator" && (
+      <>
+        <div className="mc-create-card-layout">
+          <section className="mc-create-card-panel mc-create-card-controls">
+            <div className="mc-create-kicker">AI CARD GENERATOR</div>
+            <h2>Создать карточку товара</h2>
+            <p className="mc-create-lead">
+              Загрузи фото, добавь данные товара и выбери маркетплейс. MarketCard AI соберет премиальную карточку в стиле платформы.
+            </p>
+
+            <label
+              className={selectedFile ? "mc-upload-dropzone has-file" : "mc-upload-dropzone"}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                const file = e.dataTransfer.files?.[0] ?? null
+                if (file && file.type.startsWith("image/")) {
+                  setSelectedFile(file)
+                }
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  setSelectedFile(file)
+                }}
+              />
+
+              {previewUrl ? (
+                <div className="mc-upload-preview-wrap">
+                  <img src={previewUrl} alt="Preview" />
+                  <div>
+                    <strong>{selectedFile?.name || "Фото товара загружено"}</strong>
+                    <span>Нажми или перетащи новое фото для замены</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="mc-upload-empty-state">
+                  <span className="mc-upload-icon">+</span>
+                  <strong>Загрузить фото товара</strong>
+                  <small>Перетащите фото сюда или нажмите для выбора файла</small>
+                  <em>PNG, JPG, WEBP до 10 МБ</em>
+                </div>
+              )}
+            </label>
+
+            <div className={photoAnalyzing ? "mc-photo-ai-status is-loading" : "mc-photo-ai-status"}>
+              <span>AI</span>
+              <div>
+                <strong>
+                  {photoAnalyzing
+                    ? "Распознаю товар по фото..."
+                    : photoAnalyzeError
+                      ? "Фото можно заполнить вручную"
+                      : selectedFile
+                        ? "Название и характеристики заполняются автоматически"
+                        : "Загрузите фото, и AI сам определит товар"}
+                </strong>
+                <small>
+                  {photoAnalyzeError || "Вам останется проверить результат и вписать бренд товара."}
+                </small>
+              </div>
+            </div>
+
+            <div className="mc-create-field mc-create-field-wide">
+              <label>{t.titleLabel}</label>
+              <input
+                type="text"
+                value={productTitle}
+                onChange={(e) => setProductTitle(e.target.value)}
+                placeholder={t.titlePlaceholder}
+              />
+            </div>
+
+            <div className="mc-create-two-fields">
+              <div className="mc-create-field">
+                <label>{t.brandLabel}</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="BRAVE"
+                />
+              </div>
+
+              <div className="mc-create-field">
+                <label>{t.categoryLabel}</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="Автозапчасти"
+                />
+              </div>
+            </div>
+
+            <div className="mc-create-field mc-create-field-wide mc-create-characteristics-field">
+              <label>Характеристики</label>
+              <textarea
+                value={productCharacteristics}
+                onChange={(e) => setProductCharacteristics(e.target.value)}
+                placeholder="AI заполнит: назначение, тип товара, визуальные преимущества, комплектацию..."
+              />
+            </div>
+
+            <div className="mc-create-marketplaces">
+              <span className="mc-create-section-label">Маркетплейс</span>
+              <div className="mc-create-market-grid">
+                {[
+                  { key: "uzum" as const, logo: "/marketplaces-premium/uzum.png", note: "3:4 карточка" },
+                  { key: "wildberries" as const, logo: "/marketplaces-premium/wildberries.png", note: "WB-ready" },
+                  { key: "ozon" as const, logo: "/marketplaces-premium/ozon.png", note: "Ozon feed" },
+                  { key: "yandex" as const, logo: "/marketplaces-premium/yandex.png", note: "1:1 витрина" },
+                ].map((market) => (
+                  <div className="mc-market-tile-wrap" key={market.key}>
+                    <MarketplaceButton
+                      label={marketplaceFormats[market.key].label}
+                      selected={selectedMarketplace === market.key}
+                      gradient={marketplaceFormats[market.key].gradient}
+                      logoSrc={market.logo}
+                      onClick={() => setSelectedMarketplace(market.key)}
+                    />
+                    <small>{market.note}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mc-create-options-grid">
+              <div className="mc-create-option-box">
+                <span>Язык</span>
+                <div className="mc-create-chip-row">
+                  <button type="button" className={languageMode === "ru" ? "mc-create-chip is-active" : "mc-create-chip"} onClick={() => setLanguageMode("ru")}>
+                    RU
+                  </button>
+                  <button type="button" className={languageMode === "uz" ? "mc-create-chip is-active" : "mc-create-chip"} onClick={() => setLanguageMode("uz")}>
+                    UZ
+                  </button>
+                  <button type="button" className={languageMode === "both" ? "mc-create-chip is-active" : "mc-create-chip"} onClick={() => setLanguageMode("both")}>
+                    RU + UZ
+                  </button>
+                </div>
+              </div>
+
+              <div className="mc-create-option-box">
+                <span>Варианты</span>
+                <select value={variantCount} onChange={(e) => setVariantCount(Number(e.target.value))}>
+                  <option value={1}>1</option>
+                  <option value={3}>3</option>
+                  <option value={5}>5</option>
+                </select>
+              </div>
+
+              <div className="mc-create-option-box mc-create-format-box">
+                <span>Формат</span>
+                <strong>
+                  {currentFormat.width} x {currentFormat.height}
+                </strong>
+                <small>{currentFormat.label} • {currentFormat.ratio}</small>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="mc-create-generate-button"
+              onClick={handleGenerate}
+              disabled={creating}
+            >
+              <span>AI</span>
+              {creating ? "ГЕНЕРАЦИЯ..." : "СГЕНЕРИРОВАТЬ"}
+            </button>
+
+            <div className="mc-create-support-row">
+              <button type="button" onClick={handleDownloadPng} disabled={!pngReady}>
+                Скачать PNG
+              </button>
+              <a href="https://t.me/marketcardai_support_bot" target="_blank" rel="noreferrer">
+                Поддержка Telegram
+              </a>
+              {pngReady && <span>PNG готов</span>}
+            </div>
+          </section>
+
+          <section className="mc-create-card-panel mc-create-results-panel-v2">
+            <div className="mc-create-results-head">
+              <div>
+                <span>RESULTS</span>
+                <h2>Готовые варианты</h2>
+              </div>
+              <small>{generatedVariants.length || 0} создано</small>
+            </div>
+
+            {(ikpuLoading || ikpuResults.length > 0) && (
+              <div className="mc-create-ikpu-strip">
+                <div className="mc-create-ikpu-orb">IK</div>
+                <div className="mc-create-ikpu-main">
+                  <span>IKPU / SOLIQ</span>
+                  <strong>
+                    {ikpuLoading
+                      ? "Ищем правильный код..."
+                      : ikpuResults[0]?.code || "Код нужно уточнить"}
+                  </strong>
+                  <p>
+                    {ikpuLoading
+                      ? "Система автоматически сверяет товар с классификатором Soliq."
+                      : ikpuResults[0]?.name || "Откройте раздел ИКПУ для дополнительного поиска."}
+                  </p>
+                </div>
+                <button type="button" onClick={() => selectDashboardPage("ikpu")}>
+                  Проверить
+                </button>
+              </div>
+            )}
+
+            {isGenerating ? (
+              <div className="mc-create-results-stage is-loading">
+                <LiveGenerationProgress
+                  progress={imageProgress}
+                  title="AI генерирует карточки"
+                  note="Ожидание 35-40 секунд: вырезаем товар, собираем фон, тексты, формат и IKPU."
+                  steps={["Фото", "Фон", "Тексты", "IKPU"]}
+                />
+              </div>
+            ) : generatedVariants.length === 0 ? (
+              <div className="mc-create-results-stage">
+                <div className="mc-result-ghost-grid">
+                  <i />
+                  <i />
+                </div>
+                <strong>Здесь появятся готовые карточки</strong>
+                <span>После генерации варианты будут показаны в виде премиальных карточек с быстрым доступом к PNG.</span>
+              </div>
+            ) : (
+              <div className="mc-create-results-grid">
+                {generatedVariants.map((url: string, index: number) => {
+                  const imageSrc = url.startsWith("/generated_cards") ? `/api${url}` : url
+
+                  return (
+                    <article className="mc-create-result-card" key={`${url}-${index}`}>
+                      <img src={imageSrc} alt={`variant-${index + 1}`} />
+                      <div>
+                        <p>{productTitle || "Карточка товара"}</p>
+                        <span>{brand || "Brand"} • {category || currentFormat.label}</span>
+                        <div>
+                          <em>{index === 0 ? "Бестселлер" : "Премиум"}</em>
+                          <a href={imageSrc} target="_blank" rel="noreferrer">
+                            Открыть PNG
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+
+        <section className="mc-create-card-panel mc-create-correction-panel">
+          <div className="mc-correction-title">
+            <span>EDIT</span>
+            <h2>Исправить изображение</h2>
+          </div>
+
+          <div className="mc-correction-grid-v2">
+            <div className="mc-correction-controls">
+              <p>Напишите, что нужно изменить:</p>
+
+              <div className="mc-correction-variant-row">
+                {generatedVariants.length > 0 ? (
+                  generatedVariants.map((_, index) => (
+                    <button
+                      type="button"
+                      key={index}
+                      className={selectedFixIndex === index ? "is-active" : ""}
+                      onClick={() => setSelectedFixIndex(index)}
+                    >
+                      Фото {index + 1}
+                    </button>
+                  ))
+                ) : (
+                  <span>Сначала сгенерируйте карточку</span>
+                )}
+              </div>
+
+              <textarea
+                className="fix-prompt-textarea"
+                value={fixPrompt}
+                onChange={(e) => setFixPrompt(e.target.value)}
+                placeholder="Например: Сделай фон светлее, добавь тень под товар, измени текст на 'Скидка 30%'"
+              />
+
+              <div className="mc-correction-actions">
+                <button type="button" onClick={handleFixGeneratedImage} disabled={isFixingImage || generatedVariants.length === 0}>
+                  {isFixingImage ? "Исправление..." : "Применить исправление"}
+                </button>
+
+                {fixedImages[selectedFixIndex] ? (
+                  <a href={fixedImages[selectedFixIndex]} download={`fixed_image_${selectedFixIndex + 1}.png`} target="_blank" rel="noreferrer">
+                    Скачать PNG
+                  </a>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mc-correction-preview-v2">
+              {isFixingImage ? (
+                <div className="mc-create-results-stage is-loading">
+                  <LiveGenerationProgress
+                    progress={fixProgress}
+                    title="AI применяет правки"
+                    note="Ожидание 35-40 секунд: обновляем фон, текст и композицию выбранного варианта."
+                    steps={["Правка", "Фон", "Текст", "Экспорт"]}
+                  />
+                </div>
+              ) : (fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]) ? (
+                <img
+                  src={fixedImages[selectedFixIndex] || generatedVariants[selectedFixIndex]}
+                  alt="Предпросмотр изображения"
+                />
+              ) : (
+                <div className="mc-correction-empty">
+                  <strong>Здесь появится исправленная версия</strong>
+                  <span>Выберите вариант и опишите правку.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </>
+    )}
+
+    {false && activePage === "generator" && (
       <div
+        className="mc-generator-studio-grid"
         style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr" : "440px 1fr",
@@ -2649,6 +4220,7 @@ if (!authChecked) return null
         }}
       >
         <div
+          className="mc-generator-control-panel"
           style={{
             padding: "28px",
             borderRadius: "24px",
@@ -2679,9 +4251,11 @@ if (!authChecked) return null
             {t.aiPremiumHint}
           </div>
 
-          <div style={{ display: "grid", gap: "18px" }}>
-            <div>
-              <div style={labelStyle}>{t.uploadPhoto}</div><label
+          <div className="mc-create-card-form" style={{ display: "grid", gap: "18px" }}>
+            <div className="mc-generator-upload-field">
+              <div className="mc-generator-field-caption">{t.uploadPhoto}</div>
+              <label
+                className="mc-generator-upload-zone"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault()
@@ -2743,14 +4317,14 @@ if (!authChecked) return null
                     }}
                   >
                     {selectedFile
-                      ? `${t.selectedFile}: ${selectedFile.name}`
+                      ? `${t.selectedFile}: ${selectedFile?.name || ""}`
                       : t.noFile}
                   </div>
                 </div>
               </label>
             </div>
 
-            <div>
+            <div className="mc-generator-live-preview">
               <div
                 style={{
                   width: "100%",                  borderRadius: "18px",
@@ -2784,8 +4358,8 @@ if (!authChecked) return null
               </div>
             </div>
 
-            <div>
-              <div style={labelStyle}>{t.titleLabel}</div>
+            <div className="mc-generator-floating-field mc-generator-title-field">
+              <label>{t.titleLabel}</label>
               <input
                 type="text"
                 value={productTitle}
@@ -2793,53 +4367,61 @@ if (!authChecked) return null
                 placeholder={t.titlePlaceholder}
                 style={inputStyle}
               />
-            </div><div>
-              <div style={labelStyle}>{t.brandLabel}</div>
-              <input
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                placeholder={t.brandPlaceholder}
-                style={inputStyle}
-              />
             </div>
 
-            <div>
-              <div style={labelStyle}>{t.categoryLabel}</div>
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder={t.categoryPlaceholder}
-                style={inputStyle}
-              />
+            <div className="mc-generator-two-col">
+              <div className="mc-generator-floating-field">
+                <label>{t.brandLabel}</label>
+                <input
+                  type="text"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder={t.brandPlaceholder}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className="mc-generator-floating-field">
+                <label>{t.categoryLabel}</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder={t.categoryPlaceholder}
+                  style={inputStyle}
+                />
+              </div>
             </div>
 
-            <div>
-              <div style={labelStyle}>{t.chooseMarketplace}</div>
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <div className="mc-marketplace-selector">
+              <div className="mc-generator-field-caption">{t.chooseMarketplace}</div>
+              <div className="mc-marketplace-logo-grid" style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <MarketplaceButton
                   label={marketplaceFormats.uzum.label}
                   selected={selectedMarketplace === "uzum"}
                   gradient={marketplaceFormats.uzum.gradient}
+                  logoSrc="/marketplaces-premium/uzum.png"
                   onClick={() => setSelectedMarketplace("uzum")}
                 />
                 <MarketplaceButton
                   label={marketplaceFormats.wildberries.label}
                   selected={selectedMarketplace === "wildberries"}
                   gradient={marketplaceFormats.wildberries.gradient}
+                  logoSrc="/marketplaces-premium/wildberries.png"
                   onClick={() => setSelectedMarketplace("wildberries")}
                 />
                 <MarketplaceButton
                   label={marketplaceFormats.ozon.label}
                   selected={selectedMarketplace === "ozon"}
                   gradient={marketplaceFormats.ozon.gradient}
+                  logoSrc="/marketplaces-premium/ozon.png"
                   onClick={() => setSelectedMarketplace("ozon")}
                 />
                 <MarketplaceButton
                   label={marketplaceFormats.yandex.label}
                   selected={selectedMarketplace === "yandex"}
                   gradient={marketplaceFormats.yandex.gradient}
+                  logoSrc="/marketplaces-premium/yandex.png"
                   onClick={() => setSelectedMarketplace("yandex")}
                 />
               </div>
@@ -2919,6 +4501,7 @@ if (!authChecked) return null
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <button
+                className="mc-generate-hero-button"
                 onClick={handleGenerate}
                 disabled={creating}
                 style={primaryButtonStyle(creating)}
@@ -2927,6 +4510,7 @@ if (!authChecked) return null
               </button>
 
               <button
+                className="mc-download-soft-button"
                 onClick={handleDownloadPng}
                 disabled={!pngReady}
                 style={secondaryButtonStyle(!pngReady)}
@@ -2934,6 +4518,7 @@ if (!authChecked) return null
                 {t.downloadPng}
               </button>
             <a
+  className="mc-telegram-soft-button"
   href="https://t.me/marketcardai_support_bot"
   target="_blank"
   rel="noreferrer"
@@ -2987,12 +4572,14 @@ if (!authChecked) return null
         </div>
 
         <div
+          className="mc-generator-results-panel"
           style={{
             display: "grid",
             gap: "20px",
           }}
         >
           <div
+            className="mc-results-shell"
             style={{
               padding: "20px",
               borderRadius: "24px",
@@ -3051,6 +4638,7 @@ if (!authChecked) return null
   </div>
 ) : generatedVariants.length === 0 ? (
               <div
+                className="mc-results-empty"
                 style={{
                   minHeight: "320px",
                   borderRadius: "20px",
@@ -3070,6 +4658,7 @@ if (!authChecked) return null
               </div>
             ) : (
               <div
+                className="mc-results-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -3078,6 +4667,7 @@ if (!authChecked) return null
               >
                 {generatedVariants.map((url: string, index: number) => (
                   <div
+                    className="mc-generated-card-preview"
                     key={`${url}-${index}`}
                     style={{
                       padding: "14px",
@@ -3127,13 +4717,14 @@ if (!authChecked) return null
     )}
 
 
-      {activePage === "generator" && (
+      {false && activePage === "generator" && (
 <div
+        className="mc-fix-lab"
         style={{
-          marginTop: isMobile ? "20px" : "-1005px",
-          marginBottom: isMobile ? "24px" : "520px",
-          marginLeft: isMobile ? "0" : "464px",
-          width: isMobile ? "100%" : "calc(100% - 464px)",
+          marginTop: "24px",
+          marginBottom: "0",
+          marginLeft: "0",
+          width: "100%",
           padding: "20px",
           borderRadius: "24px",
           background: "rgba(255,255,255,0.06)",
@@ -3204,6 +4795,13 @@ if (!authChecked) return null
           }}
         >
           {isFixingImage ? (
+            <LiveGenerationProgress
+              progress={fixProgress}
+              title="AI исправляет изображение"
+              note="Ожидание 35-40 секунд: пересобираем фон, текст, свет и экспорт."
+              steps={["Запрос", "Композиция", "Рендер", "PNG"]}
+            />
+          ) : isFixingImage ? (
             <div
               style={{
                 display: "flex",
@@ -3338,7 +4936,7 @@ if (!authChecked) return null
 
 
 {activePage === "listing" && (
-  <div style={{ maxWidth: "1180px", padding: "28px", borderRadius: "24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 18px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(14px)" }}>
+  <div className="mc-listing-suite" style={{ maxWidth: "1180px", padding: "28px", borderRadius: "24px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", boxShadow: "0 18px 45px rgba(0,0,0,0.28)", backdropFilter: "blur(14px)" }}>
     <div style={{ fontSize: "34px", fontWeight: 900, marginBottom: "18px" }}>
       SEO / Описание товара
 
@@ -3446,6 +5044,303 @@ if (listingLang === "uz" && translatedListing) {
 </div>
 )}
 
+{activePage === "recommendations" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>AI SALES ADVISOR</span>
+      <h2>Рекомендации по продажам</h2>
+      <p>Система показывает, что делать с товаром: поднять карточку, снизить цену, сделать комплект, запустить промо, распродать остаток или перезаказать.</p>
+    </div>
+    <div className="mc-sales-advisor-grid">
+      {[
+        ["Товар лежит 21+ день", "Сделай скидку 7-12%, обнови первое фото, добавь бейдж выгоды и проверь SEO-запросы.", "Высокий приоритет", "red"],
+        ["Остаток высокий, просмотры есть", "Запусти A/B вариант карточки, добавь видео и усили преимущества в первых 3 секундах.", "Рост конверсии", "cyan"],
+        ["Цена выше рынка", "Проверь break-even в экономике товара. Если маржа позволяет, протестируй цену -5% на 72 часа.", "Ценовой тест", "amber"],
+        ["Возвраты растут", "Добавь честные размеры, комплектацию, материалы и фото деталей. Уменьши ожидание покупателя.", "Снижение возвратов", "emerald"],
+      ].map(([title, text, tag, tone]) => (
+        <div className={`mc-sales-advisor-card is-${tone}`} key={title}>
+          <span>{tag}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <button type="button" onClick={() => selectDashboardPage(title.includes("Цена") ? "economy" : "generator")}>
+            Выполнить действие
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{activePage === "integrations" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>MARKETPLACE API</span>
+      <h2>Интеграции маркетплейсов</h2>
+      <p>Центр публикации карточек, видео, описаний, IKPU и остатков в 4 площадки. Сейчас backend готов проверять ключи и собирать payload, а реальные API включаются через env.</p>
+    </div>
+    <div className="mc-market-publish-grid">
+      {[
+        { name: "Uzum", logo: "/marketplaces-premium/uzum.png", env: "UZUM_API_KEY + UZUM_SELLER_ID" },
+        { name: "Wildberries", logo: "/marketplaces-premium/wildberries.png", env: "WILDBERRIES_TOKEN" },
+        { name: "Ozon", logo: "/marketplaces-premium/ozon.png", env: "OZON_CLIENT_ID + OZON_API_KEY" },
+        { name: "Yandex Market", logo: "/marketplaces-premium/yandex.png", env: "YANDEX_MARKET_TOKEN + CAMPAIGN_ID" },
+      ].map((market) => (
+        <div className="mc-market-publish-card" key={market.name}>
+          <img src={market.logo} alt={market.name} />
+          <strong>{market.name}</strong>
+          <p>Автозагрузка карточки, видео, описания, цены и складских остатков.</p>
+          <small>{market.env}</small>
+          <button type="button" onClick={checkMarketplaceStatus}>Проверить подключение</button>
+        </div>
+      ))}
+    </div>
+    <div className="mc-publish-pipeline">
+      {[
+        ["01", "Контент", "PNG, видео, SEO, IKPU"],
+        ["02", "Проверка", "размеры, правила, обязательные поля"],
+        ["03", "Публикация", "создание товара через API"],
+        ["04", "Склад", "остатки и цены после публикации"],
+      ].map(([step, title, text]) => (
+        <div key={step}>
+          <span>{step}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{activePage === "warehouse" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>WAREHOUSE OS</span>
+      <h2>Мой склад</h2>
+      <p>Склад продавца: остатки, замороженные деньги, скорость продаж, рекомендации пополнения и товары, которые надо срочно двигать.</p>
+    </div>
+    <div className="mc-warehouse-grid">
+      {[
+        ["Остатки всего", "1 284 шт.", "153 SKU активны"],
+        ["Заморожено в товаре", "184 600 000 сум", "по закупочной стоимости"],
+        ["Без движения", "27 SKU", "нужна скидка или новый контент"],
+        ["Нужно заказать", "14 SKU", "риск out-of-stock в 7 дней"],
+      ].map(([label, value, note]) => (
+        <div className="mc-warehouse-row" key={label}>
+          <span>{label}</span>
+          <strong>{value}</strong>
+          <p>{note}</p>
+        </div>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={() => selectDashboardPage("purchase")}>Найти закуп товара</button>
+      <button type="button" onClick={() => selectDashboardPage("recommendations")}>Получить рекомендации</button>
+    </div>
+  </div>
+)}
+
+{activePage === "invoices" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>INVOICES</span>
+      <h2>Накладные</h2>
+      <p>Рабочая зона для накладных поставок, актов и будущей синхронизации с DIDOX/ЭДО.</p>
+    </div>
+    <div className="mc-invoice-board">
+      {[
+        ["Черновики", "4 документа", "готовы к проверке"],
+        ["На подписи", "2 документа", "ожидают контрагента"],
+        ["Проведено", "38 документов", "за текущий месяц"],
+      ].map(([title, value, note]) => (
+        <div className="mc-invoice-card" key={title}>
+          <span>{title}</span>
+          <strong>{value}</strong>
+          <p>{note}</p>
+          <button type="button" onClick={() => selectDashboardPage("didox")}>Открыть ЭДО</button>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+{activePage === "ikpu" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>SOLIQ / TASNIF</span>
+      <h2>Автоподбор ИКПУ</h2>
+      <p>
+        Введите название товара или используйте данные последней генерации. Backend ищет в локальном кеше,
+        затем дергает Soliq parser, сохраняет найденные коды и ранжирует варианты.
+      </p>
+    </div>
+
+    <div className="mc-tool-search">
+      <input
+        value={ikpuQuery}
+        onChange={(event) => setIkpuQuery(event.target.value)}
+        placeholder="Например: насос ГУР Cobalt, беспроводные наушники, аромат для дома"
+      />
+      <button type="button" onClick={searchIkpu} disabled={ikpuLoading}>
+        {ikpuLoading ? "Поиск..." : "Найти ИКПУ"}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const query = `${productTitle} ${brand} ${category}`.trim()
+          setIkpuQuery(query)
+          void searchIkpuAuto(query)
+        }}
+      >
+        Подобрать по карточке
+      </button>
+    </div>
+
+    {ikpuLoading && (
+      <LiveGenerationProgress
+        progress={ikpuProgress}
+        title="Soliq parser ищет IKPU"
+        note="Ожидание 35-40 секунд: сверяем название, категорию и локальный кеш."
+        steps={["Запрос", "Soliq", "Ранжирование", "Кеш"]}
+      />
+    )}
+
+    <div className="mc-ikpu-results">
+      {ikpuResults.length ? (
+        ikpuResults.map((item: any, index: number) => (
+          <div className="mc-ikpu-row" key={`${item.code || index}-${index}`}>
+            <div>
+              <span>#{index + 1} / {item.source || "parser"}</span>
+              <strong>{item.code || "Код не найден"}</strong>
+              <p>{item.name}</p>
+            </div>
+            <button type="button" onClick={() => navigator.clipboard.writeText(item.code || "")}>
+              Скопировать
+            </button>
+          </div>
+        ))
+      ) : (
+        <div className="mc-tool-empty">
+          <strong>ИКПУ появится здесь</strong>
+          <p>После генерации карточки раздел подсветится и покажет подходящие коды автоматически.</p>
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
+{activePage === "purchase" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>SOURCING</span>
+      <h2>Закуп товара</h2>
+      <p>Площадки для закупа, фабрики, карго и быстрый расчет входной цены. Сюда позже подключаются API поставщиков и карго.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["1688", "Китайский опт и фабрики", "https://www.1688.com", "CN"],
+        ["Alibaba", "Международные поставщики", "https://www.alibaba.com", "AL"],
+        ["Taobao", "Тренды и розничный Китай", "https://world.taobao.com", "TB"],
+        ["Made-in-China", "Фабрики и производство", "https://www.made-in-china.com", "MC"],
+        ["Global Sources", "B2B поставщики", "https://www.globalsources.com", "GS"],
+        ["DHgate", "Мелкий опт", "https://www.dhgate.com", "DH"],
+      ].map(([title, text, url, logo]) => (
+        <button className="mc-tool-card" key={title} type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")}>
+          <span className="mc-market-logo-badge">{logo}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </button>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={openSourcingLinks}>Открыть все источники</button>
+      <button type="button" onClick={() => selectDashboardPage("economy")}>Посчитать входную цену</button>
+    </div>
+  </div>
+)}
+
+{activePage === "didox" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>DIDOX / ЭДО</span>
+      <h2>Документы продавца</h2>
+      <p>Раздел готов под API DIDOX: счета, акты, накладные, статусы подписи и привязка документов к товарам.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["Счета", "Создание и контроль счетов по заказам", "Готово к API"],
+        ["Акты", "Шаблоны актов и статусы подписания", "DIDOX"],
+        ["Накладные", "Документы поставок и закупа", "ЭДО"],
+        ["Проверка", "Контроль ИНН, компании и статуса", "KYC"],
+      ].map(([title, text, tag]) => (
+        <div className="mc-tool-card" key={title}>
+          <span className="mc-market-logo-badge">{tag.slice(0, 2)}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <small>{tag}</small>
+        </div>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={() => window.open("https://didox.uz", "_blank", "noopener,noreferrer")}>Открыть DIDOX</button>
+      <button type="button" onClick={() => alert("Добавьте DIDOX_CLIENT_ID и DIDOX_CLIENT_SECRET в backend/.env")}>Проверить API ключи</button>
+    </div>
+  </div>
+)}
+
+{activePage === "deficit" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>4 MARKETPLACES</span>
+      <h2>Дефицит товаров</h2>
+      <p>Поиск ниш, где спрос есть, а карточки слабые или товаров мало. Поддержка Uzum, Wildberries, Ozon и Yandex Market.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["Uzum", "Локальный спрос и дефицит категорий", "UZ"],
+        ["Wildberries", "Слабые карточки и высокий спрос", "WB"],
+        ["Ozon", "Пробелы ассортимента и цены", "OZ"],
+        ["Yandex Market", "Категории и товарные разрывы", "YA"],
+      ].map(([title, text, logo]) => (
+        <div className="mc-tool-card" key={title}>
+          <span className="mc-market-logo-badge">{logo}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <small><i className="mc-status-dot" /> parser ready</small>
+        </div>
+      ))}
+    </div>
+    <div className="mc-tool-actions">
+      <button type="button" onClick={openDeficitProductsAllMarketplaces}>Собрать дефицит по 4 площадкам</button>
+      <button type="button" onClick={openDeficitProducts}>Быстрый Uzum отчет</button>
+    </div>
+  </div>
+)}
+
+{activePage === "instructions" && (
+  <div className="mc-tool-suite">
+    <div className="mc-tool-hero">
+      <span>LIVE RULES</span>
+      <h2>Инструкции маркетплейсов</h2>
+      <p>Центр правил для продавцов: требования к изображениям, SEO, запрещенные слова, документы и форматы.</p>
+    </div>
+    <div className="mc-tool-grid">
+      {[
+        ["Uzum", "Фото, характеристики, ИКПУ и локальные требования", "UZ"],
+        ["Wildberries", "Инфографика, SEO, размеры и контент-риск", "WB"],
+        ["Ozon", "Медиа, описание, rich-content и модерация", "OZ"],
+        ["Yandex Market", "Фиды, изображения, документы и категории", "YA"],
+      ].map(([title, text, logo]) => (
+        <div className="mc-tool-card" key={title}>
+          <span className="mc-market-logo-badge">{logo}</span>
+          <strong>{title}</strong>
+          <p>{text}</p>
+          <small>обновление через parser/cron</small>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 {activePage === "audit" && (
   <>
   <CardAuditPanel />
@@ -3460,246 +5355,198 @@ if (listingLang === "uz" && translatedListing) {
 )}
 
 {activePage === "economy" && (
-      <div
-        style={{
-          maxWidth: "980px",
-          padding: "28px",
-          borderRadius: "24px",
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          boxShadow: "0 18px 45px rgba(0,0,0,0.28)",
-          backdropFilter: "blur(14px)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "34px",
-            fontWeight: 900,
-            marginBottom: "6px",
-          }}
-        >
-          {t.unitTitle}
+      <div className="mc-economy-command">
+        <div className="mc-economy-hero">
+          <div>
+            <span className="mc-economy-kicker">Profit cockpit</span>
+            <h2>Юнит-экономика продавца</h2>
+            <p>
+              Считай реальную прибыль после закупки, комиссий, рекламы, налогов,
+              логистики, возвратов и фиксированных расходов. Не валовая маржа,
+              а честный contribution margin.
+            </p>
+          </div>
+          <div className={unit.contributionProfit > 0 ? "mc-economy-health is-good" : "mc-economy-health is-risk"}>
+            <span>{unit.contributionProfit > 0 ? "PROFIT" : "RISK"}</span>
+            <strong>{formatMoney(unit.contributionProfit, lang)} сум</strong>
+            <small>прибыль с 1 продажи</small>
+          </div>
         </div>
 
-        <div
-          style={{
-            fontSize: "15px",
-            color: "#cbd5e1",
-            marginBottom: "18px",
-            fontWeight: 700,
-          }}
-        >
-          {t.unitSubtitle}
+        <div className="mc-economy-metrics">
+          {[
+            ["Цена продажи", `${formatMoney(unit.sellingPriceNum, lang)} сум`, "текущая цена"],
+            ["Чистая маржа", `${unit.contributionMargin.toFixed(1)}%`, "после всех переменных расходов"],
+            ["ROI", `${unit.roi.toFixed(1)}%`, "прибыль / true cost"],
+            ["Break-even", `${formatMoney(unit.breakEven, lang)} сум`, "минимальная цена"],
+            ["Max ACOS", `${unit.maxAcos.toFixed(1)}%`, "порог рекламы"],
+            ["План прибыли", `${formatMoney(unit.profitPlan, lang)} сум`, `${plannedUnits} шт.`],
+          ].map(([label, value, note]) => (
+            <div className="mc-economy-metric" key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+              <small>{note}</small>
+            </div>
+          ))}
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "12px",
-          }}
-        >
-          <div>
-            <div style={labelStyle}>{t.purchaseUsd}</div>
-            <input
-              value={purchaseUsd}
-              onChange={(e) => setPurchaseUsd(e.target.value)}
-              style={inputStyle}
-            />
+        <div className="mc-economy-grid">
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>01</span>
+              <div>
+                <h3>Вводные по товару</h3>
+                <p>Закупка, курс, логистика, упаковка и склад.</p>
+              </div>
+            </div>
+            <div className="mc-economy-input-grid">
+              {[
+                ["Закупка, $", purchaseUsd, setPurchaseUsd],
+                ["Курс USD", usdRate, setUsdRate],
+                ["Логистика МП", fulfillmentLogistics, setFulfillmentLogistics],
+                ["Локальная логистика", localLogistics, setLocalLogistics],
+                ["Упаковка", packaging, setPackaging],
+                ["Хранение / шт.", storagePerUnit, setStoragePerUnit],
+                ["Прочие расходы", otherCosts, setOtherCosts],
+                ["План продаж, шт.", plannedUnits, setPlannedUnits],
+              ].map(([label, value, setter]) => (
+                <label className="mc-economy-field" key={String(label)}>
+                  <span>{String(label)}</span>
+                  <input value={String(value)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} />
+                </label>
+              ))}
+            </div>
           </div>
 
-          <div>
-            <div style={labelStyle}>{t.usdRate}</div>
-            <input
-              value={usdRate}
-              onChange={(e) => setUsdRate(e.target.value)}
-              style={inputStyle}
-            />
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>02</span>
+              <div>
+                <h3>Маркетплейс и риск</h3>
+                <p>Комиссии, реклама, возвраты, налоги и платежи.</p>
+              </div>
+            </div>
+            <div className="mc-economy-input-grid">
+              {[
+                ["Цена продажи", sellingPrice, setSellingPrice],
+                ["Цена конкурентов", competitorPrice, setCompetitorPrice],
+                ["Комиссия МП, %", commissionPercent, setCommissionPercent],
+                ["Реклама / ACOS, %", adCostPercent, setAdCostPercent],
+                ["Налог, %", taxPercent, setTaxPercent],
+                ["Эквайринг, %", paymentFeePercent, setPaymentFeePercent],
+                ["Возвраты, %", returnRatePercent, setReturnRatePercent],
+                ["Стоимость возврата", returnCost, setReturnCost],
+                ["Фикс. расходы / мес", monthlyFixedCosts, setMonthlyFixedCosts],
+                ["Желаемая прибыль / шт.", desiredProfit, setDesiredProfit],
+              ].map(([label, value, setter]) => (
+                <label className="mc-economy-field" key={String(label)}>
+                  <span>{String(label)}</span>
+                  <input value={String(value)} onChange={(event) => (setter as (value: string) => void)(event.target.value)} />
+                </label>
+              ))}
+            </div>
           </div>
-
-          <div>
-            <div style={labelStyle}>{t.commissionPercent}</div>
-            <input
-              value={commissionPercent}
-              onChange={(e) => setCommissionPercent(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.fulfillmentLogistics}</div>
-            <input
-              value={fulfillmentLogistics}
-              onChange={(e) => setFulfillmentLogistics(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.localLogistics}</div>
-            <input
-              value={localLogistics}
-              onChange={(e) => setLocalLogistics(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.marketing}</div>
-            <input
-              value={marketing}
-              onChange={(e) => setMarketing(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.packaging}</div>
-            <input
-              value={packaging}
-              onChange={(e) => setPackaging(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.otherCosts}</div>
-            <input
-              value={otherCosts}
-              onChange={(e) => setOtherCosts(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.desiredProfit}</div>
-            <input
-              value={desiredProfit}
-              onChange={(e) => setDesiredProfit(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <div>
-            <div style={labelStyle}>{t.competitorPrice}</div>
-            <input
-              value={competitorPrice}
-              onChange={(e) => setCompetitorPrice(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-        </div><div
-          style={{
-            marginTop: "18px",
-            display: "grid",
-            gap: "12px",
-          }}
-        >
-          <SummaryLine
-            label={t.totalCost}
-            value={`${formatMoney(unit.totalCost, lang)} ${t.sum}`}
-          />
-          <SummaryLine
-            label={t.breakEvenPrice}
-            value={`${formatMoney(unit.breakEven, lang)} ${t.sum}`}
-          />
-          <SummaryLine
-            label={t.marketBenchmark}
-            value={
-              unit.competitorNum > 0
-                ? `${formatMoney(unit.competitorNum, lang)} ${t.sum}`
-                : t.noBenchmark
-            }
-            hint={t.competitorHint}
-          />
         </div>
 
-        <div
-          style={{
-            marginTop: "18px",
-            display: "grid",
-            gap: "12px",
-          }}
-        >
-          <ScenarioCard
-            title={t.aggressivePrice}
-            hint={t.aggressiveHint}
-            demand={t.demandHigh}
-            price={`${formatMoney(unit.aggressive, lang)} ${t.sum}`}
-            profit={`${formatMoney(unit.aggressiveProfit, lang)} ${t.sum}`}
-            gradient="linear-gradient(135deg,#22c55e,#16a34a)"
-            profitLabel={t.expectedNetProfit}
-            marginPercent={unit.aggressiveMargin}
-            roiPercent={unit.aggressiveROI}
-            statusText={getStatusText(unit.aggressiveStatus, dict.ru)}
-            statusGradient={getStatusColor(unit.aggressiveStatus)}
-            marginLabel={t.netMarginPercent}
-            roiLabel={t.roi}
-          />
+        <div className="mc-economy-breakdown">
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>03</span>
+              <div>
+                <h3>Структура себестоимости</h3>
+                <p>True cost на одну продажу.</p>
+              </div>
+            </div>
+            {[
+              ["Закупка в сумах", unit.purchaseCostUzs],
+              ["Операционные расходы", unit.totalCost - unit.purchaseCostUzs],
+              ["Резерв на возвраты", unit.returnReserve],
+              ["Фиксированные на 1 шт.", unit.fixedPerUnit],
+              ["Итого true cost", unit.trueUnitCost],
+            ].map(([label, value]) => (
+              <SummaryLine key={String(label)} label={String(label)} value={`${formatMoney(Number(value), lang)} сум`} />
+            ))}
+          </div>
 
-          <ScenarioCard
-            title={t.optimalPrice}
-            hint={t.optimalHint}
-            demand={t.demandMedium}
-            price={`${formatMoney(unit.optimal, lang)} ${t.sum}`}
-            profit={`${formatMoney(unit.optimalProfit, lang)} ${t.sum}`}
-            gradient="linear-gradient(135deg,#06b6d4,#2563eb)"
-            profitLabel={t.expectedNetProfit}
-            marginPercent={unit.optimalMargin}
-            roiPercent={unit.optimalROI}
-            statusText={getStatusText(unit.optimalStatus, dict.ru)}
-            statusGradient={getStatusColor(unit.optimalStatus)}
-            marginLabel={t.netMarginPercent}
-            roiLabel={t.roi}
-          />
-
-          <ScenarioCard
-            title={t.premiumPrice}
-            hint={t.premiumHint}
-            demand={t.demandLow}
-            price={`${formatMoney(unit.premium, lang)} ${t.sum}`}
-            profit={`${formatMoney(unit.premiumProfit, lang)} ${t.sum}`}
-            gradient="linear-gradient(135deg,#f59e0b,#f97316)"
-            profitLabel={t.expectedNetProfit}
-            marginPercent={unit.premiumMargin}
-            roiPercent={unit.premiumROI}
-            statusText={getStatusText(unit.premiumStatus, dict.ru)}
-            statusGradient={getStatusColor(unit.premiumStatus)}
-            marginLabel={t.netMarginPercent}
-            roiLabel={t.roi}
-          />
+          <div className="mc-economy-panel">
+            <div className="mc-economy-panel-head">
+              <span>04</span>
+              <div>
+                <h3>Сценарии цены</h3>
+                <p>Быстро выбери стратегию запуска.</p>
+              </div>
+            </div>
+            <div className="mc-economy-scenarios">
+              <ScenarioCard
+                title={t.aggressivePrice}
+                hint={t.aggressiveHint}
+                demand={t.demandHigh}
+                price={`${formatMoney(unit.aggressive, lang)} ${t.sum}`}
+                profit={`${formatMoney(unit.aggressiveProfit, lang)} ${t.sum}`}
+                gradient="linear-gradient(135deg,#22c55e,#16a34a)"
+                profitLabel={t.expectedNetProfit}
+                marginPercent={unit.aggressiveMargin}
+                roiPercent={unit.aggressiveROI}
+                statusText={getStatusText(unit.aggressiveStatus, dict.ru)}
+                statusGradient={getStatusColor(unit.aggressiveStatus)}
+                marginLabel={t.netMarginPercent}
+                roiLabel={t.roi}
+              />
+              <ScenarioCard
+                title={t.optimalPrice}
+                hint={t.optimalHint}
+                demand={t.demandMedium}
+                price={`${formatMoney(unit.optimal, lang)} ${t.sum}`}
+                profit={`${formatMoney(unit.optimalProfit, lang)} ${t.sum}`}
+                gradient="linear-gradient(135deg,#06b6d4,#2563eb)"
+                profitLabel={t.expectedNetProfit}
+                marginPercent={unit.optimalMargin}
+                roiPercent={unit.optimalROI}
+                statusText={getStatusText(unit.optimalStatus, dict.ru)}
+                statusGradient={getStatusColor(unit.optimalStatus)}
+                marginLabel={t.netMarginPercent}
+                roiLabel={t.roi}
+              />
+              <ScenarioCard
+                title={t.premiumPrice}
+                hint={t.premiumHint}
+                demand={t.demandLow}
+                price={`${formatMoney(unit.premium, lang)} ${t.sum}`}
+                profit={`${formatMoney(unit.premiumProfit, lang)} ${t.sum}`}
+                gradient="linear-gradient(135deg,#f59e0b,#f97316)"
+                profitLabel={t.expectedNetProfit}
+                marginPercent={unit.premiumMargin}
+                roiPercent={unit.premiumROI}
+                statusText={getStatusText(unit.premiumStatus, dict.ru)}
+                statusGradient={getStatusColor(unit.premiumStatus)}
+                marginLabel={t.netMarginPercent}
+                roiLabel={t.roi}
+              />
+            </div>
+          </div>
         </div>
 
-        <div
-          style={{
-            marginTop: "18px",
-            padding: "16px",
-            borderRadius: "18px",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 900,
-              fontSize: "15px",
-              marginBottom: "8px",
-            }}
-          >
-            {t.recommendation}
+        <div className="mc-economy-advice">
+          <div>
+            <strong>Рекомендация MarketCard AI</strong>
+            <p>
+              {unit.safetyGap >= 0
+                ? `Цена выше break-even на ${formatMoney(unit.safetyGap, lang)} сум. Можно тестировать рекламу до ACOS ${unit.maxAcos.toFixed(1)}%.`
+                : `Цена ниже break-even на ${formatMoney(Math.abs(unit.safetyGap), lang)} сум. Подними цену, снизь комиссию/логистику или уменьши рекламный ACOS.`}
+            </p>
           </div>
-          <div
-            style={{
-              color: "#cbd5e1",
-              fontSize: "14px",
-              lineHeight: 1.6,
-            }}
-          >
-            {t.recommendationText}
+          <div>
+            <strong>Break-even объем</strong>
+            <p>
+              {unit.breakEvenUnits > 0
+                ? `${unit.breakEvenUnits} продаж, оборот ${formatMoney(unit.breakEvenRevenue, lang)} сум для покрытия фиксированных расходов.`
+                : "При текущей цене contribution margin отрицательная, точка безубыточности недостижима."}
+            </p>
           </div>
         </div>
       </div>
     )}
+    </div>
   </div>
 </section>
 </div>
@@ -3708,6 +5555,7 @@ if (listingLang === "uz" && translatedListing) {
 
 {showTariffModal && (
   <div
+    className="mc-modal-shell mc-tariff-modal-shell"
     style={{
       position: "fixed",
       inset: 0,
@@ -3719,6 +5567,7 @@ if (listingLang === "uz" && translatedListing) {
     }}
   >
     <div
+      className="mc-modal-card mc-tariff-modal-card"
       style={{
         width: "100%",
         maxWidth: isMobile ? "94vw" : "1040px",
@@ -3733,6 +5582,7 @@ if (listingLang === "uz" && translatedListing) {
       }}
     >
       <div
+        className="mc-modal-head"
         style={{
           display: "flex",
           justifyContent: "space-between",
@@ -3755,6 +5605,7 @@ if (listingLang === "uz" && translatedListing) {
       </div>
 
       <div
+        className="mc-tariff-grid"
         style={{
           display: "grid",
           gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
@@ -3767,6 +5618,7 @@ if (listingLang === "uz" && translatedListing) {
 
           return (
             <button
+              className={isSelected ? "mc-tariff-card is-selected" : "mc-tariff-card"}
               key={tariff}
               onClick={() => setSelectedTariff(tariff)}
               style={{
@@ -3831,6 +5683,7 @@ if (listingLang === "uz" && translatedListing) {
         }}
       >
         <button
+          className="mc-modal-primary"
           onClick={() => {
             setShowTariffModal(false)
             setShowPaymentModal(true)
@@ -3858,6 +5711,7 @@ if (listingLang === "uz" && translatedListing) {
 
 {showPaymentModal && (
   <div
+    className="mc-modal-shell mc-payment-modal-shell"
     style={{
       position: "fixed",
       inset: 0,
@@ -3869,6 +5723,7 @@ if (listingLang === "uz" && translatedListing) {
     }}
   >
     <div
+      className="mc-modal-card mc-payment-modal-card"
       style={{
         width: "100%",
         maxWidth: "760px",
@@ -3914,6 +5769,7 @@ if (listingLang === "uz" && translatedListing) {
         }}
       >
         <button
+          className={selectedPayment === "payme" ? "mc-payment-card is-selected" : "mc-payment-card"}
           onClick={() => setSelectedPayment("payme")}
           style={{
             padding: "22px",
@@ -3939,8 +5795,38 @@ if (listingLang === "uz" && translatedListing) {
             }}
           />
         </button>
+        
+        <button
+  className={selectedPayment === "visa" ? "mc-payment-card is-selected" : "mc-payment-card"}
+  onClick={() => setSelectedPayment("visa")}
+  style={{
+    padding: "22px",
+    borderRadius: "22px",
+    border:
+      selectedPayment === "visa"
+        ? "2px solid rgba(255,255,255,0.95)"
+        : "1px solid rgba(255,255,255,0.12)",
+    background:
+      selectedPayment === "visa"
+        ? "rgba(255,255,255,0.12)"
+        : "rgba(255,255,255,0.05)",
+    cursor: "pointer",
+  }}
+>
+  <div
+    style={{
+      fontSize: "38px",
+      fontWeight: 900,
+      color: "white",
+      textAlign: "center",
+    }}
+  >
+    VISA
+  </div>
+</button>
 
         <button
+          className={selectedPayment === "click" ? "mc-payment-card is-selected" : "mc-payment-card"}
           onClick={() => setSelectedPayment("click")}
           style={{
             padding: "22px",
@@ -3970,6 +5856,7 @@ if (listingLang === "uz" && translatedListing) {
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
+          className="mc-modal-primary"
           onClick={handleConfirmPayment}
           style={{
             padding: "16px 24px",
@@ -3991,6 +5878,8 @@ if (listingLang === "uz" && translatedListing) {
 
 </div>
 )}
+
+  <SupportWidget />
 
   </>
 )}

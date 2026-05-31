@@ -1,9 +1,10 @@
-import base64
+import hashlib
 import logging
 import os
 import time
 from datetime import datetime
 
+import base64
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session, select
 
@@ -12,7 +13,6 @@ from app.models.finance_income import TariffIncome
 from app.models.payment_order import PaymentOrder
 from app.models.user import User
 from app.security import get_current_user
-from app.services.tariff_activation import grant_tariff_benefits
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ PAYME_BASE_URL = os.getenv("PAYME_BASE_URL", "https://checkout.paycom.uz").strip
 
 CLICK_SERVICE_ID = os.getenv("CLICK_SERVICE_ID", "").strip()
 CLICK_MERCHANT_ID = os.getenv("CLICK_MERCHANT_ID", "").strip()
+CLICK_SECRET_KEY = os.getenv("CLICK_SECRET_KEY", "").strip()
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -37,8 +38,9 @@ TARIFF_LIMITS = {
     "Premium": 200,
 }
 
+from app.services.tariff_activation import grant_tariff_benefits
 
-def _record_tariff_income(session: Session, user: User, order: PaymentOrder, source: str) -> None:
+def _record_tariff_income(session: Session, user: User, order: PaymentOrder) -> None:
     session.add(
         TariffIncome(
             user_id=user.id,
@@ -46,30 +48,8 @@ def _record_tariff_income(session: Session, user: User, order: PaymentOrder, sou
             tariff_name=order.tariff_name,
             amount_uzs=int(order.amount_uzs or 0),
             generations_total=int(user.tariff_generations_total or 0),
-            source=source,
+            source=f"payme:{order.provider or 'payme'}",
         )
-    )
-
-
-def _build_payme_url(order: PaymentOrder) -> str:
-    amount_tiyin = int(order.amount_uzs) * 100
-    payme_data = (
-        f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin};"
-        f"c=https://marketcard.uz/dashboard"
-    )
-    payme_encoded = base64.b64encode(payme_data.encode()).decode()
-    return f"{PAYME_BASE_URL}/{payme_encoded}"
-
-
-def _build_click_url(order: PaymentOrder) -> str | None:
-    if not CLICK_SERVICE_ID or not CLICK_MERCHANT_ID:
-        return None
-    return (
-        "https://my.click.uz/services/pay"
-        f"?service_id={CLICK_SERVICE_ID}"
-        f"&merchant_id={CLICK_MERCHANT_ID}"
-        f"&amount={order.amount_uzs}"
-        f"&transaction_param={order.id}"
     )
 
 
@@ -99,13 +79,14 @@ def create_order(
     session.commit()
     session.refresh(order)
 
+    amount_tiyin = int(order.amount_uzs) * 100
+    payme_data = f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin};c=https://marketcard.uz/dashboard"
+    payme_encoded = base64.b64encode(payme_data.encode()).decode()
+
     return {
         "success": True,
         "order_id": order.id,
-        "amount": order.amount_uzs,
-        "provider": provider,
-        "payme_url": _build_payme_url(order),
-        "click_url": _build_click_url(order),
+        "payme_url": f"{PAYME_BASE_URL}/{payme_encoded}",
     }
 
 
@@ -149,9 +130,7 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
     tx_id = str(params.get("id"))
 
     if method and method.lower() == "checkperformtransaction":
-        order = session.exec(
-            select(PaymentOrder).where(PaymentOrder.id == int(order_id))
-        ).first()
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
         if not order:
             return err(-31050, "Order not found")
         if int(order.amount_uzs) * 100 != int(amount):
@@ -159,9 +138,7 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
         return ok({"allow": True})
 
     if method == "CreateTransaction":
-        order = session.exec(
-            select(PaymentOrder).where(PaymentOrder.id == int(order_id))
-        ).first()
+        order = session.exec(select(PaymentOrder).where(PaymentOrder.id == int(order_id))).first()
         if not order:
             return err(-31050, "Order not found")
 
@@ -208,7 +185,7 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
         if not order.paid_at:
             order.paid_at = datetime.utcnow()
 
-        _record_tariff_income(session, user, order, f"payme:{order.provider or 'payme'}")
+        _record_tariff_income(session, user, order)
         session.add(user)
         session.add(order)
         session.commit()
@@ -220,11 +197,9 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
         })
 
     if method == "CancelTransaction":
-        cancel_tx_id = params.get("id")
+        tx_id = params.get("id")
         order = session.exec(
-            select(PaymentOrder).where(
-                PaymentOrder.external_transaction_id == cancel_tx_id
-            )
+            select(PaymentOrder).where(PaymentOrder.external_transaction_id == tx_id)
         ).first()
         if not order:
             return err(-31003, "Transaction not found")
@@ -257,17 +232,15 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
         session.commit()
 
         return ok({
-            "transaction": cancel_tx_id,
+            "transaction": tx_id,
             "cancel_time": int(time.time() * 1000),
             "state": -2,
         })
 
     if method == "CheckTransaction":
-        check_tx_id = params.get("id")
+        tx_id = params.get("id")
         order = session.exec(
-            select(PaymentOrder).where(
-                PaymentOrder.external_transaction_id == str(check_tx_id)
-            )
+            select(PaymentOrder).where(PaymentOrder.external_transaction_id == str(tx_id))
         ).first()
         if not order:
             return err(-31003, "Transaction not found")
@@ -278,7 +251,7 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
                 "create_time": ms(create_dt),
                 "perform_time": ms(order.paid_at),
                 "cancel_time": 0,
-                "transaction": str(check_tx_id),
+                "transaction": str(tx_id),
                 "state": 2,
                 "reason": None,
             })
@@ -287,7 +260,7 @@ async def payme_callback(request: Request, session: Session = Depends(get_sessio
             "create_time": ms(create_dt),
             "perform_time": 0,
             "cancel_time": 0,
-            "transaction": str(check_tx_id),
+            "transaction": str(tx_id),
             "state": 1,
             "reason": None,
         })
@@ -301,15 +274,15 @@ def create_audit_order(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    packages = {
+    PACKAGES = {
         "audit10": {"credits": 10, "amount": 49000},
         "audit30": {"credits": 30, "amount": 99000},
     }
 
-    if package not in packages:
-        raise HTTPException(status_code=400, detail="Invalid package")
+    if package not in PACKAGES:
+        raise HTTPException(400, "Invalid package")
 
-    pkg = packages[package]
+    pkg = PACKAGES[package]
 
     order = PaymentOrder(
         user_id=current_user.id,
@@ -324,11 +297,14 @@ def create_audit_order(
     session.commit()
     session.refresh(order)
 
+    amount_tiyin = int(order.amount_uzs) * 100
+    payme_data = f"m={PAYME_MERCHANT_ID};ac.order_id={order.id};a={amount_tiyin};c=https://marketcard.uz/dashboard"
+    payme_encoded = base64.b64encode(payme_data.encode()).decode()
+
     return {
         "success": True,
         "order_id": order.id,
         "amount": pkg["amount"],
         "credits": pkg["credits"],
-        "payme_url": _build_payme_url(order),
-        "click_url": _build_click_url(order),
+        "payme_url": f"{PAYME_BASE_URL}/{payme_encoded}",
     }

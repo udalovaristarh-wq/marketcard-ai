@@ -23,11 +23,13 @@ type ArpuData = {
   profit_note?: string
 }
 
+import { authFetch } from "@/lib/auth"
+
 export default function ArpuStatsBlock() {
   const [data, setData] = useState<ArpuData | null>(null)
 
   useEffect(() => {
-    fetch("/api/admin/arpu-stats")
+    authFetch("/api/admin/arpu-stats")
       .then(res => res.json())
       .then(setData)
   }, [])

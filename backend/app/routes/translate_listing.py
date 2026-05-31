@@ -4,8 +4,11 @@ import html
 from typing import Any, List
 
 import requests
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+
+from app.models.user import User
+from app.security import get_current_user
 
 router = APIRouter(prefix="/translate", tags=["translate"])
 
@@ -89,7 +92,10 @@ def translate_characteristic(item: Any) -> Any:
 
 
 @router.post("/listing")
-def translate_listing(payload: ListingTranslateRequest):
+def translate_listing(
+    payload: ListingTranslateRequest,
+    current_user: User = Depends(get_current_user),
+):
     return {
         "title": translate_small(payload.title),
         "short_description": translate_text(payload.short_description),

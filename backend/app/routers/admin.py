@@ -4,22 +4,36 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.models import User, UserError
+from app.security import get_current_admin
 import psutil
+import os
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+class AdminPasswordRequest(BaseModel):
+    password: str
+
+
+@router.post("/verify-password")
+def verify_admin_password(
+    data: AdminPasswordRequest,
+    current_user: User = Depends(get_current_admin),
+):
+    admin_password = os.getenv("ADMIN_PANEL_PASSWORD", "").strip()
+    if not admin_password:
+        raise HTTPException(status_code=500, detail="Admin password not configured")
+    if data.password.strip() != admin_password:
+        raise HTTPException(status_code=403, detail="Неверный пароль администратора")
+    return {"success": True}
 
 
 @router.get("/users")
 def get_users(
     session: Session = Depends(get_session),
-    limit: int = 200,
-    offset: int = 0,
+    current_user: User = Depends(get_current_admin),
 ):
-    limit = max(1, min(limit, 500))
-    offset = max(0, offset)
-    users = session.exec(
-        select(User).order_by(User.id.desc()).offset(offset).limit(limit)
-    ).all()
+    users = session.exec(select(User).order_by(User.id.desc())).all()
 
     return [
         {
@@ -44,7 +58,10 @@ def get_users(
 
 
 @router.get("/errors")
-def get_all_errors(session: Session = Depends(get_session)):
+def get_all_errors(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     errors = session.exec(
         select(UserError).order_by(UserError.id.desc())
     ).all()
@@ -52,7 +69,11 @@ def get_all_errors(session: Session = Depends(get_session)):
 
 
 @router.get("/errors/{user_id}")
-def get_user_errors(user_id: int, session: Session = Depends(get_session)):
+def get_user_errors(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
@@ -85,7 +106,11 @@ def get_user_errors(user_id: int, session: Session = Depends(get_session)):
 
 
 @router.post("/errors/{error_id}/resolve")
-def resolve_error(error_id: int, session: Session = Depends(get_session)):
+def resolve_error(
+    error_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     error = session.get(UserError, error_id)
     if not error:
         raise HTTPException(status_code=404, detail="Ошибка не найдена")
@@ -194,6 +219,7 @@ class UnbanUserPayload(BaseModel):
 def ban_user(
     payload: BanUserPayload,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
 ):
 
     user = session.exec(select(User).where(User.id == payload.user_id)).first()
@@ -205,6 +231,7 @@ def ban_user(
 
     user.is_banned = True
     user.ban_reason = payload.ban_reason or "Заблокирован администратором"
+    user.token_version = int(getattr(user, "token_version", 0) or 0) + 1
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -216,6 +243,7 @@ def ban_user(
 def unban_user(
     payload: UnbanUserPayload,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
 ):
 
     user = session.exec(select(User).where(User.id == payload.user_id)).first()
@@ -232,7 +260,10 @@ def unban_user(
 
 
 @router.get("/stats")
-def get_admin_stats(session: Session = Depends(get_session)):
+def get_admin_stats(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_admin),
+):
     users = session.exec(select(User)).all()
 
     total_users = len(users)
@@ -240,7 +271,7 @@ def get_admin_stats(session: Session = Depends(get_session)):
     used_generations = sum(u.tariff_generations_used or 0 for u in users)
     without_tariff = len([u for u in users if not u.tariff_name])
 
-    cpu = psutil.cpu_percent(interval=None)
+    cpu = psutil.cpu_percent(interval=0.5)
     memory = psutil.virtual_memory().percent
     disk = psutil.disk_usage('/').percent
 

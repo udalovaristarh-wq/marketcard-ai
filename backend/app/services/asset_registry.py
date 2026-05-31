@@ -28,6 +28,42 @@ class DesignPack:
     category: str
 
 
+TEMPLATE_BANK_SIZE = 500
+TEMPLATE_LAYOUTS = [
+    "center_focus",
+    "left_text_right_product",
+    "right_text_left_product",
+    "bottom_infographic",
+    "top_offer",
+    "split_specs",
+    "benefit_stack",
+    "marketplace_badges",
+    "comparison_grid",
+    "premium_editorial",
+]
+
+TEMPLATE_SURFACES = [
+    "glass_dark",
+    "soft_light",
+    "neon_grid",
+    "studio_shadow",
+    "marketplace_clean",
+    "luxury_gradient",
+    "technical_blueprint",
+    "warm_retail",
+    "eco_fresh",
+    "automotive_metal",
+]
+
+TEMPLATE_MOTION_HINTS = [
+    "static_hero",
+    "zoom_product",
+    "floating_badges",
+    "spec_sweep",
+    "offer_reveal",
+]
+
+
 # =========================
 # CATEGORY DETECTION
 # =========================
@@ -131,15 +167,18 @@ def get_scene(category: str) -> str:
 # =========================
 # LAYOUTS
 # ========================= 
-def get_layout(category: str) -> str:
-    layouts = [
-        "center_focus",
-        "left_text_right_product",
-        "bottom_infographic",
-        "grid_features",
-        "cards"
-    ]
-    return random.choice(layouts)
+def get_layout(category: str, seed: int = 0) -> str:
+    return TEMPLATE_LAYOUTS[seed % len(TEMPLATE_LAYOUTS)]
+
+
+def get_template_meta(category: str, slide_type: str, seed: int = 0) -> dict:
+    template_id = seed % TEMPLATE_BANK_SIZE
+    return {
+        "template_id": f"{category}-{slide_type}-{template_id:03d}",
+        "template_bank_size": TEMPLATE_BANK_SIZE,
+        "surface": TEMPLATE_SURFACES[(seed + len(category)) % len(TEMPLATE_SURFACES)],
+        "motion_hint": TEMPLATE_MOTION_HINTS[(seed + len(slide_type)) % len(TEMPLATE_MOTION_HINTS)],
+    }
 
 
 # =========================
@@ -153,11 +192,13 @@ def build_design_pack(title: str, category: str, slide_type: str, seed: int = 0)
 
     palette = get_palette(detected)
     scene = get_scene(detected)
-    layout = get_layout(detected)
+    layout = get_layout(detected, seed)
+    template = get_template_meta(detected, slide_type, seed)
 
     return {
         "palette": palette,
         "scene": scene,
         "layout": layout,
-        "category": detected
+        "category": detected,
+        "template": template,
     }

@@ -47,6 +47,75 @@ def _resolve_output_size(marketplace_profile: dict[str, Any]) -> str:
     return "1536x1024"
 
 
+def _copy_for_slide(
+    *,
+    slide_key: str,
+    product_title: str,
+    brand: str,
+    category: str,
+    category_type: str,
+    extra_features: list[str],
+) -> dict[str, Any]:
+    title = product_title or category or "Товар"
+    clean_brand = brand or "MarketCard"
+    features = extra_features[:4] or [
+        "Аккуратная подача товара",
+        "Понятные преимущества",
+        "Готово для маркетплейса",
+    ]
+
+    defaults = {
+        "hero": {
+            "headline": title,
+            "subheadline": "Премиальная карточка, которая сразу объясняет ценность товара",
+            "badge": "Хит продаж",
+            "benefits": features[:3],
+        },
+        "benefits": {
+            "headline": "Почему выбирают этот товар",
+            "subheadline": "Ключевые преимущества для быстрого решения о покупке",
+            "badge": "Преимущества",
+            "benefits": features[:4],
+        },
+        "specs": {
+            "headline": "Характеристики без лишнего шума",
+            "subheadline": "Коротко, понятно и удобно для сравнения",
+            "badge": "Параметры",
+            "benefits": features[:3],
+        },
+        "usage": {
+            "headline": "Удобно каждый день",
+            "subheadline": "Показываем сценарий использования и реальную пользу",
+            "badge": "Сценарий",
+            "benefits": features[:3],
+        },
+        "trust": {
+            "headline": "Надежный выбор",
+            "subheadline": "Финальный слайд доверия для повышения конверсии",
+            "badge": "Гарантия",
+            "benefits": features[:3],
+        },
+    }
+    data = defaults.get(slide_key, defaults["hero"]).copy()
+    data.update(
+        {
+            "slide_type": slide_key,
+            "category_type": category_type or "general",
+            "scene_style": category or category_type or "premium marketplace",
+            "shape": "hero",
+            "visual_size": "large" if slide_key == "hero" else "medium",
+            "position_bias": "centered",
+            "specs": [
+                f"Бренд: {clean_brand}",
+                f"Категория: {category or 'товар'}",
+                "Формат: marketplace-ready",
+                "Дизайн: premium AI",
+            ],
+        }
+    )
+    return data
+
+
 def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
     product_title = _clean_text(payload.get("product_title"))
     brand = _clean_text(payload.get("brand"))
@@ -119,6 +188,19 @@ def full_generate(payload: Dict[str, Any]) -> Dict[str, Any]:
         extra_features=extra_features,
         visual_profile=visual_profile,
     )
+
+    for item in prompts:
+        slide_key = str(item.get("slide_key", "hero"))
+        item["copy_data"] = _copy_for_slide(
+            slide_key=slide_key,
+            product_title=product_title,
+            brand=brand,
+            category=category,
+            category_type=series_plan["category_type"],
+            extra_features=extra_features,
+        )
+        item["brand"] = brand
+        item["marketplace"] = marketplace
 
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     output_dir = (GENERATED_DIR / generation_id).resolve()

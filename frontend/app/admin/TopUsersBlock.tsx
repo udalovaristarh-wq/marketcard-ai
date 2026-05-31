@@ -25,11 +25,13 @@ function formatUsd(value: number) {
   return "$" + Number(value || 0).toFixed(4)
 }
 
+import { authFetch } from "@/lib/auth"
+
 export default function TopUsersBlock() {
   const [data, setData] = useState<TopUsersResponse | null>(null)
 
   useEffect(() => {
-    fetch("/api/admin/top-users")
+    authFetch("/api/admin/top-users")
       .then(res => res.json())
       .then(setData)
   }, [])

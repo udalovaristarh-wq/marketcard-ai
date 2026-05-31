@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { authFetch, getAuthHeaders } from "@/lib/auth";
 
 type FinanceSummary = {
   total_income_uzs: number;
@@ -46,7 +47,7 @@ export default function FinanceBlock() {
   const [realUsdRate, setRealUsdRate] = useState<number>(0);
 
   useEffect(() => {
-    fetch("/api/admin/usd-rate", { cache: "no-store" })
+    fetch("/api/admin/usd-rate", { cache: "no-store", credentials: "include", headers: getAuthHeaders() as HeadersInit })
       .then((res) => res.json())
       .then((d) => setRealUsdRate(Number(d?.rate || 0)))
       .catch(() => setRealUsdRate(0));
@@ -66,8 +67,8 @@ export default function FinanceBlock() {
         setError("");
 
         const [summaryRes, timeseriesRes] = await Promise.all([
-          fetch("https://marketcard.uz/api/admin/finance-summary", { cache: "no-store" }),
-          fetch("https://marketcard.uz/api/admin/finance-timeseries", { cache: "no-store" }),
+          authFetch("/api/admin/finance-summary", { cache: "no-store" }),
+          authFetch("/api/admin/finance-timeseries", { cache: "no-store" }),
         ]);
 
         if (!summaryRes.ok) throw new Error("Не удалось получить finance-summary");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/auth";
 
 type RateData = {
   rate: number | null;
@@ -17,7 +18,7 @@ export default function UsdRateBlock() {
   const [data, setData] = useState<RateData | null>(null);
 
   const load = () => {
-    fetch("/api/admin/usd-rate", { cache: "no-store" })
+    authFetch("/api/admin/usd-rate", { cache: "no-store" })
       .then((res) => res.json())
       .then(setData);
   };

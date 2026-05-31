@@ -2,7 +2,10 @@ from pathlib import Path
 import shutil
 import uuid
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+
+from app.models.user import User
+from app.security import get_current_user
 
 from app.services.background_remover import remove_background
 from app.services.legacy.card_series_generator import generate_card_series
@@ -40,6 +43,7 @@ async def generate(
     style_mode: str = Form("premium"),
     variants_count: int = Form(5),
     image: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
 ):
     validate_image_filename(image.filename)
 

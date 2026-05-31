@@ -37,14 +37,18 @@ async def analyze_card(
             detail="Лимит оценок карточек исчерпан. Купите дополнительные аудиты."
         )
 
-    # 💰 списание
+    result = analyze_product_card(image_bytes, file.filename or "card.jpg")
+
+    if not result:
+        raise HTTPException(status_code=500, detail="Не удалось выполнить аудит карточки")
+
     current_user.audit_credits = max((current_user.audit_credits or 0) - 1, 0)
     session.add(current_user)
     session.commit()
-
-    result = analyze_product_card(image_bytes, file.filename or "card.jpg")
+    session.refresh(current_user)
 
     return {
         "success": True,
         "audit": result,
-}
+        "audit_credits_left": current_user.audit_credits,
+    }

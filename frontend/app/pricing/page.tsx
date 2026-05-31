@@ -4,13 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 type PlanKey = "starter" | "business" | "premium"
-type PaymentMethod = "click" | "payme" | null
-
-const TARIFF_BY_PLAN: Record<PlanKey, string> = {
-  starter: "Start",
-  business: "Business",
-  premium: "Premium",
-}
+type PaymentMethod = "click" | "payme" | "visa" | null
 
 type Lang = "ru" | "uz" | "en"
 
@@ -28,9 +22,9 @@ const dict = {
     starter: "Старт",
     business: "Бизнес",
     premium: "Премиум",
-    gen20: "20 AI-генераций",
-    gen60: "60 AI-генераций",
-    gen200: "200 AI-генераций",
+    products100: "До 100 товаров",
+    products500: "До 500 товаров",
+    productsUnlimited: "Без лимита товаров",
     oneMarketplace: "1 маркетплейс",
     allMarketplaces: "Все маркетплейсы",
     basicTemplates: "Базовые шаблоны",
@@ -67,9 +61,9 @@ const dict = {
     starter: "Start",
     business: "Biznes",
     premium: "Premium",
-    gen20: "20 ta AI generatsiya",
-    gen60: "60 ta AI generatsiya",
-    gen200: "200 ta AI generatsiya",
+    products100: "100 tagacha mahsulot",
+    products500: "500 tagacha mahsulot",
+    productsUnlimited: "Cheksiz mahsulot",
     oneMarketplace: "1 marketpleys",
     allMarketplaces: "Barcha marketpleyslar",
     basicTemplates: "Asosiy shablonlar",
@@ -106,9 +100,9 @@ const dict = {
     starter: "Starter",
     business: "Business",
     premium: "Premium",
-    gen20: "20 AI generations",
-    gen60: "60 AI generations",
-    gen200: "200 AI generations",
+    products100: "Up to 100 products",
+    products500: "Up to 500 products",
+    productsUnlimited: "Unlimited products",
     oneMarketplace: "1 marketplace",
     allMarketplaces: "All marketplaces",
     basicTemplates: "Basic templates",
@@ -401,13 +395,12 @@ useEffect(() => {
     () => ({
       starter: {
         title: t.starter,
-        price: "249 000 сум",
+        price: "3 000 сум",
         accent: "linear-gradient(135deg,#22d3ee,#2563eb)",
         features: [
-          t.gen20,
+          t.products100,
           t.oneMarketplace,
           t.basicTemplates,
-          t.aiCards,
         ],
       },
       business: {
@@ -415,7 +408,7 @@ useEffect(() => {
         price: "799 000 сум",
         accent: "linear-gradient(135deg,#22c55e,#16a34a)",
         features: [
-          t.gen60,
+          t.products500,
           t.allMarketplaces,
           t.excel,
           t.massGenerate,
@@ -428,7 +421,7 @@ useEffect(() => {
         price: "1 900 000 сум",
         accent: "linear-gradient(135deg,#f59e0b,#ea580c)",
         features: [
-          t.gen200,
+          t.productsUnlimited,
           t.allMarketplaces,
           t.aiInfographics,
           t.massGenerate,
@@ -598,7 +591,7 @@ useEffect(() => {
               setSelectedPayment(null)
             }}
           />
-        </div>{selectedPlan && currentPlan && (
+        </div>{selectedPlan && 'currentPlan' && (
           <div
             style={{
               position: "fixed",
@@ -656,9 +649,9 @@ useEffect(() => {
                       fontWeight: 700,
                     }}
                   >
-                    {t.paymentText}: <b style={{ color: "white" }}>{currentPlan.title}</b>
+                    {t.paymentText}: <b style={{ color: "white" }}>{'currentPlan.title'}</b>
                     {" · "}
-                    <b style={{ color: "white" }}>{currentPlan.price}</b>
+                    <b style={{ color: "white" }}>{'currentPlan.price'}</b>
                   </div>
                 </div>
 
@@ -718,6 +711,13 @@ useEffect(() => {
                   logo="P"
                   onClick={() => setSelectedPayment("payme")}
                 />
+                <PaymentButton
+                  title="VISA"
+                  subtitle="Visa"
+                  color="linear-gradient(135deg,#1d4ed8,#2563eb)"
+                  logo="V"
+                  onClick={() => setSelectedPayment("visa")}
+                />
               </div>
 
               <div
@@ -748,45 +748,48 @@ useEffect(() => {
                       return
                     }
 
-                    if (!selectedPlan) {
-                      alert("Выберите тариф")
-                      return
-                    }
-
-                    const tariffName = TARIFF_BY_PLAN[selectedPlan]
-                    const orderRes = await fetch(
-                      `/api/payments/create-order?tariff_name=${encodeURIComponent(tariffName)}&provider=${encodeURIComponent(selectedPayment)}`,
-                      {
-                        method: "POST",
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                        },
+                    // получаем профиль
+                    const profileRes = await fetch("/api/auth/profile", {
+                      headers: {
+                        Authorization: `Bearer ${token}`
                       }
-                    )
+                    })
 
-                    const orderData = await orderRes.json().catch(() => null)
+                    const profile = await profileRes.json()
 
-                    if (!orderRes.ok || !orderData?.success) {
-                      const detail =
-                        typeof orderData?.detail === "string"
-                          ? orderData.detail
-                          : "Ошибка создания заказа"
-                      alert(detail)
+                    if (!profile?.email) {
+                      alert("Ошибка получения профиля")
                       return
                     }
 
-                    if (selectedPayment === "payme" && orderData.payme_url) {
+                    // создаём заказ
+                    const orderRes = await fetch("/api/payments/create-order", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        email: profile.email,
+                        tariff_name: currentPlan?.title,
+                        provider: selectedPayment
+                      })
+                    })
+
+                    const orderData = await orderRes.json()
+
+                    if (!orderData.success) {
+                      alert("Ошибка создания заказа")
+                      return
+                    }
+
+                    // редирект на оплату
+                    if (selectedPayment === "payme") {
                       localStorage.setItem("marketcard_pending_tariff_purchase", "1")
                       window.location.href = orderData.payme_url
-                      return
-                    }
-
-                    if (selectedPayment === "click" && orderData.click_url) {
+                    } else if (selectedPayment === "click") {
                       window.location.href = orderData.click_url
-                      return
                     }
-
-                    alert("Ссылка на оплату не получена. Проверьте настройки Payme/Click на сервере.")
 
                   } catch (err) {
                     console.error(err)

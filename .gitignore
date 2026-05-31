@@ -18,3 +18,11 @@ backend/.env.*
 frontend/.env
 frontend/.env.*
 frontend/.env.local
+
+# backup artifacts with possible secrets
+*.bak
+*.save
+*.broken
+*.bak-*
+*.sql
+database.db

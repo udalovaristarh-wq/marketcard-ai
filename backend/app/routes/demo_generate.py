@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request
+
+from app.rate_limit import rate_limit
 from PIL import Image, ImageDraw, ImageFont
 
 from app.services.ai_pipeline.full_generate_service import full_generate
@@ -133,6 +135,7 @@ async def demo_generate(
     language_mode: str = Form("ru"),
     image: UploadFile = File(...),
 ):
+    rate_limit(request, key_prefix="demo-generate", max_calls=5, window_seconds=3600)
     ip = _client_ip(request)
     _check_demo_limit(ip)
 
